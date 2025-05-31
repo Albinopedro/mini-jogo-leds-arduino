@@ -34,6 +34,7 @@ GameState game;
 int pegaLuzTarget = -1;
 unsigned long pegaLuzStartTime = 0;
 bool pegaLuzWaitingResponse = false;
+unsigned long pegaLuzNextSpawn = 0;
 
 // Sequência Maluca
 int sequenciaMaluca[50];
@@ -57,6 +58,8 @@ int playerPosition = 0;
 bool meteoros[NUM_LEDS];
 unsigned long meteorLastUpdate = 0;
 int meteorSpeed = 1000;
+unsigned long meteorBlinkTime = 0;
+bool meteorVisible = true;
 
 // Guitar Hero
 struct Note {
@@ -72,33 +75,33 @@ unsigned long guitarStartTime = 0;
 
 void setup() {
   Serial.begin(9600);
-  
+
   // Inicializar pinos dos LEDs
   for (int i = 0; i < NUM_LEDS; i++) {
     pinMode(ledPins[i], OUTPUT);
     digitalWrite(ledPins[i], LOW);
   }
-  
+
   // Inicializar estado do jogo
   game.currentMode = MENU;
   game.gameActive = false;
   game.score = 0;
   game.level = 1;
   game.difficulty = 1;
-  
+
   // Seed para números aleatórios
   randomSeed(analogRead(A5));
-  
+
   // Teste inicial dos LEDs
   testLEDs();
-  
+
   Serial.println("ARDUINO_READY");
 }
 
 void loop() {
   // Processar comandos seriais
   processSerialCommands();
-  
+
   // Executar lógica do jogo atual
   if (game.gameActive) {
     switch (game.currentMode) {
@@ -112,14 +115,14 @@ void loop() {
         updateGatoRato();
         break;
       case ESQUIVA_METEOROS:
-        updateEsquivaMeteoros();
+        displayEsquivaMeteoros();
         break;
       case GUITAR_HERO:
         updateGuitarHero();
         break;
     }
   }
-  
+
   delay(10); // Pequeno delay para estabilidade
 }
 
@@ -128,7 +131,7 @@ void processSerialCommands() {
   if (Serial.available()) {
     String command = Serial.readStringUntil('\n');
     command.trim();
-    
+
     if (command.startsWith("START_GAME:")) {
       int mode = command.substring(11).toInt();
       startGame((GameMode)mode);
@@ -206,9 +209,9 @@ void startGame(GameMode mode) {
   game.difficulty = 1;
   game.gameStartTime = millis();
   game.lastUpdateTime = millis();
-  
+
   clearAllLEDs();
-  
+
   // Inicializar jogo específico
   switch (mode) {
     case PEGA_LUZ:
@@ -227,7 +230,7 @@ void startGame(GameMode mode) {
       initGuitarHero();
       break;
   }
-  
+
   sendGameEvent("GAME_STARTED", mode);
 }
 
@@ -239,7 +242,7 @@ void stopGame() {
 
 void handleKeyPress(int key) {
   if (!game.gameActive) return;
-  
+
   switch (game.currentMode) {
     case PEGA_LUZ:
       handlePegaLuzKey(key);
@@ -263,47 +266,57 @@ void handleKeyPress(int key) {
 void initPegaLuz() {
   pegaLuzTarget = -1;
   pegaLuzWaitingResponse = false;
-  spawnNewPegaLuzTarget();
+  pegaLuzNextSpawn = millis() + random(500, 1500);
 }
 
 void updatePegaLuz() {
-  if (!pegaLuzWaitingResponse && millis() - pegaLuzStartTime > 2000) {
+  unsigned long currentTime = millis();
+
+  // Verificar timeout se estiver esperando resposta
+  if (pegaLuzWaitingResponse && currentTime - pegaLuzStartTime > 2000) {
     // Timeout - jogador não respondeu a tempo
     sendGameEvent("PEGA_LUZ_TIMEOUT");
     if (game.score > 0) game.score--;
+    pegaLuzWaitingResponse = false;
+    pegaLuzNextSpawn = currentTime + random(500, 1500);
+    clearAllLEDs();
+  }
+
+  // Spawn novo target se não estiver esperando resposta
+  if (!pegaLuzWaitingResponse && currentTime >= pegaLuzNextSpawn) {
     spawnNewPegaLuzTarget();
   }
 }
 
 void spawnNewPegaLuzTarget() {
   clearAllLEDs();
-  delay(random(500, 1500)); // Delay aleatório
-  
+
   pegaLuzTarget = random(0, NUM_LEDS);
   setLED(pegaLuzTarget, true);
   pegaLuzStartTime = millis();
   pegaLuzWaitingResponse = true;
-  
+
   sendGameEvent("PEGA_LUZ_TARGET", pegaLuzTarget);
 }
 
 void handlePegaLuzKey(int key) {
   if (!pegaLuzWaitingResponse) return;
-  
+
   if (key == pegaLuzTarget) {
     // Acertou!
     unsigned long reactionTime = millis() - pegaLuzStartTime;
     game.score++;
-    
+
     // Aumentar dificuldade a cada 5 pontos
     if (game.score % 5 == 0) {
       game.level++;
       game.difficulty++;
     }
-    
+
     sendGameEvent("PEGA_LUZ_HIT", reactionTime);
     pegaLuzWaitingResponse = false;
-    spawnNewPegaLuzTarget();
+    pegaLuzNextSpawn = millis() + random(300, 1000); // Mais rápido com dificuldade
+    clearAllLEDs();
   } else {
     // Errou
     sendGameEvent("PEGA_LUZ_MISS");
@@ -317,25 +330,25 @@ void initSequenciaMaluca() {
   sequenciaCurrentStep = 0;
   sequenciaShowingPattern = false;
   sequenciaWaitingInput = false;
-  
+
   // Gerar primeira sequência
   for (int i = 0; i < 50; i++) {
     sequenciaMaluca[i] = random(0, NUM_LEDS);
   }
-  
+
   startSequenciaRound();
 }
 
 void updateSequenciaMaluca() {
   if (sequenciaShowingPattern) {
     if (millis() - sequenciaLastLed > 600) {
+      clearAllLEDs();
+
       if (sequenciaDisplayIndex < sequenciaLength) {
-        clearAllLEDs();
         setLED(sequenciaMaluca[sequenciaDisplayIndex], true);
         sequenciaDisplayIndex++;
         sequenciaLastLed = millis();
       } else {
-        clearAllLEDs();
         sequenciaShowingPattern = false;
         sequenciaWaitingInput = true;
         sequenciaCurrentStep = 0;
@@ -355,20 +368,20 @@ void startSequenciaRound() {
 
 void handleSequenciaMalucaKey(int key) {
   if (!sequenciaWaitingInput) return;
-  
+
   if (key == sequenciaMaluca[sequenciaCurrentStep]) {
     sequenciaCurrentStep++;
     setLED(key, true);
     delay(100);
     setLED(key, false);
-    
+
     if (sequenciaCurrentStep >= sequenciaLength) {
       // Completou a sequência!
       game.score++;
       game.level++;
       sequenciaLength++;
       sequenciaWaitingInput = false;
-      
+
       sendGameEvent("SEQUENCIA_COMPLETE");
       delay(1000);
       startSequenciaRound();
@@ -390,65 +403,63 @@ void initGatoRato() {
   gatoLastMove = millis();
   ratoLastMove = millis();
   gatoMoveDelay = 500;
-  ratoMoveDelay = 300;
+  ratoMoveDelay = max(300 - (game.level * 20), 100); // Rato mais rápido com nível
   updateGatoRatoDisplay();
 }
 
 void updateGatoRato() {
   unsigned long currentTime = millis();
-  
+
   // Mover o rato automaticamente
   if (currentTime - ratoLastMove > ratoMoveDelay) {
     int newRatoPos;
     do {
       newRatoPos = random(0, NUM_LEDS);
     } while (newRatoPos == ratoPosition || newRatoPos == gatoPosition);
-    
+
     ratoPosition = newRatoPos;
     ratoLastMove = currentTime;
-    updateGatoRatoDisplay();
   }
-  
+
   // Verificar se o gato pegou o rato
   if (gatoPosition == ratoPosition) {
     game.score++;
     game.level++;
-    
+
     // Aumentar dificuldade
-    if (ratoMoveDelay > 150) ratoMoveDelay -= 20;
-    
+    ratoMoveDelay = max(ratoMoveDelay - 20, 100);
+
     sendGameEvent("GATO_CAUGHT_RATO");
-    
+
     // Reposicionar
     gatoPosition = random(0, NUM_LEDS);
     do {
       ratoPosition = random(0, NUM_LEDS);
     } while (ratoPosition == gatoPosition);
-    
-    updateGatoRatoDisplay();
   }
+
+  updateGatoRatoDisplay();
 }
 
 void handleGatoRatoKey(int key) {
   if (key >= 0 && key < NUM_LEDS) {
     gatoPosition = key;
-    updateGatoRatoDisplay();
   }
 }
 
 void updateGatoRatoDisplay() {
   clearAllLEDs();
   setLED(gatoPosition, true); // Gato (LED contínuo)
-  
+
   // Rato (LED piscando)
   static bool ratoVisible = true;
   static unsigned long lastBlink = 0;
-  
+
   if (millis() - lastBlink > 250) {
     ratoVisible = !ratoVisible;
     lastBlink = millis();
   }
-  
+
   if (ratoVisible && ratoPosition != gatoPosition) {
     setLED(ratoPosition, true);
   }
@@ -459,17 +470,20 @@ void initEsquivaMeteoros() {
   playerPosition = NUM_LEDS / 2;
   meteorSpeed = 1000;
   meteorLastUpdate = millis();
-  
+  meteorBlinkTime = millis();
+  meteorVisible = true;
+
   for (int i = 0; i < NUM_LEDS; i++) {
     meteoros[i] = false;
   }
-  
+
   updateEsquivaMeteoros();
 }
 
-void updateEsquivaMeteoros() {
+void displayEsquivaMeteoros() {
   unsigned long currentTime = millis();
-  
+
+  // Atualizar meteoros
   if (currentTime - meteorLastUpdate > meteorSpeed) {
     // Spawn novo meteoro aleatoriamente
     if (random(0, 100) < 30) { // 30% chance
@@ -477,17 +491,17 @@ void updateEsquivaMeteoros() {
       do {
         meteorPos = random(0, NUM_LEDS);
       } while (meteorPos == playerPosition || meteoros[meteorPos]);
-      
+
       meteoros[meteorPos] = true;
     }
-    
+
     // Verificar colisão
     if (meteoros[playerPosition]) {
       sendGameEvent("METEOR_HIT");
       if (game.score > 0) game.score--;
       meteoros[playerPosition] = false;
     }
-    
+
     // Remover meteoros antigos aleatoriamente
     for (int i = 0; i < NUM_LEDS; i++) {
       if (meteoros[i] && random(0, 100) < 20) { // 20% chance de desaparecer
@@ -495,30 +509,29 @@ void updateEsquivaMeteoros() {
         if (i != playerPosition) game.score++;
       }
     }
-    
+
     // Aumentar dificuldade
     if (meteorSpeed > 200) meteorSpeed -= 2;
-    
+
     meteorLastUpdate = currentTime;
-    updateEsquivaMeteoros();
   }
+
+  // Atualizar display
+  displayEsquivaMeteoros();
 }
 
 void updateEsquivaMeteoros() {
   clearAllLEDs();
-  
+
   // Mostrar jogador (LED contínuo)
   setLED(playerPosition, true);
-  
+
   // Mostrar meteoros (LEDs piscando)
-  static bool meteorVisible = true;
-  static unsigned long lastMeteorBlink = 0;
-  
-  if (millis() - lastMeteorBlink > 150) {
+  if (millis() - meteorBlinkTime > 150) {
     meteorVisible = !meteorVisible;
-    lastMeteorBlink = millis();
+    meteorBlinkTime = millis();
   }
-  
+
   if (meteorVisible) {
     for (int i = 0; i < NUM_LEDS; i++) {
       if (meteoros[i] && i != playerPosition) {
@@ -540,7 +553,7 @@ void initGuitarHero() {
   guitarLastSpawn = millis();
   guitarSpawnDelay = 1000;
   guitarStartTime = millis();
-  
+
   for (int i = 0; i < 20; i++) {
     guitarNotes[i].active = false;
   }
@@ -548,16 +561,16 @@ void initGuitarHero() {
 
 void updateGuitarHero() {
   unsigned long currentTime = millis();
-  
+
   // Spawn novas notas
   if (currentTime - guitarLastSpawn > guitarSpawnDelay) {
     spawnGuitarNote();
     guitarLastSpawn = currentTime;
-    
+
     // Diminuir delay para aumentar dificuldade
     if (guitarSpawnDelay > 300) guitarSpawnDelay -= 10;
   }
-  
+
   // Atualizar notas existentes
   for (int i = 0; i < 20; i++) {
     if (guitarNotes[i].active) {
@@ -569,7 +582,7 @@ void updateGuitarHero() {
       }
     }
   }
-  
+
   updateGuitarHeroDisplay();
 }
 
@@ -587,14 +600,14 @@ void spawnGuitarNote() {
 
 void handleGuitarHeroKey(int key) {
   if (key < 0 || key >= 4) return; // Apenas 4 teclas válidas
-  
+
   unsigned long currentTime = millis();
   bool hitNote = false;
-  
+
   for (int i = 0; i < 20; i++) {
     if (guitarNotes[i].active && guitarNotes[i].position == key) {
       unsigned long timeDiff = currentTime - guitarNotes[i].timing;
-      
+
       if (timeDiff < 500) { // Janela de tempo para acertar
         guitarNotes[i].active = false;
         game.score++;
@@ -604,7 +617,7 @@ void handleGuitarHeroKey(int key) {
       }
     }
   }
-  
+
   if (!hitNote) {
     sendGameEvent("GUITAR_WRONG");
     if (game.score > 0) game.score--;
@@ -613,9 +626,9 @@ void handleGuitarHeroKey(int key) {
 
 void updateGuitarHeroDisplay() {
   clearAllLEDs();
-  
+
   unsigned long currentTime = millis();
-  
+
   for (int i = 0; i < 20; i++) {
     if (guitarNotes[i].active) {
       // Calcular posição da nota baseada no tempo
@@ -623,7 +636,7 @@ void updateGuitarHeroDisplay() {
       int row = (elapsed / 500) % 4; // Nota desce pela matriz
       int col = guitarNotes[i].position;
       int ledIndex = row * 4 + col;
-      
+
       if (ledIndex >= 0 && ledIndex < NUM_LEDS) {
         setLED(ledIndex, true);
       }
