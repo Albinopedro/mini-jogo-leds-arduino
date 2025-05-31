@@ -1,0 +1,289 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="miniJogo.MainWindow"
+        Title="Mini Jogo LEDs - Arduino"
+        Width="800" Height="600"
+        WindowStartupLocation="CenterScreen"
+        KeyDown="Window_KeyDown"
+        Focusable="True">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- Header -->
+    <Border Grid.Row="0" Background="#2E3440" Padding="20">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        
+        <TextBlock Grid.Column="0" 
+                   Text="🎮 Mini Jogo LEDs - Arduino" 
+                   FontSize="24" 
+                   FontWeight="Bold" 
+                   Foreground="White"/>
+        
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="15">
+          <TextBlock Text="Conexão Arduino:" 
+                     Foreground="White" 
+                     VerticalAlignment="Center"/>
+          <Ellipse x:Name="ConnectionStatus" 
+                   Width="15" Height="15" 
+                   Fill="Red"/>
+          <TextBlock x:Name="ConnectionText" 
+                     Text="Desconectado" 
+                     Foreground="White" 
+                     VerticalAlignment="Center"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Main Content -->
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="300"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- Left Panel - Game Selection and Player Info -->
+      <Border Grid.Column="0" Background="#3B4252" Margin="10" CornerRadius="10">
+        <StackPanel Margin="20" Spacing="15">
+          
+          <!-- Player Info -->
+          <Border Background="#434C5E" CornerRadius="8" Padding="15">
+            <StackPanel Spacing="10">
+              <TextBlock Text="👤 Jogador" 
+                         FontSize="16" 
+                         FontWeight="Bold" 
+                         Foreground="White"/>
+              
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <TextBox x:Name="PlayerNameTextBox" 
+                         Width="150"/>
+                <Button x:Name="SavePlayerButton" 
+                        Content="💾" 
+                        Click="SavePlayerButton_Click"
+                        ToolTip.Tip="Salvar Nome"/>
+              </StackPanel>
+              
+              <TextBlock x:Name="PlayerDisplayText" 
+                         Text="Jogador: Não definido" 
+                         Foreground="#88C0D0"/>
+            </StackPanel>
+          </Border>
+
+          <!-- Game Selection -->
+          <Border Background="#434C5E" CornerRadius="8" Padding="15">
+            <StackPanel Spacing="10">
+              <TextBlock Text="🎯 Seleção de Jogo" 
+                         FontSize="16" 
+                         FontWeight="Bold" 
+                         Foreground="White"/>
+              
+              <ListBox x:Name="GameModeListBox" 
+                       SelectionChanged="GameModeListBox_SelectionChanged"
+                       Background="Transparent"
+                       BorderThickness="0">
+                <ListBoxItem Content="1️⃣ Pega-Luz" Tag="1"/>
+                <ListBoxItem Content="2️⃣ Sequência Maluca" Tag="2"/>
+                <ListBoxItem Content="3️⃣ Gato e Rato" Tag="3"/>
+                <ListBoxItem Content="4️⃣ Esquiva Meteoros" Tag="4"/>
+                <ListBoxItem Content="5️⃣ Guitar Hero" Tag="5"/>
+              </ListBox>
+            </StackPanel>
+          </Border>
+
+          <!-- Game Controls -->
+          <Border Background="#434C5E" CornerRadius="8" Padding="15">
+            <StackPanel Spacing="10">
+              <TextBlock Text="🎮 Controles" 
+                         FontSize="16" 
+                         FontWeight="Bold" 
+                         Foreground="White"/>
+              
+              <StackPanel Spacing="5">
+                <Button x:Name="StartGameButton" 
+                        Content="▶️ Iniciar Jogo (F1)" 
+                        Click="StartGameButton_Click"
+                        IsEnabled="False"
+                        HorizontalAlignment="Stretch"/>
+                
+                <Button x:Name="StopGameButton" 
+                        Content="⏹️ Parar Jogo (F2)" 
+                        Click="StopGameButton_Click"
+                        IsEnabled="False"
+                        HorizontalAlignment="Stretch"/>
+                
+                <Button x:Name="ResetScoreButton" 
+                        Content="🔄 Reset Pontuação (F3)" 
+                        Click="ResetScoreButton_Click"
+                        HorizontalAlignment="Stretch"/>
+                
+                <Button x:Name="ViewScoresButton" 
+                        Content="🏆 Ver Pontuações (F4)" 
+                        Click="ViewScoresButton_Click"
+                        HorizontalAlignment="Stretch"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- Arduino Connection -->
+          <Border Background="#434C5E" CornerRadius="8" Padding="15">
+            <StackPanel Spacing="10">
+              <TextBlock Text="🔌 Conexão Arduino" 
+                         FontSize="16" 
+                         FontWeight="Bold" 
+                         Foreground="White"/>
+              
+              <ComboBox x:Name="PortComboBox" 
+                        HorizontalAlignment="Stretch"/>
+              
+              <StackPanel Orientation="Horizontal" Spacing="5">
+                <Button x:Name="RefreshPortsButton" 
+                        Content="🔄" 
+                        Click="RefreshPortsButton_Click"
+                        ToolTip.Tip="Atualizar Portas"/>
+                
+                <Button x:Name="ConnectButton" 
+                        Content="🔗 Conectar" 
+                        Click="ConnectButton_Click"
+                        HorizontalAlignment="Stretch"/>
+              </StackPanel>
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
+      </Border>
+
+      <!-- Right Panel - Game Info and LED Matrix -->
+      <Border Grid.Column="1" Background="#3B4252" Margin="10" CornerRadius="10">
+        <StackPanel Margin="20" Spacing="20">
+          
+          <!-- Game Status -->
+          <Border Background="#434C5E" CornerRadius="8" Padding="15">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              
+              <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                <TextBlock Text="🎯 Jogo Atual" 
+                           Foreground="#88C0D0" 
+                           HorizontalAlignment="Center"/>
+                <TextBlock x:Name="CurrentGameText" 
+                           Text="Nenhum" 
+                           FontSize="18" 
+                           FontWeight="Bold" 
+                           Foreground="White" 
+                           HorizontalAlignment="Center"/>
+              </StackPanel>
+              
+              <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                <TextBlock Text="🏆 Pontuação" 
+                           Foreground="#88C0D0" 
+                           HorizontalAlignment="Center"/>
+                <TextBlock x:Name="ScoreText" 
+                           Text="0" 
+                           FontSize="18" 
+                           FontWeight="Bold" 
+                           Foreground="#A3BE8C" 
+                           HorizontalAlignment="Center"/>
+              </StackPanel>
+              
+              <StackPanel Grid.Column="2" HorizontalAlignment="Center">
+                <TextBlock Text="📊 Nível" 
+                           Foreground="#88C0D0" 
+                           HorizontalAlignment="Center"/>
+                <TextBlock x:Name="LevelText" 
+                           Text="1" 
+                           FontSize="18" 
+                           FontWeight="Bold" 
+                           Foreground="#EBCB8B" 
+                           HorizontalAlignment="Center"/>
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <!-- LED Matrix Visualization -->
+          <Border Background="#434C5E" CornerRadius="8" Padding="20">
+            <StackPanel>
+              <TextBlock Text="💡 Matriz de LEDs (4x4)" 
+                         FontSize="16" 
+                         FontWeight="Bold" 
+                         Foreground="White" 
+                         HorizontalAlignment="Center" 
+                         Margin="0,0,0,15"/>
+              
+              <Grid x:Name="LedMatrix" 
+                    Width="300" 
+                    Height="300" 
+                    HorizontalAlignment="Center">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="*"/>
+                  <RowDefinition Height="*"/>
+                  <RowDefinition Height="*"/>
+                  <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="*"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <!-- Game Instructions -->
+          <Border Background="#434C5E" CornerRadius="8" Padding="15">
+            <StackPanel>
+              <TextBlock Text="📖 Instruções" 
+                         FontSize="16" 
+                         FontWeight="Bold" 
+                         Foreground="White" 
+                         Margin="0,0,0,10"/>
+              
+              <TextBlock x:Name="InstructionsText" 
+                         Text="Selecione um jogo para ver as instruções..."
+                         TextWrapping="Wrap" 
+                         Foreground="#D8DEE9"/>
+            </StackPanel>
+          </Border>
+
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <!-- Footer -->
+    <Border Grid.Row="2" Background="#2E3440" Padding="15">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        
+        <TextBlock x:Name="StatusText" 
+                   Text="Pronto para jogar! Conecte o Arduino e selecione um jogo." 
+                   Foreground="#88C0D0" 
+                   VerticalAlignment="Center"/>
+        
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="15">
+          <TextBlock Text="Teclas: F1=Iniciar | F2=Parar | F3=Reset | F4=Pontuações | 0-9,A-F=LEDs" 
+                     Foreground="#5E81AC" 
+                     VerticalAlignment="Center"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+  </Grid>
+</Window>
