@@ -1,0 +1,413 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="miniJogo.InstructionsWindow"
+        Title="📖 Instruções dos Jogos - Mini Jogo LEDs"
+        Width="800" Height="600"
+        WindowStartupLocation="CenterOwner"
+        Background="#1A202C">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- Header -->
+    <Border Grid.Row="0" Background="#E53E3E" Padding="20">
+      <TextBlock Text="📖 Guia Completo dos Jogos"
+                 FontSize="24"
+                 FontWeight="Bold"
+                 Foreground="White"
+                 HorizontalAlignment="Center"/>
+    </Border>
+
+    <!-- Content -->
+    <ScrollViewer Grid.Row="1" Padding="30" VerticalScrollBarVisibility="Auto">
+      <StackPanel Spacing="25">
+
+        <!-- Game 1: Pega-Luz -->
+        <Border Background="#E53E3E" CornerRadius="12" Padding="25">
+          <StackPanel Spacing="15">
+            <TextBlock Text="🎯 1. PEGA-LUZ"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+
+            <TextBlock Text="OBJETIVO:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="Pressione rapidamente a tecla correspondente ao LED que acender na matriz."
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="COMO JOGAR:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="• Um LED aleatório acenderá na matriz&#10;• Pressione a tecla correspondente o mais rápido possível&#10;• Cada acerto aumenta sua pontuação&#10;• A dificuldade aumenta a cada 5 pontos&#10;• Cuidado com o tempo limite!"
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="TECLAS: 0-9, A-F (correspondendo aos 16 LEDs da matriz 4x4)"
+                       FontWeight="Medium"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="12"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Game 2: Sequência Maluca -->
+        <Border Background="#38A169" CornerRadius="12" Padding="25">
+          <StackPanel Spacing="15">
+            <TextBlock Text="🧠 2. SEQUÊNCIA MALUCA"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+
+            <TextBlock Text="OBJETIVO:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="Memorize e reproduza sequências cada vez mais longas de LEDs."
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="COMO JOGAR:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="• Observe a sequência de LEDs que acendem&#10;• Memorize a ordem exata&#10;• Reproduza a sequência pressionando as teclas na ordem correta&#10;• A cada acerto, a sequência fica um LED mais longa&#10;• Um erro e você recomeça!"
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="DICA: Concentre-se e vá devagar na reprodução!"
+                       FontWeight="Medium"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="12"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Game 3: Gato e Rato -->
+        <Border Background="#D69E2E" CornerRadius="12" Padding="25">
+          <StackPanel Spacing="15">
+            <TextBlock Text="🐱 3. GATO E RATO"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+
+            <TextBlock Text="OBJETIVO:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="Controle o gato (LED fixo) para capturar o rato (LED piscante)."
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="COMO JOGAR:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="• O gato aparece como um LED sempre aceso&#10;• O rato aparece como um LED piscando&#10;• Mova o gato pressionando as teclas&#10;• Posicione o gato na mesma posição do rato para capturá-lo&#10;• O rato fica mais rápido a cada captura!"
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="ESTRATÉGIA: Antecipe o movimento do rato!"
+                       FontWeight="Medium"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="12"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Game 4: Esquiva Meteoros -->
+        <Border Background="#3182CE" CornerRadius="12" Padding="25">
+          <StackPanel Spacing="15">
+            <TextBlock Text="☄️ 4. ESQUIVA METEOROS"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+
+            <TextBlock Text="OBJETIVO:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="Mova seu personagem (LED fixo) para evitar os meteoros (LEDs piscantes)."
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="COMO JOGAR:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="• Seu personagem é o LED que permanece aceso&#10;• Meteoros aparecem como LEDs piscando&#10;• Mova-se constantemente para evitar colisões&#10;• Cada meteoro evitado dá pontos&#10;• A velocidade dos meteoros aumenta com o tempo!"
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="SOBREVIVÊNCIA: Mantenha-se em movimento!"
+                       FontWeight="Medium"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="12"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Game 5: Guitar Hero -->
+        <Border Background="#9F7AEA" CornerRadius="12" Padding="25">
+          <StackPanel Spacing="15">
+            <TextBlock Text="🎸 5. GUITAR HERO"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+
+            <TextBlock Text="OBJETIVO:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="Pressione as teclas no tempo certo conforme as 'notas' descem pela matriz."
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="COMO JOGAR:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="• Notas aparecem na parte superior da matriz&#10;• Elas 'descem' linha por linha&#10;• Pressione a tecla quando a nota chegar na linha inferior&#10;• Timing perfeito = mais pontos&#10;• A velocidade aumenta gradualmente!"
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="RITMO: Use apenas as 4 primeiras teclas (0,1,2,3)!"
+                       FontWeight="Medium"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="12"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Game 6: Roleta Russa -->
+        <Border Background="#DC2626" CornerRadius="12" Padding="25">
+          <StackPanel Spacing="15">
+            <TextBlock Text="🎲 6. ROLETA RUSSA LED"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+
+            <TextBlock Text="OBJETIVO:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="Jogue com a sorte! Escolha um LED - se acertar o seguro, multiplique sua pontuação. Se errar, perde TUDO!"
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="COMO JOGAR:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="• Todos os LEDs piscam criando tensão&#10;• Escolha um LED pressionando 0-9, A-F&#10;• Se for o LED seguro: ganhe multiplicador e continue&#10;• Se for perigoso: BOOM! Perde toda a pontuação&#10;• Multiplicadores: 2x, 4x, 8x, 16x... até 256x!"
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="RISCO EXTREMO: Quanto mais rodadas, maior o prêmio e o risco!"
+                       FontWeight="Medium"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="12"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Game 7: Lightning Strike -->
+        <Border Background="#7C2D12" CornerRadius="12" Padding="25">
+          <StackPanel Spacing="15">
+            <TextBlock Text="⚡ 7. LIGHTNING STRIKE"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+
+            <TextBlock Text="OBJETIVO:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="Memorize padrões de LEDs que aparecem por apenas milissegundos e reproduza-os perfeitamente!"
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="COMO JOGAR:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="• Padrão de LEDs pisca ultra-rapidamente&#10;• Memorize quais LEDs acenderam&#10;• Reproduza a sequência exata&#10;• A cada nível: +1 LED no padrão e -50ms de tempo&#10;• UM ERRO = GAME OVER instantâneo!"
+                       TextWrapping="Wrap"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="13"/>
+
+            <TextBlock Text="VELOCIDADE EXTREMA: Tempo mínimo de 0.1 segundo!"
+                       FontWeight="Medium"
+                       Foreground="White"
+                       Opacity="0.9"
+                       FontSize="12"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Game 8: Sniper Mode -->
+        <Border Background="#059669" CornerRadius="12" Padding="25">
+          <StackPanel Spacing="15">
+            <TextBlock Text="🎯 8. SNIPER MODE"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+
+            <TextBlock Text="OBJETIVO:"
+                       FontSize="14"
+                       FontWeight="Bold"
+                       Foreground="White"/>
+            <TextBlock Text="Teste de precisão impossível! Atire nos alvos que piscam por apenas 0.1 segundo!"
+                       TextWrapping="Wrap" 
+                       Foreground="White" 
+                       Opacity="0.9"
+                       FontSize="13"/>
+            
+            <TextBlock Text="COMO JOGAR:" 
+                       FontSize="14" 
+                       FontWeight="Bold" 
+                       Foreground="White"/>
+            <TextBlock Text="• Alvo aparece aleatoriamente por 0.1 segundo&#10;• Pressione a tecla EXATA enquanto pisca&#10;• Muito lento = perde pontos&#10;• Tecla errada = perde pontos&#10;• META: 10 acertos seguidos = VITÓRIA IMPOSSÍVEL!"
+                       TextWrapping="Wrap" 
+                       Foreground="White" 
+                       Opacity="0.9"
+                       FontSize="13"/>
+            
+            <TextBlock Text="RECOMPENSA ÉPICA: Completar = Bônus x10 na pontuação!" 
+                       FontWeight="Medium" 
+                       Foreground="White" 
+                       Opacity="0.9"
+                       FontSize="12"/>
+          </StackPanel>
+        </Border>
+
+        <!-- Controls Legend -->
+        <Border Background="#2D3748" CornerRadius="12" Padding="25">
+          <StackPanel Spacing="15">
+            <TextBlock Text="⌨️ MAPEAMENTO DE TECLAS"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Foreground="White"
+                       HorizontalAlignment="Center"/>
+
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              
+              <StackPanel Grid.Column="0" Spacing="10">
+                <TextBlock Text="🔴 LINHA VERMELHA (LEDs 0-3):" 
+                           FontWeight="Bold" 
+                           Foreground="#E53E3E"/>
+                <TextBlock Text="Teclas: 0, 1, 2, 3" 
+                           Foreground="White" 
+                           Margin="20,0,0,0"/>
+                
+                <TextBlock Text="🟡 LINHA AMARELA (LEDs 4-7):" 
+                           FontWeight="Bold" 
+                           Foreground="#D69E2E"/>
+                <TextBlock Text="Teclas: 4, 5, 6, 7" 
+                           Foreground="White" 
+                           Margin="20,0,0,0"/>
+              </StackPanel>
+              
+              <StackPanel Grid.Column="1" Spacing="10">
+                <TextBlock Text="🟢 LINHA VERDE (LEDs 8-11):" 
+                           FontWeight="Bold" 
+                           Foreground="#38A169"/>
+                <TextBlock Text="Teclas: 8, 9, A, B" 
+                           Foreground="White" 
+                           Margin="20,0,0,0"/>
+                
+                <TextBlock Text="🔵 LINHA AZUL (LEDs 12-15):" 
+                           FontWeight="Bold" 
+                           Foreground="#3182CE"/>
+                <TextBlock Text="Teclas: C, D, E, F" 
+                           Foreground="White" 
+                           Margin="20,0,0,0"/>
+              </StackPanel>
+            </Grid>
+            
+            <Border Background="#1A202C" CornerRadius="8" Padding="15" Margin="0,15,0,0">
+              <StackPanel Spacing="10">
+                <TextBlock Text="💡 DICAS IMPORTANTES:" 
+                           FontWeight="Bold" 
+                           Foreground="#E2E8F0" 
+                           HorizontalAlignment="Center"/>
+                <TextBlock Text="• Cada linha tem sua cor: Vermelha (0-3), Amarela (4-7), Verde (8-B), Azul (C-F)&#10;• Use ambas as mãos: esquerda (0-7), direita (8-F)&#10;• Roleta Russa: Calcule probabilidades - 1 em 16 chance&#10;• Lightning Strike: Concentre-se totalmente na tela&#10;• Sniper Mode: Mantenha dedos sobre as teclas sempre"
+                           TextWrapping="Wrap" 
+                           Foreground="#E2E8F0" 
+                           HorizontalAlignment="Center"
+                           FontSize="12"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Border>
+
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- Footer -->
+    <Border Grid.Row="2" Background="#2D3748" Padding="20">
+      <StackPanel Orientation="Horizontal"
+                  HorizontalAlignment="Center"
+                  Spacing="15">
+        <Button x:Name="CloseButton"
+                Content="❌ Fechar"
+                Click="CloseButton_Click"
+                Background="#E53E3E"
+                Foreground="White"
+                Padding="15,8"
+                CornerRadius="6"
+                FontWeight="Medium"/>
+
+        <Button x:Name="PrintButton"
+                Content="🖨️ Imprimir"
+                Click="PrintButton_Click"
+                Background="#3182CE"
+                Foreground="White"
+                Padding="15,8"
+                CornerRadius="6"
+                FontWeight="Medium"/>
+      </StackPanel>
+    </Border>
+
+  </Grid>
+</Window>

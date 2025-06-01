@@ -107,6 +107,20 @@ namespace miniJogo.Models
         };
     }
 
+    // New GameScore class compatible with the updated system
+    public class GameScore
+    {
+        public string PlayerName { get; set; } = "";
+        public string GameMode { get; set; } = "";
+        public int Score { get; set; }
+        public int Level { get; set; }
+        public TimeSpan Duration { get; set; }
+        public DateTime PlayedAt { get; set; }
+
+        public string FormattedDate => PlayedAt.ToString("dd/MM/yyyy HH:mm");
+        public string FormattedDuration => $"{Duration:mm\\:ss}";
+    }
+
     public class GameEvent
     {
         public string Type { get; set; } = "";

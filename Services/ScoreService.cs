@@ -11,27 +11,65 @@ namespace miniJogo.Services
     public class ScoreService
     {
         private readonly string _scoresFilePath;
+        private readonly string _gameScoresFilePath;
         private List<PlayerScore> _scores;
+        private List<GameScore> _gameScores;
 
         public ScoreService()
         {
-            _scoresFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MiniJogo", "scores.json");
+            var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MiniJogo");
+            _scoresFilePath = Path.Combine(appDataPath, "scores.json");
+            _gameScoresFilePath = Path.Combine(appDataPath, "game_scores.json");
             _scores = new List<PlayerScore>();
+            _gameScores = new List<GameScore>();
             
             // Ensure directory exists
-            var directory = Path.GetDirectoryName(_scoresFilePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            if (!Directory.Exists(appDataPath))
             {
-                Directory.CreateDirectory(directory);
+                Directory.CreateDirectory(appDataPath);
             }
             
             LoadScores();
+            LoadGameScores();
         }
 
         public async Task SaveScoreAsync(PlayerScore score)
         {
             _scores.Add(score);
             await SaveScoresAsync();
+        }
+
+        public void SaveScore(GameScore score)
+        {
+            _gameScores.Add(score);
+            SaveGameScores();
+        }
+
+        public List<GameScore> GetGameScores(string? gameMode = null, string? playerName = null)
+        {
+            var query = _gameScores.AsQueryable();
+            
+            if (!string.IsNullOrEmpty(gameMode))
+            {
+                query = query.Where(s => s.GameMode.Equals(gameMode, StringComparison.OrdinalIgnoreCase));
+            }
+            
+            if (!string.IsNullOrEmpty(playerName))
+            {
+                query = query.Where(s => s.PlayerName.Equals(playerName, StringComparison.OrdinalIgnoreCase));
+            }
+            
+            return query.OrderByDescending(s => s.Score).ThenByDescending(s => s.PlayedAt).ToList();
+        }
+
+        public List<GameScore> GetTopScores(int count = 10)
+        {
+            return _gameScores
+                .OrderByDescending(s => s.Score)
+                .ThenByDescending(s => s.Level)
+                .ThenBy(s => s.Duration)
+                .Take(count)
+                .ToList();
         }
 
         public List<PlayerScore> GetHighScores(GameMode gameMode, int count = 10)
@@ -160,6 +198,23 @@ namespace miniJogo.Services
             }
         }
 
+        private void LoadGameScores()
+        {
+            try
+            {
+                if (File.Exists(_gameScoresFilePath))
+                {
+                    var json = File.ReadAllText(_gameScoresFilePath);
+                    var scores = JsonSerializer.Deserialize<List<GameScore>>(json);
+                    _gameScores = scores ?? new List<GameScore>();
+                }
+            }
+            catch
+            {
+                _gameScores = new List<GameScore>();
+            }
+        }
+
         private async Task SaveScoresAsync()
         {
             try
@@ -171,6 +226,24 @@ namespace miniJogo.Services
                 
                 var json = JsonSerializer.Serialize(_scores, options);
                 await File.WriteAllTextAsync(_scoresFilePath, json);
+            }
+            catch
+            {
+                // Silently fail - scores won't persist but app continues working
+            }
+        }
+
+        private void SaveGameScores()
+        {
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                };
+                
+                var json = JsonSerializer.Serialize(_gameScores, options);
+                File.WriteAllText(_gameScoresFilePath, json);
             }
             catch
             {

@@ -24,7 +24,16 @@ build_property.EnableCodeStyleSeverity =
 [/home/albinopedro/Projects/miniJogo/App.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
+[/home/albinopedro/Projects/miniJogo/DebugWindow.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[/home/albinopedro/Projects/miniJogo/InstructionsWindow.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
 [/home/albinopedro/Projects/miniJogo/MainWindow.axaml]
+build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
+
+[/home/albinopedro/Projects/miniJogo/Views/ScoresWindow.axaml]
 build_metadata.AdditionalFiles.SourceItemGroup = AvaloniaXaml
 
 [/home/albinopedro/Projects/miniJogo/Views/ScoreWindow.axaml]

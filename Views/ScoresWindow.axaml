@@ -1,0 +1,234 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="miniJogo.Views.ScoresWindow"
+        Title="🏆 Rankings e Pontuações - Mini Jogo LEDs"
+        Width="800" Height="600"
+        MinWidth="600" MinHeight="400"
+        WindowStartupLocation="CenterOwner"
+        Background="#1A202C">
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- Header -->
+    <Border Grid.Row="0" Background="#E53E3E" Padding="20">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*"/>
+          <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+        
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="15">
+          <TextBlock Text="🏆 Rankings e Pontuações" 
+                     FontSize="24" 
+                     FontWeight="Bold" 
+                     Foreground="White"
+                     VerticalAlignment="Center"/>
+          <Border Background="#C53030" CornerRadius="15" Padding="10,5">
+            <TextBlock x:Name="TotalScoresText"
+                       Text="0 jogos registrados"
+                       Foreground="White"
+                       FontWeight="Medium"
+                       FontSize="14"
+                       VerticalAlignment="Center"/>
+          </Border>
+        </StackPanel>
+
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+          <Button x:Name="RefreshButton"
+                  Content="🔄"
+                  Click="RefreshButton_Click"
+                  ToolTip.Tip="Atualizar dados"
+                  Width="40" Height="40"
+                  CornerRadius="8"
+                  Background="#C53030"/>
+          <Button x:Name="ExportButton"
+                  Content="📊"
+                  Click="ExportButton_Click"
+                  ToolTip.Tip="Exportar dados"
+                  Width="40" Height="40"
+                  CornerRadius="8"
+                  Background="#C53030"/>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Main Content -->
+    <Grid Grid.Row="1" Margin="20">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*"/>
+        <ColumnDefinition Width="15"/>
+        <ColumnDefinition Width="250"/>
+      </Grid.ColumnDefinitions>
+
+      <!-- Left Panel - Scores List -->
+      <Border Grid.Column="0" Background="#2D3748" CornerRadius="12" Padding="20">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+          </Grid.RowDefinitions>
+
+          <!-- Filters -->
+          <StackPanel Grid.Row="0" Spacing="15" Margin="0,0,0,20">
+            <TextBlock Text="🔍 Filtros" 
+                       FontSize="16" 
+                       FontWeight="Bold" 
+                       Foreground="White"/>
+            
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+              </Grid.ColumnDefinitions>
+              
+              <StackPanel Grid.Column="0">
+                <TextBlock Text="Jogo:" Foreground="White" FontSize="12" Margin="0,0,0,5"/>
+                <ComboBox x:Name="GameFilterComboBox"
+                          SelectionChanged="GameFilterComboBox_SelectionChanged"
+                          HorizontalAlignment="Stretch"
+                          Padding="8">
+                  <ComboBoxItem Content="Todos os jogos" Tag=""/>
+                  <ComboBoxItem Content="🎯 Pega-Luz" Tag="Pega-Luz"/>
+                  <ComboBoxItem Content="🧠 Sequência Maluca" Tag="Sequência Maluca"/>
+                  <ComboBoxItem Content="🐱 Gato e Rato" Tag="Gato e Rato"/>
+                  <ComboBoxItem Content="☄️ Esquiva Meteoros" Tag="Esquiva Meteoros"/>
+                  <ComboBoxItem Content="🎸 Guitar Hero" Tag="Guitar Hero"/>
+                  <ComboBoxItem Content="🎲 Roleta Russa" Tag="Roleta Russa"/>
+                  <ComboBoxItem Content="⚡ Lightning Strike" Tag="Lightning Strike"/>
+                  <ComboBoxItem Content="🎯 Sniper Mode" Tag="Sniper Mode"/>
+                </ComboBox>
+              </StackPanel>
+              
+              <StackPanel Grid.Column="2">
+                <TextBlock Text="Jogador:" Foreground="White" FontSize="12" Margin="0,0,0,5"/>
+                <ComboBox x:Name="PlayerFilterComboBox"
+                          SelectionChanged="PlayerFilterComboBox_SelectionChanged"
+                          HorizontalAlignment="Stretch"
+                          Padding="8"/>
+              </StackPanel>
+            </Grid>
+          </StackPanel>
+
+          <!-- Column Headers -->
+          <Border Grid.Row="1" Background="#1A202C" CornerRadius="8" Padding="15,10" Margin="0,0,0,10">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="120"/>
+                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="60"/>
+                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="120"/>
+              </Grid.ColumnDefinitions>
+              
+              <TextBlock Grid.Column="0" Text="#" Foreground="White" FontWeight="Bold" FontSize="12"/>
+              <TextBlock Grid.Column="1" Text="Jogador" Foreground="White" FontWeight="Bold" FontSize="12"/>
+              <TextBlock Grid.Column="2" Text="Jogo" Foreground="White" FontWeight="Bold" FontSize="12"/>
+              <TextBlock Grid.Column="3" Text="Pontos" Foreground="White" FontWeight="Bold" FontSize="12"/>
+              <TextBlock Grid.Column="4" Text="Nível" Foreground="White" FontWeight="Bold" FontSize="12"/>
+              <TextBlock Grid.Column="5" Text="Tempo" Foreground="White" FontWeight="Bold" FontSize="12"/>
+              <TextBlock Grid.Column="6" Text="Data" Foreground="White" FontWeight="Bold" FontSize="12"/>
+            </Grid>
+          </Border>
+
+          <!-- Scores List -->
+          <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel x:Name="ScoresPanel" Spacing="2"/>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+
+      <!-- Right Panel - Statistics -->
+      <Border Grid.Column="2" Background="#38A169" CornerRadius="12" Padding="20">
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+          <StackPanel Spacing="20">
+            <TextBlock Text="📊 Estatísticas" 
+                       FontSize="16" 
+                       FontWeight="Bold" 
+                       Foreground="White"
+                       HorizontalAlignment="Center"/>
+
+            <!-- Top Players -->
+            <Border Background="#2F855A" CornerRadius="8" Padding="15">
+              <StackPanel Spacing="10">
+                <TextBlock Text="🥇 Top 3 Jogadores" 
+                           FontWeight="Bold" 
+                           Foreground="White"
+                           FontSize="14"
+                           HorizontalAlignment="Center"/>
+                <StackPanel x:Name="TopPlayersPanel" Spacing="8"/>
+              </StackPanel>
+            </Border>
+
+            <!-- Game Statistics -->
+            <Border Background="#2F855A" CornerRadius="8" Padding="15">
+              <StackPanel Spacing="10">
+                <TextBlock Text="🎮 Por Jogo" 
+                           FontWeight="Bold" 
+                           Foreground="White"
+                           FontSize="14"
+                           HorizontalAlignment="Center"/>
+                <StackPanel x:Name="GameStatsPanel" Spacing="5"/>
+              </StackPanel>
+            </Border>
+
+            <!-- Recent Activity -->
+            <Border Background="#2F855A" CornerRadius="8" Padding="15">
+              <StackPanel Spacing="10">
+                <TextBlock Text="⏰ Atividade Recente" 
+                           FontWeight="Bold" 
+                           Foreground="White"
+                           FontSize="14"
+                           HorizontalAlignment="Center"/>
+                <StackPanel x:Name="RecentActivityPanel" Spacing="5"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </Border>
+    </Grid>
+
+    <!-- Footer -->
+    <Border Grid.Row="2" Background="#2D3748" Padding="20">
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
+        <Button x:Name="ClearAllButton"
+                Content="🗑️ Limpar Tudo"
+                Click="ClearAllButton_Click"
+                Background="#E53E3E"
+                Foreground="White"
+                Padding="15,8"
+                CornerRadius="6"
+                FontWeight="Medium"/>
+        
+        <Button x:Name="ExportCsvButton"
+                Content="📄 Exportar CSV"
+                Click="ExportCsvButton_Click"
+                Background="#3182CE"
+                Foreground="White"
+                Padding="15,8"
+                CornerRadius="6"
+                FontWeight="Medium"/>
+        
+        <Button x:Name="CloseButton"
+                Content="✅ Fechar"
+                Click="CloseButton_Click"
+                Background="#38A169"
+                Foreground="White"
+                Padding="15,8"
+                CornerRadius="6"
+                FontWeight="Medium"/>
+      </StackPanel>
+    </Border>
+  </Grid>
+</Window>

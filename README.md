@@ -2,6 +2,30 @@
 
 Um sistema de jogos interativos usando uma matriz 4x4 de LEDs conectada ao Arduino Uno, controlado por uma aplicação desktop em Avalonia UI.
 
+## 🐛 Sistema de Debug
+
+### Recursos de Debug Implementados
+- **Debug Panel**: Interface visual em tempo real para monitoramento de comunicação
+- **Mensagens DEBUG_***: Sistema de logging detalhado no Arduino
+- **Histórico de Comandos**: Rastreamento de todos os comandos enviados/recebidos
+- **Verificação de Estado**: Monitoramento do estado interno dos jogos
+- **Detecção de Erros**: Identificação automática de problemas de comunicação
+
+### Uso do Sistema de Debug
+1. Execute a aplicação C# 
+2. O painel de debug aparecerá automaticamente
+3. Conecte o Arduino na porta USB
+4. Todas as mensagens serão exibidas em tempo real
+5. Use o botão "Limpar Debug" para limpar o histórico
+
+### Scripts de Teste
+- `debug_verification.py`: Teste automatizado completo do sistema
+- `test_serial.py`: Teste interativo da comunicação Arduino
+
+### Correção de Bug Principal
+**Problema resolvido**: No jogo "Sequência Maluca", após um erro, as entradas corretas subsequentes eram ignoradas.
+**Solução**: Reset completo do estado do jogo após erros, com validação de entrada aprimorada.
+
 ## 🎮 Jogos Disponíveis
 
 ### 1. ⚡ Pega-Luz

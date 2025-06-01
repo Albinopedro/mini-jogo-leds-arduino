@@ -5,6 +5,7 @@
 /home/albinopedro/Projects/miniJogo/obj/Debug/net9.0/miniJogo.AssemblyInfoInputs.cache
 /home/albinopedro/Projects/miniJogo/obj/Debug/net9.0/miniJogo.AssemblyInfo.cs
 /home/albinopedro/Projects/miniJogo/obj/Debug/net9.0/miniJogo.csproj.CoreCompileInputs.cache
+/home/albinopedro/Projects/miniJogo/obj/Debug/net9.0/miniJogo.sourcelink.json
 /home/albinopedro/Projects/miniJogo/obj/Debug/net9.0/miniJogo.dll
 /home/albinopedro/Projects/miniJogo/obj/Debug/net9.0/refint/miniJogo.dll
 /home/albinopedro/Projects/miniJogo/obj/Debug/net9.0/miniJogo.pdb

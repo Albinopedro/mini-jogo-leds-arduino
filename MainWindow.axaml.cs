@@ -1,17 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.IO.Ports;
+using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.Controls.Shapes;
-using System;
-using System.Collections.Generic;
-using System.IO.Ports;
-using System.Threading.Tasks;
-using System.Timers;
 using Avalonia.Threading;
-using miniJogo.Views;
-using miniJogo.Services;
+using System.Globalization;
+using Avalonia.Controls.Shapes;
 using miniJogo.Models;
+using miniJogo.Services;
+using miniJogo.Views;
 
 namespace miniJogo;
 
@@ -25,31 +26,53 @@ public partial class MainWindow : Window
     private int _score = 0;
     private int _level = 1;
     private DateTime _gameStartTime;
-    private readonly ScoreService _scoreService;
+    private ScoreService _scoreService;
+    private DebugWindow? _debugWindow;
 
-    // LED visualization
+    // LED Matrix (4x4)
     private readonly Ellipse[,] _ledMatrix = new Ellipse[4, 4];
 
-    // Game instructions
+    // Game descriptions for the new games
+    private readonly Dictionary<int, string> _gameDescriptions = new()
+    {
+        { 1, "🎯 Pressione o LED que acende antes que ele apague! Reflexos rápidos são essenciais." },
+        { 2, "🧠 Memorize e repita a sequência de LEDs que pisca. Cada nível adiciona mais LEDs!" },
+        { 3, "🐱 Você é o gato! Persiga o rato (LED vermelho) pela matriz usando as teclas." },
+        { 4, "☄️ Desvie dos meteoros (LEDs vermelhos) que caem! Use as setas para mover." },
+        { 5, "🎸 Pressione os LEDs no ritmo da música! Timing perfeito = pontos extras." },
+        { 6, "🎲 Roleta Russa LED! Escolha um LED - acerte e multiplique sua pontuação, erre e perca tudo!" },
+        { 7, "⚡ Lightning Strike! Memorize padrões ultra-rápidos que aparecem por milissegundos!" },
+        { 8, "🎯 Sniper Mode! Atire nos alvos que piscam por apenas 0.1 segundo - precisão extrema!" }
+    };
+
+    // Game instructions for the new games
     private readonly Dictionary<int, string> _gameInstructions = new()
     {
-        { 1, "PEGA-LUZ:\nQuando um LED acender, pressione a tecla correspondente o mais rápido possível!\nTeclas: 0-9, A-F para os 16 LEDs da matriz 4x4." },
-        { 2, "SEQUÊNCIA MALUCA:\nMemorize a sequência de LEDs que acendem e repita na ordem correta.\nA sequência fica mais longa a cada rodada!" },
-        { 3, "GATO E RATO:\nControle o gato (LED fixo) para pegar o rato (LED piscante).\nUse as teclas 0-9, A-F para mover o gato." },
-        { 4, "ESQUIVA METEOROS:\nEsquive dos meteoros que aparecem! Mova-se com as teclas 0-9, A-F.\nSobreviva o máximo de tempo possível." },
-        { 5, "GUITAR HERO:\nToque as notas quando elas chegarem na linha inferior!\nUse as teclas 0-3 para as 4 colunas da matriz." }
+        { 1, "PEGA-LUZ:\n• Pressione 0-9, A-F quando o LED acender\n• Seja rápido! LEDs apagam sozinhos\n• +10 pontos por acerto\n• +5 pontos por velocidade" },
+        { 2, "SEQUÊNCIA MALUCA:\n• Observe a sequência de LEDs\n• Repita pressionando 0-9, A-F\n• Cada nível adiciona +1 LED\n• Erro = Game Over" },
+        { 3, "GATO E RATO:\n• Use setas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas azuis\n• +20 pontos por captura" },
+        { 4, "ESQUIVA METEOROS:\n• Use ↑↓←→ para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo" },
+        { 5, "GUITAR HERO:\n• Pressione 0-9, A-F no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental" },
+        { 6, "ROLETA RUSSA:\n• Escolha um LED pressionando 0-9, A-F\n• Multiplicador: 2x, 4x, 8x, 16x...\n• Acerte = continua com multiplicador maior\n• Erre = perde TODA a pontuação!" },
+        { 7, "LIGHTNING STRIKE:\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo de exibição diminui por nível\n• Erro = Game Over instantâneo" },
+        { 8, "SNIPER MODE:\n• Alvos piscam por apenas 0.1 segundo\n• Pressione a tecla exata no tempo\n• 10 acertos = vitória impossível\n• Bônus x10 se completar!" }
     };
 
     public MainWindow()
     {
         InitializeComponent();
-        _scoreService = new ScoreService();
         InitializeLedMatrix();
         InitializeTimer();
+        _scoreService = new ScoreService();
         RefreshPorts();
 
-        // Set initial game selection
-        GameModeListBox.SelectedIndex = 0;
+        // Set initial values
+        PlayerDisplayText.Text = "👤 Jogador: Não definido";
+        GameDescriptionText.Text = "Selecione um jogo para ver a descrição...";
+        CurrentGameText.Text = "Nenhum";
+
+        // Set first game as default
+        GameModeComboBox.SelectedIndex = 0;
     }
 
     private void InitializeLedMatrix()
@@ -60,18 +83,17 @@ public partial class MainWindow : Window
             {
                 var led = new Ellipse
                 {
-                    Width = 60,
-                    Height = 60,
-                    Fill = Brushes.Gray,
+                    Width = 80,
+                    Height = 80,
+                    Fill = GetLedDefaultColor(row),
                     Stroke = Brushes.White,
-                    StrokeThickness = 2,
-                    Margin = new Avalonia.Thickness(5)
+                    StrokeThickness = 3,
+                    Margin = new Avalonia.Thickness(10)
                 };
 
                 Grid.SetRow(led, row);
                 Grid.SetColumn(led, col);
                 LedMatrix.Children.Add(led);
-
                 _ledMatrix[row, col] = led;
             }
         }
@@ -79,22 +101,18 @@ public partial class MainWindow : Window
 
     private void InitializeTimer()
     {
-        _statusTimer = new Timer(100);
-        _statusTimer.Elapsed += async (sender, e) =>
+        _statusTimer = new Timer(async _ =>
         {
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                if (_serialPort?.IsOpen == true)
+                if (_gameActive)
                 {
-                    try
-                    {
-                        _serialPort.WriteLine("GET_STATUS");
-                    }
-                    catch { }
+                    var elapsed = DateTime.Now - _gameStartTime;
+                    TimeText.Text = $"{elapsed.Minutes:D2}:{elapsed.Seconds:D2}";
                 }
+                UpdateUI();
             });
-        };
-        _statusTimer.Start();
+        }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
     }
 
     private void RefreshPorts()
@@ -105,7 +123,6 @@ public partial class MainWindow : Window
         {
             PortComboBox.Items.Add(port);
         }
-
         if (ports.Length > 0)
         {
             PortComboBox.SelectedIndex = 0;
@@ -118,16 +135,12 @@ public partial class MainWindow : Window
         {
             // Disconnect
             _serialPort.Close();
-            _serialPort.Dispose();
             _serialPort = null;
-
-            ConnectionStatus.Fill = Brushes.Red;
-            ConnectionText.Text = "Desconectado";
             ConnectButton.Content = "🔗 Conectar";
-            StartGameButton.IsEnabled = false;
-            StopGameButton.IsEnabled = false;
-
-            StatusText.Text = "Arduino desconectado.";
+            ConnectionText.Text = "Desconectado";
+            ConnectionStatus.Fill = Brushes.White;
+            ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(197, 48, 48));
+            AddDebugMessage("Arduino desconectado.");
         }
         else
         {
@@ -140,19 +153,21 @@ public partial class MainWindow : Window
                     _serialPort.DataReceived += SerialPort_DataReceived;
                     _serialPort.Open();
 
-                    // Wait for Arduino ready signal
-                    await Task.Delay(2000);
-
-                    ConnectionStatus.Fill = Brushes.Green;
-                    ConnectionText.Text = "Conectado";
                     ConnectButton.Content = "🔌 Desconectar";
+                    ConnectionText.Text = "Conectado";
+                    ConnectionStatus.Fill = Brushes.LimeGreen;
+                    ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(56, 161, 105));
                     StartGameButton.IsEnabled = true;
+                    AddDebugMessage($"Arduino conectado na porta {selectedPort}");
 
-                    StatusText.Text = $"Arduino conectado em {selectedPort}";
+                    // Send initialization command
+                    await Task.Delay(2000); // Wait for Arduino to initialize
+                    _serialPort.WriteLine("INIT");
                 }
                 catch (Exception ex)
                 {
-                    StatusText.Text = $"Erro ao conectar: {ex.Message}";
+                    AddDebugMessage($"Erro ao conectar: {ex.Message}");
+                    await ShowMessage("Erro de Conexão", $"Não foi possível conectar ao Arduino:\n{ex.Message}");
                 }
             }
         }
@@ -160,131 +175,244 @@ public partial class MainWindow : Window
 
     private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
     {
-        if (_serialPort?.IsOpen != true) return;
-
         try
         {
-            string data = _serialPort.ReadLine().Trim();
-
+            var message = _serialPort?.ReadLine()?.Trim();
+            if (!string.IsNullOrEmpty(message))
+            {
+                Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    ProcessArduinoMessage(message);
+                });
+            }
+        }
+        catch (Exception ex)
+        {
             Dispatcher.UIThread.InvokeAsync(() =>
             {
-                ProcessArduinoMessage(data);
+                AddDebugMessage($"Erro na recepção: {ex.Message}");
             });
         }
-        catch { }
     }
 
     private void ProcessArduinoMessage(string message)
     {
-        if (message.StartsWith("STATUS:"))
-        {
-            var parts = message.Substring(7).Split(',');
-            if (parts.Length >= 4)
-            {
-                _currentGameMode = int.Parse(parts[0]);
-                _gameActive = parts[1] == "1";
-                _score = int.Parse(parts[2]);
-                _level = int.Parse(parts[3]);
+        AddDebugMessage($"Arduino: {message}", true);
 
-                UpdateUI();
+        if (message.StartsWith("GAME_EVENT:"))
+        {
+            var eventData = message.Substring("GAME_EVENT:".Length);
+            ProcessGameEvent(eventData);
+        }
+        else if (message == "READY")
+        {
+            StatusText.Text = "🟢 Arduino pronto! Selecione um jogo e aperte Iniciar.";
+        }
+        else if (message.StartsWith("LED_ON:"))
+        {
+            var ledIndex = int.Parse(message.Substring("LED_ON:".Length));
+            HighlightLed(ledIndex);
+        }
+        else if (message.StartsWith("LED_OFF:"))
+        {
+            var ledIndex = int.Parse(message.Substring("LED_OFF:".Length));
+            var row = ledIndex / 4;
+            var col = ledIndex % 4;
+            if (row < 4 && col < 4)
+            {
+                _ledMatrix[row, col].Fill = GetLedDefaultColor(row);
             }
         }
-        else if (message.StartsWith("EVENT:"))
+        else if (message == "ALL_LEDS_OFF")
         {
-            ProcessGameEvent(message.Substring(6));
+            ClearLedMatrix();
         }
-        else if (message == "ARDUINO_READY")
-        {
-            StatusText.Text = "Arduino pronto para jogar!";
-        }
+    }
+
+    private void AddDebugMessage(string message, bool isDebug = false)
+    {
+        var timestamp = DateTime.Now.ToString("HH:mm:ss");
+        var formattedMessage = $"[{timestamp}] {message}";
+
+        _debugWindow?.AddMessage(formattedMessage, isDebug);
     }
 
     private void ProcessGameEvent(string eventData)
     {
-        var parts = eventData.Split(',');
+        var parts = eventData.Split(':');
+        if (parts.Length < 2) return;
+
         var eventType = parts[0];
+        var eventValue = parts[1];
 
         switch (eventType)
         {
-            case "GAME_STARTED":
-                StatusText.Text = "Jogo iniciado!";
-                StopGameButton.IsEnabled = true;
-                StartGameButton.IsEnabled = false;
-                _gameStartTime = DateTime.Now;
+            case "SCORE":
+                if (int.TryParse(eventValue, out var scoreIncrease))
+                {
+                    _score += scoreIncrease;
+                    UpdateUI();
+                    AddDebugMessage($"Pontuação aumentada: +{scoreIncrease}");
+                }
                 break;
 
-            case "GAME_STOPPED":
-                StatusText.Text = $"Jogo finalizado! Pontuação final: {parts[1]}";
-                StopGameButton.IsEnabled = false;
+            case "LEVEL":
+                if (int.TryParse(eventValue, out var newLevel))
+                {
+                    _level = newLevel;
+                    UpdateUI();
+                    AddDebugMessage($"Nível aumentado: {newLevel}");
+                }
+                break;
+
+            case "GAME_OVER":
+                _gameActive = false;
                 StartGameButton.IsEnabled = true;
+                StopGameButton.IsEnabled = false;
+                StatusText.Text = $"🎮 Game Over! {eventValue}";
+                SaveGameScore();
+                AddDebugMessage($"Fim de jogo: {eventValue}");
+                break;
+
+            case "STATUS":
+                StatusText.Text = eventValue;
+                break;
+
+            case "HIT":
+                var hitData = eventValue.Split(',');
+                if (hitData.Length >= 2 && int.TryParse(hitData[0], out var ledHit) && int.TryParse(hitData[1], out var points))
+                {
+                    _score += points;
+                    HighlightLed(ledHit);
+                    StatusText.Text = $"🎯 Acerto! +{points} pontos";
+                    UpdateUI();
+                }
+                break;
+
+            case "MISS":
+                StatusText.Text = "❌ Errou! Tente novamente.";
+                break;
+
+            case "SEQUENCE_START":
+                StatusText.Text = "👀 Observe a sequência...";
+                break;
+
+            case "SEQUENCE_REPEAT":
+                StatusText.Text = "🔄 Agora repita a sequência!";
+                break;
+
+            case "PLAYER_MOVE":
+                if (int.TryParse(eventValue, out var playerPos))
+                {
+                    ClearLedMatrix();
+                    HighlightLed(playerPos);
+                }
+                break;
+
+            case "OBSTACLE":
+                if (int.TryParse(eventValue, out var obstaclePos))
+                {
+                    var row = obstaclePos / 4;
+                    var col = obstaclePos % 4;
+                    if (row < 4 && col < 4)
+                    {
+                        _ledMatrix[row, col].Fill = Brushes.Red;
+                    }
+                }
+                break;
+
+            case "CLEAR":
                 ClearLedMatrix();
-                
-                // Save score if player name is set and game was active
-                if (!string.IsNullOrEmpty(_playerName) && _score > 0)
+                break;
+
+            // Roleta Russa Events
+            case "ROLETA_ROUND_START":
+                var roletaData = eventValue.Split(',');
+                if (roletaData.Length >= 2)
                 {
-                    SaveGameScore();
+                    StatusText.Text = $"🎲 Rodada {roletaData[0]} - Multiplicador: {roletaData[1]}x";
                 }
                 break;
 
-            case "PEGA_LUZ_TARGET":
-                if (parts.Length > 1)
+            case "ROLETA_SAFE":
+                StatusText.Text = "💚 SEGURO! Você sobreviveu! Continuar?";
+                break;
+
+            case "ROLETA_EXPLODE":
+                StatusText.Text = "💥 BOOM! Você perdeu tudo!";
+                ClearLedMatrix();
+                break;
+
+            case "ROLETA_MAX_WIN":
+                StatusText.Text = "🏆 VITÓRIA MÁXIMA! Você é corajoso demais!";
+                break;
+
+            // Lightning Strike Events
+            case "LIGHTNING_PATTERN_SHOW":
+                var lightningData = eventValue.Split(',');
+                if (lightningData.Length >= 2)
                 {
-                    int ledIndex = int.Parse(parts[1]);
-                    HighlightLed(ledIndex, Brushes.Yellow);
-                    StatusText.Text = $"Aperte a tecla {GetKeyForLed(ledIndex)}!";
+                    StatusText.Text = $"⚡ Memorize! {lightningData[0]} LEDs por {lightningData[1]}ms";
                 }
                 break;
 
-            case "PEGA_LUZ_HIT":
-                StatusText.Text = $"Acertou! Tempo de reação: {parts[1]}ms";
+            case "LIGHTNING_INPUT_START":
+                StatusText.Text = "⚡ AGORA! Reproduza o padrão!";
                 break;
 
-            case "PEGA_LUZ_MISS":
-                StatusText.Text = "Errou! Tente novamente.";
+            case "LIGHTNING_COMPLETE":
+                StatusText.Text = "⚡ Correto! Preparando próximo nível...";
                 break;
 
-            case "PEGA_LUZ_TIMEOUT":
-                StatusText.Text = "Tempo esgotado!";
+            case "LIGHTNING_WRONG":
+                StatusText.Text = "❌ Sequência errada! Padrão correto mostrado.";
                 break;
 
-            case "SEQUENCIA_SHOW_START":
-                StatusText.Text = "Memorize a sequência...";
+            // Sniper Mode Events
+            case "SNIPER_TARGET_SPAWN":
+                StatusText.Text = "🎯 ALVO! Atire rápido!";
                 break;
 
-            case "SEQUENCIA_INPUT_START":
-                StatusText.Text = "Agora repita a sequência!";
+            case "SNIPER_HIT":
+                var sniperData = eventValue.Split(',');
+                if (sniperData.Length >= 2)
+                {
+                    StatusText.Text = $"🎯 ACERTO! {sniperData[0]}/10 - {sniperData[1]}ms";
+                }
                 break;
 
-            case "SEQUENCIA_COMPLETE":
-                StatusText.Text = "Sequência correta! Próximo nível...";
+            case "SNIPER_MISS":
+                StatusText.Text = "❌ Errou o alvo! Tente novamente.";
                 break;
 
-            case "SEQUENCIA_WRONG":
-                StatusText.Text = "Sequência errada! Tente novamente.";
+            case "SNIPER_TIMEOUT":
+                StatusText.Text = "⏰ Muito lento! Perdeu o alvo.";
                 break;
 
-            case "GATO_CAUGHT_RATO":
-                StatusText.Text = "Gato pegou o rato! +1 ponto";
+            case "SNIPER_VICTORY":
+                StatusText.Text = "🏆 IMPOSSÍVEL! Você é um atirador de elite!";
                 break;
 
-            case "METEOR_HIT":
-                StatusText.Text = "Atingido por meteoro! -1 ponto";
+            case "COMBO":
+                if (int.TryParse(eventValue, out var comboCount))
+                {
+                    StatusText.Text = $"🔥 COMBO x{comboCount}!";
+                }
                 break;
 
-            case "GUITAR_NOTE_SPAWN":
-                StatusText.Text = "Nova nota apareceu!";
+            case "PERFECT":
+                StatusText.Text = "⭐ PERFEITO! Timing excelente!";
                 break;
 
-            case "GUITAR_HIT":
-                StatusText.Text = $"Nota acertada! Timing: {parts[1]}ms";
+            case "GOOD":
+                StatusText.Text = "👍 Bom timing!";
                 break;
 
-            case "GUITAR_MISS":
-                StatusText.Text = "Nota perdida!";
-                break;
-
-            case "GUITAR_WRONG":
-                StatusText.Text = "Tecla errada!";
+            case "REACTION_TIME":
+                if (int.TryParse(eventValue, out var reactionMs))
+                {
+                    StatusText.Text = $"⚡ Tempo de reação: {reactionMs}ms";
+                }
                 break;
         }
     }
@@ -294,30 +422,53 @@ public partial class MainWindow : Window
         ScoreText.Text = _score.ToString();
         LevelText.Text = _level.ToString();
 
-        string gameName = _currentGameMode switch
+        if (!string.IsNullOrEmpty(_playerName))
         {
-            1 => "Pega-Luz",
-            2 => "Sequência Maluca",
-            3 => "Gato e Rato",
-            4 => "Esquiva Meteoros",
-            5 => "Guitar Hero",
-            _ => "Nenhum"
-        };
+            PlayerDisplayText.Text = $"👤 Jogador: {_playerName}";
+        }
 
-        CurrentGameText.Text = gameName;
+        if (_currentGameMode > 0 && _currentGameMode <= _gameDescriptions.Count)
+        {
+            var gameNames = new[] { "", "Pega-Luz", "Sequência Maluca", "Gato e Rato", "Esquiva Meteoros", "Guitar Hero", "Roleta Russa", "Lightning Strike", "Sniper Mode" };
+            CurrentGameText.Text = gameNames[_currentGameMode];
+        }
     }
 
-    private void HighlightLed(int ledIndex, IBrush color)
+    private void HighlightLed(int ledIndex)
     {
-        ClearLedMatrix();
+        if (ledIndex < 0 || ledIndex >= 16) return;
 
-        int row = ledIndex / 4;
-        int col = ledIndex % 4;
+        var row = ledIndex / 4;
+        var col = ledIndex % 4;
 
-        if (row >= 0 && row < 4 && col >= 0 && col < 4)
+        if (row < 4 && col < 4)
         {
-            _ledMatrix[row, col].Fill = color;
+            _ledMatrix[row, col].Fill = GetLedActiveColor(row);
         }
+    }
+
+    private IBrush GetLedDefaultColor(int row)
+    {
+        return row switch
+        {
+            0 => new SolidColorBrush(Color.FromRgb(80, 20, 20)),    // Dark red
+            1 => new SolidColorBrush(Color.FromRgb(80, 60, 20)),    // Dark yellow
+            2 => new SolidColorBrush(Color.FromRgb(20, 80, 20)),    // Dark green
+            3 => new SolidColorBrush(Color.FromRgb(20, 20, 80)),    // Dark blue
+            _ => Brushes.Gray
+        };
+    }
+
+    private IBrush GetLedActiveColor(int row)
+    {
+        return row switch
+        {
+            0 => new SolidColorBrush(Color.FromRgb(255, 100, 100)), // Bright red
+            1 => new SolidColorBrush(Color.FromRgb(255, 255, 100)), // Bright yellow
+            2 => new SolidColorBrush(Color.FromRgb(100, 255, 100)), // Bright green
+            3 => new SolidColorBrush(Color.FromRgb(100, 150, 255)), // Bright blue
+            _ => Brushes.White
+        };
     }
 
     private void ClearLedMatrix()
@@ -326,20 +477,33 @@ public partial class MainWindow : Window
         {
             for (int col = 0; col < 4; col++)
             {
-                _ledMatrix[row, col].Fill = Brushes.Gray;
+                _ledMatrix[row, col].Fill = GetLedDefaultColor(row);
             }
         }
     }
 
-    private string GetKeyForLed(int ledIndex)
+    private int GetKeyForLed(int ledIndex)
     {
+        // Convert LED index to key code
         return ledIndex switch
         {
-            0 => "0", 1 => "1", 2 => "2", 3 => "3",
-            4 => "4", 5 => "5", 6 => "6", 7 => "7",
-            8 => "8", 9 => "9", 10 => "A", 11 => "B",
-            12 => "C", 13 => "D", 14 => "E", 15 => "F",
-            _ => "?"
+            0 => (int)Key.D0,
+            1 => (int)Key.D1,
+            2 => (int)Key.D2,
+            3 => (int)Key.D3,
+            4 => (int)Key.D4,
+            5 => (int)Key.D5,
+            6 => (int)Key.D6,
+            7 => (int)Key.D7,
+            8 => (int)Key.D8,
+            9 => (int)Key.D9,
+            10 => (int)Key.A,
+            11 => (int)Key.B,
+            12 => (int)Key.C,
+            13 => (int)Key.D,
+            14 => (int)Key.E,
+            15 => (int)Key.F,
+            _ => -1
         };
     }
 
@@ -347,196 +511,465 @@ public partial class MainWindow : Window
     {
         return key switch
         {
-            Key.D0 => 0, Key.D1 => 1, Key.D2 => 2, Key.D3 => 3,
-            Key.D4 => 4, Key.D5 => 5, Key.D6 => 6, Key.D7 => 7,
-            Key.D8 => 8, Key.D9 => 9, Key.A => 10, Key.B => 11,
-            Key.C => 12, Key.D => 13, Key.E => 14, Key.F => 15,
+            Key.D0 => 0,
+            Key.D1 => 1,
+            Key.D2 => 2,
+            Key.D3 => 3,
+            Key.D4 => 4,
+            Key.D5 => 5,
+            Key.D6 => 6,
+            Key.D7 => 7,
+            Key.D8 => 8,
+            Key.D9 => 9,
+            Key.A => 10,
+            Key.B => 11,
+            Key.C => 12,
+            Key.D => 13,
+            Key.E => 14,
+            Key.F => 15,
             _ => -1
         };
+
     }
 
     private void Window_KeyDown(object? sender, KeyEventArgs e)
     {
-        if (_serialPort?.IsOpen != true) return;
-
-        try
+        // Handle function keys
+        switch (e.Key)
         {
-            switch (e.Key)
-            {
-                case Key.F1:
-                    StartGameButton_Click(null, new RoutedEventArgs());
-                    break;
-
-                case Key.F2:
-                    StopGameButton_Click(null, new RoutedEventArgs());
-                    break;
-
-                case Key.F3:
-                    ResetScoreButton_Click(null, new RoutedEventArgs());
-                    break;
-
-                case Key.F4:
-                    ViewScoresButton_Click(null, new RoutedEventArgs());
-                    break;
-
-                default:
-                    int ledIndex = GetLedForKey(e.Key);
-                    if (ledIndex >= 0 && _gameActive)
-                    {
-                        _serialPort.WriteLine($"KEY_PRESS:{ledIndex}");
-                        HighlightLed(ledIndex, Brushes.LightBlue);
-
-                        // Clear highlight after a short delay
-                        Task.Delay(200).ContinueWith(_ =>
-                        {
-                            Dispatcher.UIThread.InvokeAsync(() =>
-                            {
-                                _ledMatrix[ledIndex / 4, ledIndex % 4].Fill = Brushes.Gray;
-                            });
-                        });
-                    }
-                    break;
-            }
+            case Key.F1:
+                if (StartGameButton.IsEnabled) StartGameButton_Click(null, new RoutedEventArgs());
+                e.Handled = true;
+                return;
+            case Key.F2:
+                if (StopGameButton.IsEnabled) StopGameButton_Click(null, new RoutedEventArgs());
+                e.Handled = true;
+                return;
+            case Key.F3:
+                ResetScoreButton_Click(null, new RoutedEventArgs());
+                e.Handled = true;
+                return;
+            case Key.F4:
+                ViewScoresButton_Click(null, new RoutedEventArgs());
+                e.Handled = true;
+                return;
         }
-        catch { }
+
+        if (!_gameActive || _serialPort?.IsOpen != true) return;
+
+        string command = "";
+
+        // Handle LED keys (0-9, A-F)
+        var ledIndex = GetLedForKey(e.Key);
+        if (ledIndex >= 0)
+        {
+            command = $"KEY_PRESS:{ledIndex}";
+            HighlightLed(ledIndex);
+        }
+        // Handle arrow keys
+        else if (e.Key == Key.Up) command = "MOVE:UP";
+        else if (e.Key == Key.Down) command = "MOVE:DOWN";
+        else if (e.Key == Key.Left) command = "MOVE:LEFT";
+        else if (e.Key == Key.Right) command = "MOVE:RIGHT";
+        else if (e.Key == Key.Enter) command = "ACTION:CONFIRM";
+        else if (e.Key == Key.Escape) command = "ACTION:CANCEL";
+
+        if (!string.IsNullOrEmpty(command))
+        {
+            _serialPort.WriteLine(command);
+            AddDebugMessage($"Comando enviado: {command}");
+            e.Handled = true;
+        }
     }
 
     private void SavePlayerButton_Click(object? sender, RoutedEventArgs e)
     {
-        _playerName = PlayerNameTextBox.Text?.Trim() ?? "";
-        if (!string.IsNullOrEmpty(_playerName))
+        var name = PlayerNameTextBox.Text?.Trim();
+        if (!string.IsNullOrWhiteSpace(name))
         {
-            PlayerDisplayText.Text = $"Jogador: {_playerName}";
-            StatusText.Text = $"Nome do jogador salvo: {_playerName}";
-        }
-        else
-        {
-            PlayerDisplayText.Text = "Jogador: Não definido";
+            _playerName = name;
+            PlayerDisplayText.Text = $"👤 Jogador: {_playerName}";
+            AddDebugMessage($"Nome do jogador definido: {_playerName}");
         }
     }
 
-    private void GameModeListBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void GameModeComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
-        if (GameModeListBox.SelectedItem is ListBoxItem item && item.Tag is string tag)
+        if (GameModeComboBox.SelectedItem is ComboBoxItem selectedItem)
         {
-            int gameMode = int.Parse(tag);
-
-            if (_gameInstructions.TryGetValue(gameMode, out string? instructions))
-            {
-                InstructionsText.Text = instructions;
-            }
-
-            if (!_gameActive)
+            if (int.TryParse(selectedItem.Tag?.ToString(), out var gameMode))
             {
                 _currentGameMode = gameMode;
-                UpdateUI();
+
+                // Update description
+                if (_gameDescriptions.TryGetValue(gameMode, out var description))
+                {
+                    GameDescriptionText.Text = description;
+                }
+
+                // Update current game display
+                CurrentGameText.Text = selectedItem.Content?.ToString()?.Substring(2) ?? "Desconhecido"; // Remove emoji
+
+                AddDebugMessage($"Jogo selecionado: {CurrentGameText.Text} (ID: {gameMode})");
+
+                // Enable start button if connected
+                if (_serialPort?.IsOpen == true)
+                {
+                    StartGameButton.IsEnabled = true;
+                }
             }
         }
     }
 
-    private void StartGameButton_Click(object? sender, RoutedEventArgs e)
+    private void OpenDebugButton_Click(object? sender, RoutedEventArgs e)
     {
-        if (_serialPort?.IsOpen != true) return;
-
-        if (string.IsNullOrEmpty(_playerName))
+        if (_debugWindow == null)
         {
-            StatusText.Text = "Por favor, defina um nome de jogador primeiro!";
+            _debugWindow = new DebugWindow();
+            _debugWindow.Closed += (s, e) => _debugWindow = null;
+        }
+        _debugWindow.Show();
+        _debugWindow.Activate();
+    }
+
+    private async void StartGameButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_serialPort?.IsOpen != true)
+        {
+            await ShowMessage("Erro", "Arduino não está conectado!");
             return;
         }
 
-        if (GameModeListBox.SelectedItem is ListBoxItem item && item.Tag is string tag)
+        if (string.IsNullOrWhiteSpace(_playerName))
         {
-            int gameMode = int.Parse(tag);
-
-            try
-            {
-                _serialPort.WriteLine($"START_GAME:{gameMode}");
-                StatusText.Text = $"Iniciando jogo: {item.Content}";
-                _gameStartTime = DateTime.Now;
-            }
-            catch (Exception ex)
-            {
-                StatusText.Text = $"Erro ao iniciar jogo: {ex.Message}";
-            }
+            await ShowMessage("Aviso", "Por favor, defina seu nome antes de iniciar o jogo!");
+            return;
         }
+
+        if (_currentGameMode == 0)
+        {
+            await ShowMessage("Erro", "Selecione um jogo primeiro!");
+            return;
+        }
+
+        _gameActive = true;
+        _score = 0;
+        _level = 1;
+        _gameStartTime = DateTime.Now;
+
+        StartGameButton.IsEnabled = false;
+        StopGameButton.IsEnabled = true;
+
+        var command = $"START_GAME:{_currentGameMode}";
+        _serialPort.WriteLine(command);
+
+        StatusText.Text = "🚀 Jogo iniciado! Boa sorte!";
+        AddDebugMessage($"Jogo iniciado: Modo {_currentGameMode}");
+        UpdateUI();
     }
 
     private void StopGameButton_Click(object? sender, RoutedEventArgs e)
     {
-        if (_serialPort?.IsOpen != true) return;
-        
-        try
+        if (_serialPort?.IsOpen == true)
         {
             _serialPort.WriteLine("STOP_GAME");
-            StatusText.Text = "Parando jogo...";
         }
-        catch (Exception ex)
+
+        _gameActive = false;
+        StartGameButton.IsEnabled = true;
+        StopGameButton.IsEnabled = false;
+
+        StatusText.Text = "⏹️ Jogo interrompido pelo jogador.";
+        AddDebugMessage("Jogo interrompido pelo usuário");
+
+        if (_score > 0)
         {
-            StatusText.Text = $"Erro ao parar jogo: {ex.Message}";
+            SaveGameScore();
         }
+
+        ClearLedMatrix();
     }
 
     private void ResetScoreButton_Click(object? sender, RoutedEventArgs e)
     {
-        if (_serialPort?.IsOpen != true) return;
-        
-        try
-        {
-            _serialPort.WriteLine("RESET_SCORE");
-            StatusText.Text = "Pontuação resetada!";
-        }
-        catch (Exception ex)
-        {
-            StatusText.Text = $"Erro ao resetar pontuação: {ex.Message}";
-        }
+        _score = 0;
+        _level = 1;
+        UpdateUI();
+        AddDebugMessage("Pontuação resetada");
+        StatusText.Text = "🔄 Pontuação resetada!";
     }
 
     private void RefreshPortsButton_Click(object? sender, RoutedEventArgs e)
     {
         RefreshPorts();
-        StatusText.Text = "Lista de portas atualizada.";
+        AddDebugMessage("Lista de portas atualizada");
     }
 
-    private void ViewScoresButton_Click(object? sender, RoutedEventArgs e)
+    private async void ViewScoresButton_Click(object? sender, RoutedEventArgs e)
     {
-        var scoreWindow = new ScoreWindow();
-        scoreWindow.ShowDialog(this);
+        var scoresWindow = new Views.ScoresWindow(_scoreService);
+        await scoresWindow.ShowDialog(this);
     }
 
-    private async void SaveGameScore()
+    private void SaveGameScore()
     {
-        try
+        if (!string.IsNullOrWhiteSpace(_playerName) && _score > 0)
         {
-            var score = new PlayerScore
+            var gameNames = new[] { "", "Pega-Luz", "Sequência Maluca", "Gato e Rato", "Esquiva Meteoros", "Guitar Hero", "Roleta Russa", "Lightning Strike", "Sniper Mode" };
+            var gameName = _currentGameMode < gameNames.Length ? gameNames[_currentGameMode] : "Desconhecido";
+
+            var duration = DateTime.Now - _gameStartTime;
+            var score = new GameScore
             {
                 PlayerName = _playerName,
-                Game = (GameMode)_currentGameMode,
+                GameMode = gameName,
                 Score = _score,
                 Level = _level,
-                Date = _gameStartTime,
-                Duration = DateTime.Now - _gameStartTime
+                Duration = duration,
+                PlayedAt = DateTime.Now
             };
 
-            await _scoreService.SaveScoreAsync(score);
-            StatusText.Text = $"Pontuação salva! {_playerName}: {_score} pontos";
+            _scoreService.SaveScore(score);
+            AddDebugMessage($"Pontuação salva: {_playerName} - {_score} pontos");
         }
-        catch (Exception ex)
+    }
+
+    private async void QuickStartButton_Click(object? sender, RoutedEventArgs e)
+    {
+        // Quick start with default settings
+        if (_serialPort?.IsOpen != true)
         {
-            StatusText.Text = $"Erro ao salvar pontuação: {ex.Message}";
+            await ShowMessage("Aviso", "Conecte o Arduino primeiro para usar o Início Rápido!");
+            return;
         }
+
+        if (string.IsNullOrWhiteSpace(_playerName))
+        {
+            _playerName = "Jogador";
+            PlayerNameTextBox.Text = _playerName;
+            PlayerDisplayText.Text = $"👤 Jogador: {_playerName}";
+        }
+
+        if (_currentGameMode == 0)
+        {
+            GameModeComboBox.SelectedIndex = 0; // Select first game
+        }
+
+        StartGameButton_Click(sender, e);
+    }
+
+    private async void InstructionsButton_Click(object? sender, RoutedEventArgs e)
+    {
+        var instructionsWindow = new InstructionsWindow(_gameInstructions);
+        await instructionsWindow.ShowDialog(this);
+    }
+
+    private async void SettingsButton_Click(object? sender, RoutedEventArgs e)
+    {
+        var settingsWindow = new Window
+        {
+            Title = "⚙️ Configurações",
+            Width = 500,
+            Height = 400,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+
+        var stackPanel = new StackPanel { Margin = new Avalonia.Thickness(20), Spacing = 15 };
+
+        stackPanel.Children.Add(new TextBlock
+        {
+            Text = "⚙️ Configurações do Jogo",
+            FontSize = 18,
+            FontWeight = FontWeight.Bold,
+            Margin = new Avalonia.Thickness(0, 0, 0, 15)
+        });
+
+        // Player name setting
+        var playerPanel = new StackPanel { Spacing = 5 };
+        playerPanel.Children.Add(new TextBlock { Text = "👤 Nome do Jogador:" });
+        var playerTextBox = new TextBox { Text = _playerName, Watermark = "Digite seu nome..." };
+        playerPanel.Children.Add(playerTextBox);
+        stackPanel.Children.Add(playerPanel);
+
+        // Serial port settings
+        var portPanel = new StackPanel { Spacing = 5 };
+        portPanel.Children.Add(new TextBlock { Text = "🔌 Porta Serial:" });
+        var portCombo = new ComboBox();
+        foreach (var port in SerialPort.GetPortNames())
+        {
+            portCombo.Items.Add(port);
+        }
+        if (PortComboBox.SelectedItem != null)
+        {
+            portCombo.SelectedItem = PortComboBox.SelectedItem;
+        }
+        portPanel.Children.Add(portCombo);
+        stackPanel.Children.Add(portPanel);
+
+        // Buttons
+        var buttonPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 10, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
+
+        var saveButton = new Button { Content = "💾 Salvar", MinWidth = 80 };
+        saveButton.Click += (s, e) =>
+        {
+            _playerName = playerTextBox.Text ?? "";
+            PlayerNameTextBox.Text = _playerName;
+            if (!string.IsNullOrWhiteSpace(_playerName))
+            {
+                PlayerDisplayText.Text = $"👤 Jogador: {_playerName}";
+            }
+
+            if (portCombo.SelectedItem != null)
+            {
+                PortComboBox.SelectedItem = portCombo.SelectedItem;
+            }
+
+            settingsWindow.Close();
+        };
+
+        var cancelButton = new Button { Content = "❌ Cancelar", MinWidth = 80 };
+        cancelButton.Click += (s, e) => settingsWindow.Close();
+
+        buttonPanel.Children.Add(saveButton);
+        buttonPanel.Children.Add(cancelButton);
+        stackPanel.Children.Add(buttonPanel);
+
+        settingsWindow.Content = stackPanel;
+        await settingsWindow.ShowDialog(this);
+    }
+
+    private async void HelpButton_Click(object? sender, RoutedEventArgs e)
+    {
+        var helpWindow = new Window
+        {
+            Title = "❓ Ajuda - Mini Jogo LEDs",
+            Width = 600,
+            Height = 500,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+
+        var scrollViewer = new ScrollViewer();
+        var stackPanel = new StackPanel { Margin = new Avalonia.Thickness(20), Spacing = 15 };
+
+        stackPanel.Children.Add(new TextBlock
+        {
+            Text = "❓ Ajuda - Mini Jogo LEDs",
+            FontSize = 20,
+            FontWeight = FontWeight.Bold
+        });
+
+        var helpText = @"🎮 COMO JOGAR
+
+🔌 CONEXÃO:
+1. Conecte o Arduino via USB
+2. Selecione a porta correta
+3. Clique em 'Conectar'
+
+👤 CONFIGURAÇÃO:
+1. Digite seu nome
+2. Escolha um jogo
+3. Clique em 'Iniciar' ou use F1
+
+⌨️ CONTROLES:
+• 0-9, A-F: Pressionar LEDs específicos
+• Setas: Mover cursor/personagem
+• Enter: Confirmar ação
+• Esc: Cancelar/Voltar
+• F1: Iniciar jogo
+• F2: Parar jogo
+• F3: Reset pontuação
+• F4: Ver rankings
+
+🎯 JOGOS DISPONÍVEIS:
+• Pega-Luz: Reflexos rápidos
+• Sequência Maluca: Memória
+• Gato e Rato: Perseguição
+• Esquiva Meteoros: Sobrevivência
+• Guitar Hero: Ritmo
+• Corrida Infinita: Velocidade
+• Quebra-Cabeça: Lógica
+• Reflexo Rápido: Tempo de reação
+
+🏆 PONTUAÇÃO:
+• Acertos rápidos = mais pontos
+• Combos multiplicam pontuação
+• Níveis aumentam dificuldade
+• Recordes são salvos automaticamente
+
+🔧 PROBLEMAS COMUNS:
+• Arduino não conecta: Verifique a porta
+• LEDs não acendem: Reinicie a conexão
+• Jogo não responde: Verifique o cabo USB
+• Performance lenta: Feche outros programas
+
+💡 DICAS
+:
+• Use o Início Rápido para começar rapidamente
+• Veja todas as instruções antes de jogar
+• Pratique no modo Debug para testar
+• Mantenha o Arduino sempre conectado durante o jogo";
+
+        stackPanel.Children.Add(new TextBlock
+        {
+            Text = helpText,
+            TextWrapping = TextWrapping.Wrap,
+            FontFamily = "Courier New",
+            FontSize = 12,
+            LineHeight = 18
+        });
+
+        var closeButton = new Button
+        {
+            Content = "✅ Fechar",
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            MinWidth = 100,
+            Margin = new Avalonia.Thickness(0, 20, 0, 0)
+        };
+        closeButton.Click += (s, e) => helpWindow.Close();
+        stackPanel.Children.Add(closeButton);
+
+        scrollViewer.Content = stackPanel;
+        helpWindow.Content = scrollViewer;
+
+        await helpWindow.ShowDialog(this);
     }
 
     protected override void OnClosed(EventArgs e)
     {
-        _statusTimer?.Stop();
         _statusTimer?.Dispose();
-        
+
         if (_serialPort?.IsOpen == true)
         {
-            _serialPort.Close();
-            _serialPort.Dispose();
+            try
+            {
+                _serialPort.WriteLine("DISCONNECT");
+                _serialPort.Close();
+            }
+            catch { }
         }
-        
+
+        _debugWindow?.Close();
         base.OnClosed(e);
+    }
+
+    private async Task ShowMessage(string title, string message)
+    {
+        var messageWindow = new Window
+        {
+            Title = title,
+            Width = 400,
+            Height = 200,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner
+        };
+
+        var stackPanel = new StackPanel { Margin = new Avalonia.Thickness(20), Spacing = 15 };
+        stackPanel.Children.Add(new TextBlock { Text = message, TextWrapping = TextWrapping.Wrap });
+
+        var button = new Button { Content = "OK", HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center };
+        button.Click += (s, e) => messageWindow.Close();
+        stackPanel.Children.Add(button);
+
+        messageWindow.Content = stackPanel;
+        await messageWindow.ShowDialog(this);
     }
 }

@@ -1,83 +1,106 @@
-<Window xmlns="https://github.com/avaloniaui"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
-        x:Class="miniJogo.Views.ScoreWindow"
-        Title="Pontuações e Estatísticas - Mini Jogo LEDs"
-        Width="900" Height="600"
-        WindowStartupLocation="CenterOwner">
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignWidth="900"
+    d:DesignHeight="600"
+    x:Class="miniJogo.Views.ScoreWindow"
+    Title="Pontuações e Estatísticas - Mini Jogo LEDs"
+    Width="1280"
+    Height="720"
+    WindowStartupLocation="CenterOwner"
+>
 
   <Grid>
     <Grid.RowDefinitions>
-      <RowDefinition Height="Auto"/>
-      <RowDefinition Height="*"/>
-      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
     <!-- Header -->
     <Border Grid.Row="0" Background="#2E3440" Padding="20">
       <Grid>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*"/>
-          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <TextBlock Grid.Column="0"
-                   Text="🏆 Pontuações e Estatísticas" 
-                   FontSize="24" 
-                   FontWeight="Bold" 
-                   Foreground="White"/>
-        
+        <TextBlock
+                    Grid.Column="0"
+                    Text="🏆 Pontuações e Estatísticas"
+                    FontSize="24"
+                    FontWeight="Bold"
+                    Foreground="White"
+                />
+
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
-          <Button x:Name="ExportButton" 
-                  Content="📊 Exportar" 
-                  Click="ExportButton_Click"/>
-          <Button x:Name="ClearButton" 
-                  Content="🗑️ Limpar Tudo" 
-                  Click="ClearButton_Click"/>
+          <Button
+                        x:Name="ExportButton"
+                        Content="📊 Exportar"
+                        Click="ExportButton_Click"
+                    />
+          <Button
+                        x:Name="ClearButton"
+                        Content="🗑️ Limpar Tudo"
+                        Click="ClearButton_Click"
+                    />
         </StackPanel>
       </Grid>
     </Border>
 
     <!-- Main Content -->
     <TabControl Grid.Row="1" Margin="10">
-      
+
       <!-- High Scores Tab -->
       <TabItem Header="🥇 Melhores Pontuações">
         <Grid>
           <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
           </Grid.RowDefinitions>
 
           <!-- Game Filter -->
-          <Border Grid.Row="0" Background="#3B4252" CornerRadius="8" Padding="15" Margin="0,0,0,10">
+          <Border
+                        Grid.Row="0"
+                        Background="#3B4252"
+                        CornerRadius="8"
+                        Padding="15"
+                        Margin="0,0,0,10"
+                    >
             <StackPanel Orientation="Horizontal" Spacing="15">
-              <TextBlock Text="Filtrar por jogo:" 
-                         Foreground="White" 
-                         VerticalAlignment="Center"/>
-              
-              <ComboBox x:Name="GameFilterComboBox" 
-                        SelectionChanged="GameFilterComboBox_SelectionChanged"
-                        Width="200">
-                <ComboBoxItem Content="📋 Todos os Jogos" Tag="-1"/>
-                <ComboBoxItem Content="⚡ Pega-Luz" Tag="1"/>
-                <ComboBoxItem Content="🧠 Sequência Maluca" Tag="2"/>
-                <ComboBoxItem Content="🐱 Gato e Rato" Tag="3"/>
-                <ComboBoxItem Content="☄️ Esquiva Meteoros" Tag="4"/>
-                <ComboBoxItem Content="🎸 Guitar Hero" Tag="5"/>
+              <TextBlock
+                                Text="Filtrar por jogo:"
+                                Foreground="White"
+                                VerticalAlignment="Center"
+                            />
+
+              <ComboBox
+                                x:Name="GameFilterComboBox"
+                                SelectionChanged="GameFilterComboBox_SelectionChanged"
+                                Width="200"
+                            >
+                <ComboBoxItem Content="📋 Todos os Jogos" Tag="-1" />
+                <ComboBoxItem Content="⚡ Pega-Luz" Tag="1" />
+                <ComboBoxItem Content="🧠 Sequência Maluca" Tag="2" />
+                <ComboBoxItem Content="🐱 Gato e Rato" Tag="3" />
+                <ComboBoxItem Content="☄️ Esquiva Meteoros" Tag="4" />
+                <ComboBoxItem Content="🎸 Guitar Hero" Tag="5" />
               </ComboBox>
-              
-              <TextBlock x:Name="ScoreCountText" 
-                         Text="0 pontuações encontradas" 
-                         Foreground="#88C0D0" 
-                         VerticalAlignment="Center"/>
+
+              <TextBlock
+                                x:Name="ScoreCountText"
+                                Text="0 pontuações encontradas"
+                                Foreground="#88C0D0"
+                                VerticalAlignment="Center"
+                            />
             </StackPanel>
           </Border>
 
           <!-- Scores List -->
           <ScrollViewer Grid.Row="1">
-            <StackPanel x:Name="HighScoresPanel" Spacing="5"/>
+            <StackPanel x:Name="HighScoresPanel" Spacing="5" />
           </ScrollViewer>
         </Grid>
       </TabItem>
@@ -86,104 +109,143 @@
       <TabItem Header="👤 Estatísticas do Jogador">
         <Grid>
           <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
           </Grid.RowDefinitions>
 
           <!-- Player Selection -->
-          <Border Grid.Row="0" Background="#3B4252" CornerRadius="8" Padding="15" Margin="0,0,0,10">
+          <Border
+                        Grid.Row="0"
+                        Background="#3B4252"
+                        CornerRadius="8"
+                        Padding="15"
+                        Margin="0,0,0,10"
+                    >
             <StackPanel Orientation="Horizontal" Spacing="15">
-              <TextBlock Text="Selecionar jogador:" 
-                         Foreground="White" 
-                         VerticalAlignment="Center"/>
-              
-              <ComboBox x:Name="PlayerFilterComboBox" 
-                        SelectionChanged="PlayerFilterComboBox_SelectionChanged"
-                        Width="200"/>
+              <TextBlock
+                                Text="Selecionar jogador:"
+                                Foreground="White"
+                                VerticalAlignment="Center"
+                            />
+
+              <ComboBox
+                                x:Name="PlayerFilterComboBox"
+                                SelectionChanged="PlayerFilterComboBox_SelectionChanged"
+                                Width="200"
+                            />
             </StackPanel>
           </Border>
 
           <!-- Player Overview -->
-          <Border Grid.Row="1" Background="#434C5E" CornerRadius="8" Padding="20" Margin="0,0,0,10"
-                  x:Name="PlayerStatsOverview" IsVisible="False">
+          <Border
+                        Grid.Row="1"
+                        Background="#434C5E"
+                        CornerRadius="8"
+                        Padding="20"
+                        Margin="0,0,0,10"
+                        x:Name="PlayerStatsOverview"
+                        IsVisible="False"
+                    >
             <Grid>
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
 
               <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                <TextBlock Text="🎮 Total de Jogos" 
-                           Foreground="#88C0D0" 
-                           HorizontalAlignment="Center"/>
-                <TextBlock x:Name="TotalGamesText" 
-                           Text="0" 
-                           FontSize="24" 
-                           FontWeight="Bold" 
-                           Foreground="White" 
-                           HorizontalAlignment="Center"/>
+                <TextBlock
+                                    Text="🎮 Total de Jogos"
+                                    Foreground="#88C0D0"
+                                    HorizontalAlignment="Center"
+                                />
+                <TextBlock
+                                    x:Name="TotalGamesText"
+                                    Text="0"
+                                    FontSize="24"
+                                    FontWeight="Bold"
+                                    Foreground="White"
+                                    HorizontalAlignment="Center"
+                                />
               </StackPanel>
 
               <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                <TextBlock Text="🏆 Melhor Pontuação" 
-                           Foreground="#88C0D0" 
-                           HorizontalAlignment="Center"/>
-                <TextBlock x:Name="BestScoreText" 
-                           Text="0" 
-                           FontSize="24" 
-                           FontWeight="Bold" 
-                           Foreground="#A3BE8C" 
-                           HorizontalAlignment="Center"/>
+                <TextBlock
+                                    Text="🏆 Melhor Pontuação"
+                                    Foreground="#88C0D0"
+                                    HorizontalAlignment="Center"
+                                />
+                <TextBlock
+                                    x:Name="BestScoreText"
+                                    Text="0"
+                                    FontSize="24"
+                                    FontWeight="Bold"
+                                    Foreground="#A3BE8C"
+                                    HorizontalAlignment="Center"
+                                />
               </StackPanel>
 
               <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                <TextBlock Text="📊 Média" 
-                           Foreground="#88C0D0" 
-                           HorizontalAlignment="Center"/>
-                <TextBlock x:Name="AverageScoreText" 
-                           Text="0.0" 
-                           FontSize="24" 
-                           FontWeight="Bold" 
-                           Foreground="#EBCB8B" 
-                           HorizontalAlignment="Center"/>
+                <TextBlock
+                                    Text="📊 Média"
+                                    Foreground="#88C0D0"
+                                    HorizontalAlignment="Center"
+                                />
+                <TextBlock
+                                    x:Name="AverageScoreText"
+                                    Text="0.0"
+                                    FontSize="24"
+                                    FontWeight="Bold"
+                                    Foreground="#EBCB8B"
+                                    HorizontalAlignment="Center"
+                                />
               </StackPanel>
 
               <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-                <TextBlock Text="⏱️ Tempo Total" 
-                           Foreground="#88C0D0" 
-                           HorizontalAlignment="Center"/>
-                <TextBlock x:Name="TotalTimeText" 
-                           Text="00:00:00" 
-                           FontSize="24" 
-                           FontWeight="Bold" 
-                           Foreground="#BF616A" 
-                           HorizontalAlignment="Center"/>
+                <TextBlock
+                                    Text="⏱️ Tempo Total"
+                                    Foreground="#88C0D0"
+                                    HorizontalAlignment="Center"
+                                />
+                <TextBlock
+                                    x:Name="TotalTimeText"
+                                    Text="00:00:00"
+                                    FontSize="24"
+                                    FontWeight="Bold"
+                                    Foreground="#BF616A"
+                                    HorizontalAlignment="Center"
+                                />
               </StackPanel>
             </Grid>
           </Border>
 
           <!-- Game-specific Stats -->
-          <ScrollViewer Grid.Row="2" x:Name="GameStatsScrollViewer" IsVisible="False">
-            <StackPanel x:Name="GameStatsPanel" Spacing="10"/>
+          <ScrollViewer
+                        Grid.Row="2"
+                        x:Name="GameStatsScrollViewer"
+                        IsVisible="False"
+                    >
+            <StackPanel x:Name="GameStatsPanel" Spacing="10" />
           </ScrollViewer>
 
-          <TextBlock Grid.Row="2" 
-                     Text="Selecione um jogador para ver as estatísticas..."
-                     HorizontalAlignment="Center"
-                     VerticalAlignment="Center"
-                     FontSize="16"
-                     Foreground="#5E81AC"
-                     x:Name="NoPlayerSelectedText"/>
+          <TextBlock
+                        Grid.Row="2"
+                        Text="Selecione um jogador para ver as estatísticas..."
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="16"
+                        Foreground="#5E81AC"
+                        x:Name="NoPlayerSelectedText"
+                    />
         </Grid>
       </TabItem>
 
       <!-- Recent Games Tab -->
       <TabItem Header="📋 Jogos Recentes">
         <ScrollViewer>
-          <StackPanel x:Name="RecentGamesPanel" Spacing="5"/>
+          <StackPanel x:Name="RecentGamesPanel" Spacing="5" />
         </ScrollViewer>
       </TabItem>
 
@@ -193,18 +255,18 @@
     <Border Grid.Row="2" Background="#2E3440" Padding="15">
       <Grid>
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*"/>
-          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <TextBlock Grid.Column="0"
-                   x:Name="FooterStatusText" 
-                   Text="Carregando pontuações..." 
-                   Foreground="#88C0D0" 
-                   VerticalAlignment="Center"/>
-        
-        <Button Grid.Column="1"
-                Content="Fechar" 
-                Click="CloseButton_Click"/>
+        <TextBlock
+                    Grid.Column="0"
+                    x:Name="FooterStatusText"
+                    Text="Carregando pontuações..."
+                    Foreground="#88C0D0"
+                    VerticalAlignment="Center"
+                />
+
+        <Button Grid.Column="1" Content="Fechar" Click="CloseButton_Click" />
       </Grid>
     </Border>
 
