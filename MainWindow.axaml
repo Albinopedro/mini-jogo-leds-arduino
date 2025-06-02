@@ -14,6 +14,7 @@
     MinHeight="600"
     WindowStartupLocation="CenterScreen"
     KeyDown="Window_KeyDown"
+    KeyUp="Window_KeyUp"
     Focusable="True"
 >
 

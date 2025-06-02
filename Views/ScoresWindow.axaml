@@ -54,7 +54,7 @@
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
           <Button
                         x:Name="RefreshButton"
-                        Content="🔄 Atualizar dados"
+                        Content="🔄"
                         Click="RefreshButton_Click"
                         ToolTip.Tip="Atualizar dados"
                         Width="40"
@@ -66,7 +66,7 @@
                     />
           <Button
                         x:Name="ExportButton"
-                        Content="📊 Exportar dados"
+                        Content="📊"
                         Click="ExportButton_Click"
                         ToolTip.Tip="Exportar dados"
                         Width="40"

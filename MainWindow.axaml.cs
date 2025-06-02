@@ -31,6 +31,10 @@ public partial class MainWindow : Window
 
     // LED Matrix (4x4)
     private readonly Ellipse[,] _ledMatrix = new Ellipse[4, 4];
+    
+    // LED auto-restore timer
+    private readonly Dictionary<int, System.Threading.Timer> _ledTimers = new();
+    private readonly object _ledTimersLock = new();
 
     // Game descriptions for the new games
     private readonly Dictionary<int, string> _gameDescriptions = new()
@@ -444,6 +448,35 @@ public partial class MainWindow : Window
         if (row < 4 && col < 4)
         {
             _ledMatrix[row, col].Fill = GetLedActiveColor(row);
+            
+            // Auto-restore LED after 200ms as fallback (in case KeyUp is missed)
+            lock (_ledTimersLock)
+            {
+                // Cancel existing timer for this LED if any
+                if (_ledTimers.TryGetValue(ledIndex, out var existingTimer))
+                {
+                    existingTimer.Dispose();
+                }
+                
+                // Create new timer to restore LED color
+                _ledTimers[ledIndex] = new System.Threading.Timer(
+                    _ => 
+                    {
+                        Dispatcher.UIThread.InvokeAsync(() => RestoreLedColor(ledIndex));
+                        lock (_ledTimersLock)
+                        {
+                            if (_ledTimers.TryGetValue(ledIndex, out var timer))
+                            {
+                                timer.Dispose();
+                                _ledTimers.Remove(ledIndex);
+                            }
+                        }
+                    },
+                    null,
+                    TimeSpan.FromMilliseconds(200),
+                    Timeout.InfiniteTimeSpan
+                );
+            }
         }
     }
 
@@ -579,6 +612,48 @@ public partial class MainWindow : Window
             _serialPort.WriteLine(command);
             AddDebugMessage($"Comando enviado: {command}");
             e.Handled = true;
+        }
+    }
+
+    private void Window_KeyUp(object? sender, KeyEventArgs e)
+    {
+        if (!_gameActive || _serialPort?.IsOpen != true) return;
+
+        // Handle LED keys (0-9, A-F) - restore original color when key is released
+        var ledIndex = GetLedForKey(e.Key);
+        if (ledIndex >= 0)
+        {
+            RestoreLedColor(ledIndex);
+            
+            // Send key release command to Arduino
+            string command = $"KEY_RELEASE:{ledIndex}";
+            _serialPort.WriteLine(command);
+            AddDebugMessage($"Comando enviado: {command}");
+            
+            e.Handled = true;
+        }
+    }
+
+    private void RestoreLedColor(int ledIndex)
+    {
+        if (ledIndex < 0 || ledIndex >= 16) return;
+
+        var row = ledIndex / 4;
+        var col = ledIndex % 4;
+
+        if (row < 4 && col < 4)
+        {
+            _ledMatrix[row, col].Fill = GetLedDefaultColor(row);
+            
+            // Cancel auto-restore timer since we're manually restoring
+            lock (_ledTimersLock)
+            {
+                if (_ledTimers.TryGetValue(ledIndex, out var timer))
+                {
+                    timer.Dispose();
+                    _ledTimers.Remove(ledIndex);
+                }
+            }
         }
     }
 
@@ -937,6 +1012,16 @@ public partial class MainWindow : Window
     protected override void OnClosed(EventArgs e)
     {
         _statusTimer?.Dispose();
+
+        // Clean up LED timers
+        lock (_ledTimersLock)
+        {
+            foreach (var timer in _ledTimers.Values)
+            {
+                timer.Dispose();
+            }
+            _ledTimers.Clear();
+        }
 
         if (_serialPort?.IsOpen == true)
         {
