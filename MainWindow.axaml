@@ -47,6 +47,9 @@
                             Foreground="White"
                             FontWeight="Medium"
                             FontSize="14"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            TextAlignment="Center"
                         />
           </Border>
         </StackPanel>
@@ -72,6 +75,9 @@
                             Foreground="White"
                             FontWeight="Medium"
                             FontSize="13"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            TextAlignment="Center"
                         />
             </StackPanel>
           </Border>
@@ -123,6 +129,8 @@
                                     Width="40"
                                     Height="36"
                                     CornerRadius="6"
+                                    HorizontalContentAlignment="Center"
+                                    VerticalContentAlignment="Center"
                                 />
               </Grid>
             </StackPanel>
@@ -190,13 +198,14 @@
 
                 <Button
                                     x:Name="StartGameButton"
+                                    HorizontalContentAlignment="Center"
                                     Grid.Column="0"
                                     Grid.Row="0"
                                     Content="▶️ Iniciar"
                                     Click="StartGameButton_Click"
                                     IsEnabled="False"
                                     Margin="0,0,4,8"
-                                    Padding="0,10"
+                                    Padding="36,10"
                                     CornerRadius="6"
                                     FontWeight="Medium"
                                     Background="#2B6CB0"
@@ -204,13 +213,14 @@
 
                 <Button
                                     x:Name="StopGameButton"
+                                    HorizontalContentAlignment="Center"
                                     Grid.Column="1"
                                     Grid.Row="0"
-                                    Content="⏹️ Parar"
+                                    Content="◼ Parar"
                                     Click="StopGameButton_Click"
                                     IsEnabled="False"
                                     Margin="4,0,0,8"
-                                    Padding="0,10"
+                                    Padding="38,10"
                                     CornerRadius="6"
                                     FontWeight="Medium"
                                     Background="#C53030"
@@ -218,12 +228,13 @@
 
                 <Button
                                     x:Name="ResetScoreButton"
+                                    HorizontalContentAlignment="Center"
                                     Grid.Column="0"
                                     Grid.Row="1"
-                                    Content="🔄 Reset"
+                                    Content="🔄Reset"
                                     Click="ResetScoreButton_Click"
                                     Margin="0,0,4,0"
-                                    Padding="0,10"
+                                    Padding="37,10"
                                     CornerRadius="6"
                                     FontWeight="Medium"
                                     Background="#D69E2E"
@@ -231,12 +242,13 @@
 
                 <Button
                                     x:Name="ViewScoresButton"
+                                    HorizontalContentAlignment="Center"
                                     Grid.Column="1"
                                     Grid.Row="1"
                                     Content="🏆 Ranks"
                                     Click="ViewScoresButton_Click"
                                     Margin="4,0,0,0"
-                                    Padding="0,10"
+                                    Padding="34,7"
                                     CornerRadius="6"
                                     FontWeight="Medium"
                                     Background="#38A169"
@@ -287,6 +299,8 @@
                                     Height="36"
                                     CornerRadius="6"
                                     Margin="0,0,8,0"
+                                    VerticalContentAlignment="Center"
+                                    HorizontalContentAlignment="Center"
                                 />
 
                 <Button
@@ -294,7 +308,7 @@
                                     Grid.Column="1"
                                     Content="🔗 Conectar"
                                     Click="ConnectButton_Click"
-                                    Padding="0,8"
+                                    Padding="10,8"
                                     CornerRadius="6"
                                     FontWeight="Medium"
                                     Background="#B7791F"
@@ -318,7 +332,8 @@
                                 Content="🔍 Console Debug"
                                 Click="OpenDebugButton_Click"
                                 HorizontalAlignment="Stretch"
-                                Padding="0,10"
+                                HorizontalContentAlignment="Center"
+                                Padding="0,8"
                                 CornerRadius="6"
                                 FontWeight="Medium"
                                 Background="#2C5AA0"
@@ -329,6 +344,7 @@
                                 Content="📖 Ver Todas as Instruções"
                                 Click="InstructionsButton_Click"
                                 HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Center"
                                 Padding="0,10"
                                 CornerRadius="6"
                                 FontWeight="Medium"
