@@ -213,7 +213,9 @@ public partial class MainWindow : Window
         }
         else if (message == "READY")
         {
-            StatusText.Text = "🟢 Arduino pronto! Selecione um jogo e aperte Iniciar.";
+            StatusText.Text = "🟢 Arduino pronto! Conexão estabelecida com sucesso!";
+            // Trigger visual celebration
+            TriggerVisualEffect("CONNECTION_SUCCESS");
         }
         else if (message == "ALL_LEDS_OFF")
         {
@@ -282,6 +284,7 @@ public partial class MainWindow : Window
                 StatusText.Text = $"🎮 GAME OVER! Pontuação Final: {_score}";
                 SaveGameScore();
                 AddDebugMessage($"Fim de jogo - Pontuação final: {_score}");
+                TriggerVisualEffect("GAME_OVER");
                 break;
 
             case "STATUS":
@@ -341,6 +344,7 @@ public partial class MainWindow : Window
                     StatusText.Text = $"🆙 NÍVEL {level}! Dificuldade aumentada! Pontuação: {_score}";
                     UpdateUI();
                     AddDebugMessage($"Level up: {level}, Score: {_score}");
+                    TriggerVisualEffect("LEVEL_UP");
                 }
                 break;
 
@@ -351,9 +355,10 @@ public partial class MainWindow : Window
                     _gameActive = true;
                     StartGameButton.IsEnabled = false;
                     StopGameButton.IsEnabled = true;
-                    StatusText.Text = "🎮 Jogo iniciado! Boa sorte!";
+                    StatusText.Text = "🎮 Jogo iniciado! Prepare-se para a ação!";
                     AddDebugMessage($"Jogo iniciado: modo {gameMode}");
                     UpdateUI();
+                    TriggerVisualEffect("GAME_START");
                 }
                 break;
 
@@ -445,10 +450,12 @@ public partial class MainWindow : Window
             case "ROLETA_EXPLODE":
                 StatusText.Text = "💥 EXPLODIU! Era o LED com bomba. Perdeu toda a pontuação!";
                 ClearLedMatrix();
+                TriggerVisualEffect("EXPLOSION");
                 break;
 
             case "ROLETA_MAX_WIN":
                 StatusText.Text = "🏆 VITÓRIA MÁXIMA! Você é corajoso demais!";
+                TriggerVisualEffect("VICTORY");
                 break;
 
             // Lightning Strike Events
@@ -495,17 +502,20 @@ public partial class MainWindow : Window
 
             case "SNIPER_VICTORY":
                 StatusText.Text = "🏆 LEGENDÁRIO! 10/10 acertos! Você é um sniper de elite!";
+                TriggerVisualEffect("VICTORY");
                 break;
 
             case "COMBO":
                 if (int.TryParse(eventValue, out var comboCount))
                 {
                     StatusText.Text = $"🔥 COMBO x{comboCount}! Pontuação multiplicada!";
+                    TriggerVisualEffect("COMBO");
                 }
                 break;
 
             case "PERFECT":
                 StatusText.Text = "⭐ PERFEITO! Timing excelente!";
+                TriggerVisualEffect("PERFECT_HIT");
                 break;
 
             case "GOOD":
@@ -560,6 +570,7 @@ public partial class MainWindow : Window
 
             case "NEW_RECORD":
                 StatusText.Text = "🏆 NOVO RECORDE! Parabéns!";
+                TriggerVisualEffect("FIREWORKS");
                 break;
 
             case "STREAK":
@@ -608,6 +619,62 @@ public partial class MainWindow : Window
                 Tag = game.Id
             };
             GameModeComboBox.Items.Add(item);
+        }
+    }
+
+    private void TriggerVisualEffect(string effectType)
+    {
+        if (_serialPort?.IsOpen != true) return;
+
+        try
+        {
+            switch (effectType.ToUpper())
+            {
+                case "CONNECTION_SUCCESS":
+                    // Already handled by Arduino after INIT
+                    break;
+                case "GAME_START":
+                    // Already handled by Arduino in START_GAME
+                    break;
+                case "GAME_OVER":
+                    // Already handled by Arduino in STOP_GAME
+                    break;
+                case "LEVEL_UP":
+                    // Already handled by Arduino
+                    break;
+                case "PERFECT_HIT":
+                    // Already handled by Arduino
+                    break;
+                case "COMBO":
+                    // Already handled by Arduino
+                    break;
+                case "EXPLOSION":
+                    // Already handled by Arduino
+                    break;
+                case "VICTORY":
+                    // Already handled by Arduino
+                    break;
+                case "FIREWORKS":
+                    _serialPort.WriteLine("EFFECT_FIREWORKS");
+                    break;
+                case "RAINBOW":
+                    _serialPort.WriteLine("EFFECT_RAINBOW");
+                    break;
+                case "MATRIX":
+                    _serialPort.WriteLine("EFFECT_MATRIX");
+                    break;
+                case "PULSE":
+                    _serialPort.WriteLine("EFFECT_PULSE");
+                    break;
+                case "STOP_EFFECTS":
+                    _serialPort.WriteLine("STOP_EFFECTS");
+                    break;
+            }
+            AddDebugMessage($"Efeito visual disparado: {effectType}");
+        }
+        catch (Exception ex)
+        {
+            AddDebugMessage($"Erro ao disparar efeito visual: {ex.Message}");
         }
     }
 
@@ -777,6 +844,44 @@ public partial class MainWindow : Window
                 return;
             case Key.F4:
                 ViewScoresButton_Click(null, new RoutedEventArgs());
+                e.Handled = true;
+                return;
+            case Key.F5:
+                // Efeito Rainbow
+                TriggerVisualEffect("RAINBOW");
+                StatusText.Text = "🌈 Efeito Arco-íris ativado! (F6 para parar)";
+                e.Handled = true;
+                return;
+            case Key.F6:
+                // Parar todos os efeitos
+                TriggerVisualEffect("STOP_EFFECTS");
+                StatusText.Text = "⏹️ Efeitos visuais interrompidos.";
+                e.Handled = true;
+                return;
+            case Key.F7:
+                // Efeito Matrix
+                TriggerVisualEffect("MATRIX");
+                StatusText.Text = "💚 Matrix Rain ativado! (F6 para parar)";
+                e.Handled = true;
+                return;
+            case Key.F8:
+                // Efeito Pulse
+                TriggerVisualEffect("PULSE");
+                StatusText.Text = "💓 Pulso Universal ativado! (F6 para parar)";
+                e.Handled = true;
+                return;
+            case Key.F9:
+                // Fogos de artifício
+                TriggerVisualEffect("FIREWORKS");
+                StatusText.Text = "🎆 Fogos de artifício! Efeito único de 2 segundos.";
+                e.Handled = true;
+                return;
+            case Key.F10:
+                // Demo completa dos efeitos
+                if (_serialPort?.IsOpen == true)
+                {
+                    VisualEffectsDemo_Click(null, new RoutedEventArgs());
+                }
                 e.Handled = true;
                 return;
         }
@@ -1032,6 +1137,57 @@ public partial class MainWindow : Window
         await instructionsWindow.ShowDialog(this);
     }
 
+    private async void VisualEffectsDemo_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_serialPort?.IsOpen != true)
+        {
+            await ShowMessage("Aviso", "Conecte o Arduino primeiro para ver os efeitos visuais!");
+            return;
+        }
+
+        StatusText.Text = "🎆 Demonstração de Efeitos Visuais em andamento...";
+        
+        // Sequência de demonstração dos efeitos
+        var effects = new[]
+        {
+            ("RAINBOW", "🌈 Onda Arco-íris", 3000),
+            ("MATRIX", "💚 Matrix Rain", 3000),
+            ("PULSE", "💓 Pulso Universal", 2000),
+            ("FIREWORKS", "🎆 Fogos de Artifício", 2000)
+        };
+
+        foreach (var (effect, description, duration) in effects)
+        {
+            StatusText.Text = $"🎭 {description}";
+            TriggerVisualEffect(effect);
+            await Task.Delay(duration);
+            TriggerVisualEffect("STOP_EFFECTS");
+            await Task.Delay(500);
+        }
+
+        StatusText.Text = "✨ Demonstração concluída! Que tal jogar agora?";
+        TriggerVisualEffect("FIREWORKS"); // Grande final
+        await Task.Delay(2000);
+        TriggerVisualEffect("STOP_EFFECTS");
+    }
+
+    public async void TestAllVisualEffects()
+    {
+        if (_serialPort?.IsOpen != true) return;
+
+        // Teste rápido de todos os efeitos para debug
+        var testEffects = new[] { "RAINBOW", "MATRIX", "PULSE", "FIREWORKS" };
+        
+        foreach (var effect in testEffects)
+        {
+            AddDebugMessage($"Testando efeito: {effect}");
+            TriggerVisualEffect(effect);
+            await Task.Delay(1000);
+            TriggerVisualEffect("STOP_EFFECTS");
+            await Task.Delay(200);
+        }
+    }
+
     private async void SettingsButton_Click(object? sender, RoutedEventArgs e)
     {
         var settingsWindow = new Window
@@ -1147,16 +1303,22 @@ public partial class MainWindow : Window
 • F2: Parar jogo
 • F3: Reset pontuação
 • F4: Ver rankings
+• F5: Efeito Arco-íris
+• F6: Parar efeitos visuais
+• F7: Efeito Matrix Rain
+• F8: Pulso Universal
+• F9: Fogos de artifício
+• F10: Demo completa de efeitos
 
 🎯 JOGOS DISPONÍVEIS:
-• Pega-Luz: Reflexos rápidos
-• Sequência Maluca: Memória
-• Gato e Rato: Perseguição
-• Esquiva Meteoros: Sobrevivência
-• Guitar Hero: Ritmo
-• Corrida Infinita: Velocidade
-• Quebra-Cabeça: Lógica
-• Reflexo Rápido: Tempo de reação
+• 🎯 Pega-Luz: Reflexos rápidos
+• 🧠 Sequência Maluca: Memória
+• 🐱 Gato e Rato: Perseguição
+• ☄️ Esquiva Meteoros: Sobrevivência
+• 🎸 Guitar Hero: Ritmo
+• 🎲 Roleta Russa: Sorte extrema
+• ⚡ Lightning Strike: Velocidade máxima
+• 🎯 Sniper Mode: Precisão impossível
 
 🏆 PONTUAÇÃO:
 • Acertos rápidos = mais pontos
@@ -1170,7 +1332,15 @@ public partial class MainWindow : Window
 • Jogo não responde: Verifique o cabo USB
 • Performance lenta: Feche outros programas
 
-💡 DICAS
+✨ EFEITOS VISUAIS:
+O Arduino possui animações épicas para:
+• Inicialização e conexão
+• Início e fim de jogos
+• Acertos perfeitos e combos
+• Explosões e vitórias
+• Use F5-F10 para demonstrações!
+
+💡 DICAS:
 :
 • Use o Início Rápido para começar rapidamente
 • Veja todas as instruções antes de jogar
@@ -1220,7 +1390,9 @@ public partial class MainWindow : Window
         {
             try
             {
+                StatusText.Text = "👋 Desconectando... Até logo!";
                 _serialPort.WriteLine("DISCONNECT");
+                System.Threading.Thread.Sleep(500); // Give time for disconnect animation
                 _serialPort.Close();
             }
             catch { }

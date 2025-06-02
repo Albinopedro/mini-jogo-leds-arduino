@@ -105,6 +105,39 @@ int sniperHitsRequired = 10;
 int sniperCurrentHits = 0;
 unsigned long nextTargetDelay = 0;
 
+// ===== EFEITOS VISUAIS =====
+enum AnimationType {
+  ANIM_NONE,
+  ANIM_STARTUP_SEQUENCE,
+  ANIM_CONNECTION_SUCCESS,
+  ANIM_GAME_START,
+  ANIM_GAME_OVER,
+  ANIM_LEVEL_UP,
+  ANIM_PERFECT_HIT,
+  ANIM_COMBO,
+  ANIM_COUNTDOWN,
+  ANIM_EXPLOSION,
+  ANIM_VICTORY,
+  ANIM_DISCONNECT,
+  ANIM_WAITING_CONNECTION,
+  ANIM_ERROR,
+  ANIM_RAINBOW_WAVE,
+  ANIM_PULSE_ALL,
+  ANIM_SPIRAL_IN,
+  ANIM_SPIRAL_OUT,
+  ANIM_MATRIX_RAIN,
+  ANIM_FIREWORKS
+};
+
+struct AnimationState {
+  AnimationType currentAnimation;
+  unsigned long animationStartTime;
+  int animationStep;
+  int animationData[4]; // Para parâmetros extras
+  bool animationActive;
+  bool animationLoop;
+} animState;
+
 // ===== SETUP =====
 void setup() {
   Serial.begin(9600);
@@ -122,7 +155,15 @@ void setup() {
 
   randomSeed(analogRead(A4));
   clearAllLEDs();
-  testLEDs(); // Delays in setup are acceptable as they run only once.
+  
+  // Initialize animation system
+  animState.currentAnimation = ANIM_NONE;
+  animState.animationActive = false;
+  animState.animationLoop = false;
+  
+  // Epic startup sequence
+  playAnimation(ANIM_STARTUP_SEQUENCE, false);
+  
   Serial.println("READY");
 }
 
@@ -135,6 +176,468 @@ void setLED(int index, bool state) {
 
 void clearAllLEDs() {
   for (int i = 0; i < NUM_LEDS; i++) setLED(i, false);
+}
+
+// ===== SISTEMA DE ANIMAÇÕES =====
+void playAnimation(AnimationType type, bool loop = false) {
+  animState.currentAnimation = type;
+  animState.animationStartTime = millis();
+  animState.animationStep = 0;
+  animState.animationActive = true;
+  animState.animationLoop = loop;
+  for (int i = 0; i < 4; i++) animState.animationData[i] = 0;
+}
+
+void stopAnimation() {
+  animState.animationActive = false;
+  animState.currentAnimation = ANIM_NONE;
+  clearAllLEDs();
+}
+
+void updateAnimations() {
+  if (!animState.animationActive) return;
+  
+  unsigned long currentTime = millis();
+  unsigned long elapsed = currentTime - animState.animationStartTime;
+  
+  switch (animState.currentAnimation) {
+    case ANIM_STARTUP_SEQUENCE:
+      updateStartupSequence(elapsed);
+      break;
+    case ANIM_CONNECTION_SUCCESS:
+      updateConnectionSuccess(elapsed);
+      break;
+    case ANIM_GAME_START:
+      updateGameStart(elapsed);
+      break;
+    case ANIM_GAME_OVER:
+      updateGameOver(elapsed);
+      break;
+    case ANIM_LEVEL_UP:
+      updateLevelUp(elapsed);
+      break;
+    case ANIM_PERFECT_HIT:
+      updatePerfectHit(elapsed);
+      break;
+    case ANIM_COMBO:
+      updateCombo(elapsed);
+      break;
+    case ANIM_COUNTDOWN:
+      updateCountdown(elapsed);
+      break;
+    case ANIM_EXPLOSION:
+      updateExplosion(elapsed);
+      break;
+    case ANIM_VICTORY:
+      updateVictory(elapsed);
+      break;
+    case ANIM_DISCONNECT:
+      updateDisconnect(elapsed);
+      break;
+    case ANIM_WAITING_CONNECTION:
+      updateWaitingConnection(elapsed);
+      break;
+    case ANIM_ERROR:
+      updateError(elapsed);
+      break;
+    case ANIM_RAINBOW_WAVE:
+      updateRainbowWave(elapsed);
+      break;
+    case ANIM_PULSE_ALL:
+      updatePulseAll(elapsed);
+      break;
+    case ANIM_SPIRAL_IN:
+      updateSpiralIn(elapsed);
+      break;
+    case ANIM_SPIRAL_OUT:
+      updateSpiralOut(elapsed);
+      break;
+    case ANIM_MATRIX_RAIN:
+      updateMatrixRain(elapsed);
+      break;
+    case ANIM_FIREWORKS:
+      updateFireworks(elapsed);
+      break;
+  }
+}
+
+// ===== ANIMAÇÕES ESPECÍFICAS =====
+
+void updateStartupSequence(unsigned long elapsed) {
+  // Sequência épica de inicialização (4 segundos)
+  clearAllLEDs();
+  
+  if (elapsed < 500) {
+    // Fase 1: Pulse center (LED 5,6,9,10)
+    bool on = (elapsed / 100) % 2;
+    setLED(5, on); setLED(6, on); setLED(9, on); setLED(10, on);
+  }
+  else if (elapsed < 1500) {
+    // Fase 2: Espiral crescente do centro
+    int step = ((elapsed - 500) / 100) % 12;
+    int spiral[] = {5, 6, 10, 9, 1, 2, 7, 11, 14, 13, 8, 4, 0, 3, 15, 12};
+    for (int i = 0; i <= step && i < 16; i++) {
+      setLED(spiral[i], true);
+    }
+  }
+  else if (elapsed < 2500) {
+    // Fase 3: Ondas por linha
+    int line = ((elapsed - 1500) / 250) % 4;
+    for (int i = line * 4; i < (line + 1) * 4; i++) {
+      setLED(i, true);
+    }
+  }
+  else if (elapsed < 3500) {
+    // Fase 4: Efeito matriz - chuva de LEDs
+    for (int col = 0; col < 4; col++) {
+      int row = ((elapsed - 2500) / 100 + col) % 8;
+      if (row < 4) setLED(row * 4 + col, true);
+    }
+  }
+  else if (elapsed < 4000) {
+    // Fase 5: Flash final - todos os LEDs
+    bool flash = ((elapsed - 3500) / 100) % 2;
+    for (int i = 0; i < NUM_LEDS; i++) {
+      setLED(i, flash);
+    }
+  }
+  else {
+    // Fim: Iniciar animação de espera
+    stopAnimation();
+    playAnimation(ANIM_WAITING_CONNECTION, true);
+  }
+}
+
+void updateWaitingConnection(unsigned long elapsed) {
+  // Breathing effect - pulso suave
+  clearAllLEDs();
+  int brightness = (sin((elapsed / 1000.0) * 2 * PI) + 1) * 2; // 0-4
+  
+  // Acende LEDs dos cantos com intensidade variável
+  bool on = brightness > 2;
+  setLED(0, on);  // Canto superior esquerdo
+  setLED(3, on);  // Canto superior direito  
+  setLED(12, on); // Canto inferior esquerdo
+  setLED(15, on); // Canto inferior direito
+  
+  // Reset a cada 4 segundos
+  if (elapsed > 4000) {
+    animState.animationStartTime = millis();
+  }
+}
+
+void updateConnectionSuccess(unsigned long elapsed) {
+  // Explosão de alegria (2 segundos)
+  clearAllLEDs();
+  
+  if (elapsed < 500) {
+    // Explosão do centro
+    int radius = elapsed / 50;
+    int center[] = {5, 6, 9, 10}; // Centro
+    int ring1[] = {1, 2, 4, 7, 8, 11, 13, 14}; // Anel 1
+    int ring2[] = {0, 3, 12, 15}; // Cantos
+    
+    for (int i = 0; i < 4; i++) setLED(center[i], true);
+    if (radius > 2) for (int i = 0; i < 8; i++) setLED(ring1[i], true);
+    if (radius > 5) for (int i = 0; i < 4; i++) setLED(ring2[i], true);
+  }
+  else if (elapsed < 1500) {
+    // Ondas concêntricas
+    int wave = ((elapsed - 500) / 100) % 3;
+    for (int i = 0; i < NUM_LEDS; i++) {
+      if ((i / 4 + i % 4) % 3 == wave) setLED(i, true);
+    }
+  }
+  else if (elapsed < 2000) {
+    // Flash de vitória
+    bool flash = ((elapsed - 1500) / 100) % 2;
+    for (int i = 0; i < NUM_LEDS; i++) setLED(i, flash);
+  }
+  else {
+    stopAnimation();
+  }
+}
+
+void updateGameStart(unsigned long elapsed) {
+  // Countdown épico (3 segundos)
+  clearAllLEDs();
+  
+  if (elapsed < 1000) {
+    // "3" - Forma número 3
+    int three[] = {0, 1, 2, 6, 9, 10, 11, 14, 15};
+    for (int i = 0; i < 9; i++) setLED(three[i], true);
+  }
+  else if (elapsed < 2000) {
+    // "2" - Forma número 2  
+    int two[] = {0, 1, 2, 6, 8, 9, 10, 12, 13, 14, 15};
+    for (int i = 0; i < 11; i++) setLED(two[i], true);
+  }
+  else if (elapsed < 3000) {
+    // "1" - Forma número 1
+    int one[] = {1, 2, 5, 6, 9, 10, 13, 14};
+    for (int i = 0; i < 8; i++) setLED(one[i], true);
+  }
+  else {
+    // GO! - Flash final
+    bool flash = ((elapsed - 3000) / 50) % 2;
+    for (int i = 0; i < NUM_LEDS; i++) setLED(i, flash);
+    
+    if (elapsed > 3500) stopAnimation();
+  }
+}
+
+void updateGameOver(unsigned long elapsed) {
+  // Efeito de morte/explosão (3 segundos)
+  clearAllLEDs();
+  
+  if (elapsed < 1000) {
+    // Implosão - LEDs apagam do exterior para centro
+    int step = elapsed / 100;
+    int implode[] = {0, 3, 12, 15, 1, 2, 4, 7, 8, 11, 13, 14, 5, 6, 9, 10};
+    for (int i = step; i < 16; i++) {
+      setLED(implode[i], true);
+    }
+  }
+  else if (elapsed < 2000) {
+    // Flash vermelho (simulação de explosão)
+    bool flash = ((elapsed - 1000) / 100) % 2;
+    // Apenas linha vermelha (0-3)
+    for (int i = 0; i < 4; i++) setLED(i, flash);
+  }
+  else if (elapsed < 3000) {
+    // Fade out lento
+    int fadeStep = (elapsed - 2000) / 100;
+    bool show = fadeStep % 3 != 0; // Pisca mais devagar
+    for (int i = 0; i < 4; i++) setLED(i, show);
+  }
+  else {
+    stopAnimation();
+  }
+}
+
+void updateLevelUp(unsigned long elapsed) {
+  // Celebração de nível (2 segundos)
+  clearAllLEDs();
+  
+  if (elapsed < 1000) {
+    // Ondas de energia subindo
+    int wave = (elapsed / 100) % 8;
+    for (int row = 0; row < 4; row++) {
+      if ((wave - row) % 4 == 0) {
+        for (int col = 0; col < 4; col++) {
+          setLED(row * 4 + col, true);
+        }
+      }
+    }
+  }
+  else if (elapsed < 2000) {
+    // Estrela de vitória
+    bool flash = ((elapsed - 1000) / 150) % 2;
+    int star[] = {1, 2, 4, 7, 8, 11, 13, 14}; // Forma de estrela
+    for (int i = 0; i < 8; i++) setLED(star[i], flash);
+  }
+  else {
+    stopAnimation();
+  }
+}
+
+void updatePerfectHit(unsigned long elapsed) {
+  // Efeito de acerto perfeito (1 segundo)
+  clearAllLEDs();
+  
+  // Explosão rápida do centro
+  int radius = elapsed / 50;
+  if (radius < 8) {
+    int center[] = {5, 6, 9, 10};
+    int ring1[] = {1, 2, 4, 7, 8, 11, 13, 14};
+    int ring2[] = {0, 3, 12, 15};
+    
+    for (int i = 0; i < 4; i++) setLED(center[i], true);
+    if (radius > 2) for (int i = 0; i < 8; i++) setLED(ring1[i], true);
+    if (radius > 4) for (int i = 0; i < 4; i++) setLED(ring2[i], true);
+  }
+  
+  if (elapsed > 1000) stopAnimation();
+}
+
+void updateCombo(unsigned long elapsed) {
+  // Efeito de combo (1.5 segundos)
+  clearAllLEDs();
+  
+  // Ondas laterais convergindo
+  int step = (elapsed / 100) % 8;
+  for (int i = 0; i < 4; i++) {
+    if (step >= i) setLED(i, true);          // Esquerda para direita (linha 0)
+    if (step >= i) setLED(4 + i, true);      // Esquerda para direita (linha 1)
+    if (step >= i) setLED(8 + i, true);      // Esquerda para direita (linha 2)
+    if (step >= i) setLED(12 + i, true);     // Esquerda para direita (linha 3)
+  }
+  
+  if (elapsed > 1500) stopAnimation();
+}
+
+void updateExplosion(unsigned long elapsed) {
+  // Explosão massiva (2 segundos)
+  clearAllLEDs();
+  
+  if (elapsed < 200) {
+    // Flash inicial
+    for (int i = 0; i < NUM_LEDS; i++) setLED(i, true);
+  }
+  else if (elapsed < 1500) {
+    // Fragmentos voando
+    bool flash = ((elapsed - 200) / 50) % 2;
+    int fragments[] = {0, 2, 5, 7, 8, 10, 13, 15}; // Padrão de fragmentos
+    for (int i = 0; i < 8; i++) setLED(fragments[i], flash);
+  }
+  else {
+    // Fade final
+    bool fade = ((elapsed - 1500) / 250) % 2;
+    setLED(0, fade); setLED(3, fade); setLED(12, fade); setLED(15, fade);
+  }
+  
+  if (elapsed > 2000) stopAnimation();
+}
+
+void updateVictory(unsigned long elapsed) {
+  // Celebração épica de vitória (4 segundos)
+  clearAllLEDs();
+  
+  if (elapsed < 1000) {
+    // Fogos de artifício
+    int firework = (elapsed / 100) % 4;
+    int patterns[][4] = {{1, 5, 9, 13}, {2, 6, 10, 14}, {0, 4, 8, 12}, {3, 7, 11, 15}};
+    for (int i = 0; i < 4; i++) setLED(patterns[firework][i], true);
+  }
+  else if (elapsed < 3000) {
+    // Chuva de estrelas
+    int rain = (elapsed - 1000) / 100;
+    for (int i = 0; i < NUM_LEDS; i++) {
+      bool on = (rain + i) % 3 == 0;
+      setLED(i, on);
+    }
+  }
+  else {
+    // Grande final - todos piscando
+    bool bigFlash = ((elapsed - 3000) / 100) % 2;
+    for (int i = 0; i < NUM_LEDS; i++) setLED(i, bigFlash);
+  }
+  
+  if (elapsed > 4000) stopAnimation();
+}
+
+void updateDisconnect(unsigned long elapsed) {
+  // Sequência de desconexão (2 segundos)
+  clearAllLEDs();
+  
+  if (elapsed < 1500) {
+    // LEDs apagam em espiral
+    int step = elapsed / 100;
+    int spiral[] = {0, 1, 2, 3, 7, 11, 15, 14, 13, 12, 8, 4, 5, 6, 10, 9};
+    for (int i = step; i < 16; i++) {
+      setLED(spiral[i], true);
+    }
+  }
+  else {
+    // Flash final de despedida
+    bool flash = ((elapsed - 1500) / 250) % 2;
+    setLED(5, flash); setLED(6, flash); setLED(9, flash); setLED(10, flash);
+  }
+  
+  if (elapsed > 2000) {
+    stopAnimation();
+    clearAllLEDs();
+  }
+}
+
+void updateError(unsigned long elapsed) {
+  // Efeito de erro (1 segundo)
+  clearAllLEDs();
+  
+  // Flash vermelho rápido
+  bool flash = (elapsed / 100) % 2;
+  for (int i = 0; i < 4; i++) setLED(i, flash); // Apenas linha vermelha
+  
+  if (elapsed > 1000) stopAnimation();
+}
+
+void updateRainbowWave(unsigned long elapsed) {
+  // Onda arco-íris (contínua se loop ativo)
+  clearAllLEDs();
+  
+  int wave = (elapsed / 200) % 8;
+  for (int i = 0; i < 4; i++) {
+    int row = (wave + i) % 4;
+    for (int col = 0; col < 4; col++) {
+      setLED(row * 4 + col, true);
+    }
+  }
+  
+  if (!animState.animationLoop && elapsed > 2000) stopAnimation();
+}
+
+void updatePulseAll(unsigned long elapsed) {
+  // Pulso geral (contínuo se loop ativo)
+  bool pulse = (elapsed / 500) % 2;
+  for (int i = 0; i < NUM_LEDS; i++) setLED(i, pulse);
+  
+  if (!animState.animationLoop && elapsed > 2000) stopAnimation();
+}
+
+void updateSpiralIn(unsigned long elapsed) {
+  // Espiral para dentro
+  clearAllLEDs();
+  
+  int step = (elapsed / 150) % 16;
+  int spiral[] = {0, 1, 2, 3, 7, 11, 15, 14, 13, 12, 8, 4, 5, 6, 10, 9};
+  for (int i = 0; i < step; i++) {
+    setLED(spiral[i], true);
+  }
+  
+  if (elapsed > 2400) stopAnimation();
+}
+
+void updateSpiralOut(unsigned long elapsed) {
+  // Espiral para fora
+  clearAllLEDs();
+  
+  int step = (elapsed / 150) % 16;
+  int spiral[] = {5, 6, 10, 9, 4, 8, 12, 13, 14, 15, 11, 7, 3, 2, 1, 0};
+  for (int i = 0; i < step; i++) {
+    setLED(spiral[i], true);
+  }
+  
+  if (elapsed > 2400) stopAnimation();
+}
+
+void updateMatrixRain(unsigned long elapsed) {
+  // Efeito Matrix - chuva digital
+  clearAllLEDs();
+  
+  for (int col = 0; col < 4; col++) {
+    int dropPos = ((elapsed / 200) + col * 2) % 8;
+    if (dropPos < 4) setLED(dropPos * 4 + col, true);
+    if (dropPos > 0 && dropPos <= 4) setLED((dropPos - 1) * 4 + col, false);
+  }
+  
+  if (!animState.animationLoop && elapsed > 3000) stopAnimation();
+}
+
+void updateFireworks(unsigned long elapsed) {
+  // Fogos de artifício múltiplos
+  clearAllLEDs();
+  
+  int phase = (elapsed / 300) % 6;
+  switch (phase) {
+    case 0: setLED(5, true); break;
+    case 1: setLED(1, true); setLED(4, true); setLED(6, true); setLED(9, true); break;
+    case 2: setLED(0, true); setLED(2, true); setLED(8, true); setLED(10, true); break;
+    case 3: setLED(10, true); break;
+    case 4: setLED(6, true); setLED(9, true); setLED(11, true); setLED(14, true); break;
+    case 5: setLED(7, true); setLED(13, true); setLED(15, true); break;
+  }
+  
+  if (elapsed > 1800) stopAnimation();
 }
 
 void testLEDs() {
@@ -160,12 +663,28 @@ void processSerialCommands() {
   if (Serial.available() > 0) {
     String command = Serial.readStringUntil('\n');
     command.trim();
-    if (command.startsWith("START_GAME:")) startGame((GameMode)command.substring(11).toInt());
+    if (command.startsWith("START_GAME:")) {
+      stopAnimation(); // Para qualquer animação atual
+      startGame((GameMode)command.substring(11).toInt());
+    }
     else if (command == "STOP_GAME") stopGame();
     else if (command.startsWith("KEY_PRESS:")) handleKeyPress(command.substring(10).toInt());
     else if (command.startsWith("KEY_RELEASE:")) handleKeyRelease(command.substring(12).toInt());
-    else if (command == "INIT") Serial.println("READY");
-    else if (command == "DISCONNECT") clearAllLEDs();
+    else if (command == "INIT") {
+      stopAnimation();
+      playAnimation(ANIM_CONNECTION_SUCCESS, false);
+      Serial.println("READY");
+    }
+    else if (command == "DISCONNECT") {
+      playAnimation(ANIM_DISCONNECT, false);
+      // clearAllLEDs(); // Will be called by animation
+    }
+    // Comandos especiais para efeitos
+    else if (command == "EFFECT_RAINBOW") playAnimation(ANIM_RAINBOW_WAVE, true);
+    else if (command == "EFFECT_MATRIX") playAnimation(ANIM_MATRIX_RAIN, true);
+    else if (command == "EFFECT_PULSE") playAnimation(ANIM_PULSE_ALL, true);
+    else if (command == "EFFECT_FIREWORKS") playAnimation(ANIM_FIREWORKS, false);
+    else if (command == "STOP_EFFECTS") stopAnimation();
   }
 }
 
@@ -205,17 +724,29 @@ void handlePegaLuzKey(int key) {
   if (pegaLuzState != PL_PLAYING) return;
   if (key == pegaLuzTarget) {
     setLED(pegaLuzTarget, false);
+    
+    // Efeito visual para acerto
+    unsigned long reactionTime = millis() - pegaLuzStartTime;
+    if (reactionTime < 200) {
+      playAnimation(ANIM_PERFECT_HIT, false); // Acerto perfeito
+      sendGameEvent("PERFECT");
+    } else {
+      playAnimation(ANIM_COMBO, false); // Acerto normal
+    }
+    
     game.score += 10;
     sendGameEvent("HIT", key, game.score);
 
     if (game.score > 0 && game.score % 50 == 0) {
       pegaLuzTimeout = max(pegaLuzTimeout - 100, 500);
       game.level++;
+      playAnimation(ANIM_LEVEL_UP, false);
       sendGameEvent("LEVEL_UP", game.level);
     }
     pegaLuzState = PL_PAUSE_AFTER_HIT;
-    stateChangeTime = millis(); // Start pause timer
+    stateChangeTime = millis();
   } else if (pegaLuzTarget >= 0) {
+    playAnimation(ANIM_ERROR, false);
     sendGameEvent("WRONG_KEY", key);
   }
 }
@@ -270,19 +801,30 @@ void updateSequenciaMaluca() {
 void handleSequenciaMalucaKey(int key) {
   if (sequenciaState != SEQ_WAITING_INPUT) return;
   if (key == sequenciaPattern[sequenciaPlayerIndex]) {
-    setLED(key, true); // Visual feedback
-    // Note: this feedback is very short, will be cleared by the game loop.
-    // For longer feedback, another state would be needed.
+    setLED(key, true);
     sequenciaPlayerIndex++;
+    
     if (sequenciaPlayerIndex >= sequenciaLength) {
+      // Sequência completa!
+      playAnimation(ANIM_PERFECT_HIT, false);
       game.score += 10;
       game.level++;
       sequenciaLength = min(sequenciaLength + 1, 12);
+      
+      if (game.level % 3 == 0) {
+        playAnimation(ANIM_LEVEL_UP, false);
+      }
+      
       sendGameEvent("LEVEL_UP", game.level, game.score);
       sequenciaState = SEQ_PAUSE_BEFORE_NEXT;
       stateChangeTime = millis();
+    } else {
+      // Acerto parcial - pequeno feedback
+      playAnimation(ANIM_COMBO, false);
     }
   } else {
+    // Erro - game over com explosão
+    playAnimation(ANIM_EXPLOSION, false);
     sendGameEvent("GAME_OVER", game.score);
     stopGame();
   }
@@ -530,6 +1072,8 @@ void updateRoletaRussa() {
                     roletaState = ROL_SAFE_PAUSE;
                     stateChangeTime = currentTime;
                 } else {
+                    // EXPLOSÃO! Perdeu tudo!
+                    playAnimation(ANIM_EXPLOSION, false);
                     setLED(roletaChosenKey, true);
                     sendGameEvent("ROLETA_EXPLODE", roletaChosenKey, 0);
                     roletaState = ROL_EXPLODE_ANIMATION;
@@ -542,6 +1086,8 @@ void updateRoletaRussa() {
             if (roletaRound <= 8) {
                 startRoletaRound();
             } else {
+                // Vitória máxima na roleta!
+                playAnimation(ANIM_FIREWORKS, false);
                 sendGameEvent("ROLETA_MAX_WIN", game.score);
                 stopGame();
             }
@@ -677,6 +1223,8 @@ void handleSniperModeKey(int key) {
         sendGameEvent("SNIPER_HIT", sniperCurrentHits, reactionTime);
 
         if (sniperCurrentHits >= sniperHitsRequired) {
+            // VITÓRIA ÉPICA - Quase impossível!
+            playAnimation(ANIM_VICTORY, false);
             sendGameEvent("SNIPER_VICTORY", game.score);
             stopGame();
         } else {
@@ -718,6 +1266,16 @@ void handleKeyRelease(int key) {
 }
 
 void startGame(GameMode mode) {
+  // Para animações e inicia countdown épico
+  stopAnimation();
+  playAnimation(ANIM_GAME_START, false);
+  
+  // Aguarda fim da animação de início
+  while (animState.animationActive) {
+    updateAnimations();
+    delay(50);
+  }
+  
   game.currentMode = mode;
   game.gameActive = true;
   game.score = 0;
@@ -735,21 +1293,47 @@ void startGame(GameMode mode) {
     case ROLETA_RUSSA: initRoletaRussa(); break;
     case LIGHTNING_STRIKE: initLightningStrike(); break;
     case SNIPER_MODE: initSniperMode(); break;
-    default: game.gameActive = false; return;
+    default: 
+      game.gameActive = false; 
+      playAnimation(ANIM_ERROR, false);
+      return;
   }
+  
   sendGameEvent("GAME_STARTED", (int)mode);
 }
 
 void stopGame() {
   game.gameActive = false;
+  
+  // Efeito visual baseado na pontuação
+  if (game.score == 0) {
+    playAnimation(ANIM_GAME_OVER, false); // Morte épica
+  } else if (game.score > 100) {
+    playAnimation(ANIM_VICTORY, false);   // Vitória épica
+  } else {
+    playAnimation(ANIM_EXPLOSION, false); // Explosão normal
+  }
+  
   sendGameEvent("GAME_OVER", game.score);
+  
+  // Aguarda fim da animação
+  while (animState.animationActive) {
+    updateAnimations();
+    delay(50);
+  }
+  
   clearAllLEDs();
-  // Optional: Add a non-blocking game over animation here
+  
+  // Volta para animação de espera
+  playAnimation(ANIM_WAITING_CONNECTION, true);
 }
 
 // ===== LOOP PRINCIPAL =====
 void loop() {
   processSerialCommands();
+  
+  // Sempre atualiza animações (não bloqueia jogos)
+  updateAnimations();
 
   if (game.gameActive) {
     switch (game.currentMode) {
@@ -763,8 +1347,6 @@ void loop() {
       case SNIPER_MODE: updateSniperMode(); break;
       default: break;
     }
-  } else {
-    // Idle state - could run a non-blocking menu animation
   }
-  // REFACTOR: No delay() in the main loop for maximum responsiveness.
+  // Animações rodam automaticamente quando não há jogo ativo
 }
