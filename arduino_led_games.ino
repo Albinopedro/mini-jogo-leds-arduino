@@ -138,6 +138,29 @@ struct AnimationState {
   bool animationLoop;
 } animState;
 
+// ===== DECLARAÇÕES FORWARD DAS FUNÇÕES =====
+void playAnimation(AnimationType type, bool loop);
+void stopAnimation();
+void updateAnimations();
+void updateStartupSequence(unsigned long elapsed);
+void updateWaitingConnection(unsigned long elapsed);
+void updateConnectionSuccess(unsigned long elapsed);
+void updateGameStart(unsigned long elapsed);
+void updateGameOver(unsigned long elapsed);
+void updateLevelUp(unsigned long elapsed);
+void updatePerfectHit(unsigned long elapsed);
+void updateCombo(unsigned long elapsed);
+void updateExplosion(unsigned long elapsed);
+void updateVictory(unsigned long elapsed);
+void updateDisconnect(unsigned long elapsed);
+void updateError(unsigned long elapsed);
+void updateRainbowWave(unsigned long elapsed);
+void updatePulseAll(unsigned long elapsed);
+void updateSpiralIn(unsigned long elapsed);
+void updateSpiralOut(unsigned long elapsed);
+void updateMatrixRain(unsigned long elapsed);
+void updateFireworks(unsigned long elapsed);
+
 // ===== SETUP =====
 void setup() {
   Serial.begin(9600);
@@ -179,7 +202,7 @@ void clearAllLEDs() {
 }
 
 // ===== SISTEMA DE ANIMAÇÕES =====
-void playAnimation(AnimationType type, bool loop = false) {
+void playAnimation(AnimationType type, bool loop) {
   animState.currentAnimation = type;
   animState.animationStartTime = millis();
   animState.animationStep = 0;
@@ -223,7 +246,7 @@ void updateAnimations() {
       updateCombo(elapsed);
       break;
     case ANIM_COUNTDOWN:
-      updateCountdown(elapsed);
+      updateGameStart(elapsed);
       break;
     case ANIM_EXPLOSION:
       updateExplosion(elapsed);
