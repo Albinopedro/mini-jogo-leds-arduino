@@ -75,6 +75,9 @@ public partial class MainWindow : Window
         GameDescriptionText.Text = "Selecione um jogo para ver a descrição...";
         CurrentGameText.Text = "Nenhum";
 
+        // Populate game mode combo box
+        PopulateGameModeComboBox();
+        
         // Set first game as default
         GameModeComboBox.SelectedIndex = 0;
     }
@@ -212,24 +215,14 @@ public partial class MainWindow : Window
         {
             StatusText.Text = "🟢 Arduino pronto! Selecione um jogo e aperte Iniciar.";
         }
-        else if (message.StartsWith("LED_ON:"))
-        {
-            var ledIndex = int.Parse(message.Substring("LED_ON:".Length));
-            HighlightLed(ledIndex);
-        }
-        else if (message.StartsWith("LED_OFF:"))
-        {
-            var ledIndex = int.Parse(message.Substring("LED_OFF:".Length));
-            var row = ledIndex / 4;
-            var col = ledIndex % 4;
-            if (row < 4 && col < 4)
-            {
-                _ledMatrix[row, col].Fill = GetLedDefaultColor(row);
-            }
-        }
         else if (message == "ALL_LEDS_OFF")
         {
             ClearLedMatrix();
+        }
+        else
+        {
+            // Treat all other messages as game events for consistency
+            ProcessGameEvent(message);
         }
     }
 
@@ -252,11 +245,17 @@ public partial class MainWindow : Window
         switch (eventType)
         {
             case "SCORE":
-                if (int.TryParse(eventValue, out var scoreIncrease))
+                var scoreData = eventValue.Split(',');
+                if (scoreData.Length >= 1 && int.TryParse(scoreData[0], out var scoreIncrease))
                 {
                     _score += scoreIncrease;
+                    // If total score is provided as second parameter, use it for sync
+                    if (scoreData.Length >= 2 && int.TryParse(scoreData[1], out var syncScore))
+                    {
+                        _score = syncScore;
+                    }
                     UpdateUI();
-                    AddDebugMessage($"Pontuação aumentada: +{scoreIncrease}");
+                    AddDebugMessage($"Pontuação: +{scoreIncrease} (Total: {_score})");
                 }
                 break;
 
@@ -273,9 +272,16 @@ public partial class MainWindow : Window
                 _gameActive = false;
                 StartGameButton.IsEnabled = true;
                 StopGameButton.IsEnabled = false;
-                StatusText.Text = $"🎮 Game Over! {eventValue}";
+                
+                // Sync final score from Arduino if provided
+                if (int.TryParse(eventValue, out var finalScore))
+                {
+                    _score = finalScore;
+                }
+                
+                StatusText.Text = $"🎮 GAME OVER! Pontuação Final: {_score}";
                 SaveGameScore();
-                AddDebugMessage($"Fim de jogo: {eventValue}");
+                AddDebugMessage($"Fim de jogo - Pontuação final: {_score}");
                 break;
 
             case "STATUS":
@@ -284,25 +290,119 @@ public partial class MainWindow : Window
 
             case "HIT":
                 var hitData = eventValue.Split(',');
-                if (hitData.Length >= 2 && int.TryParse(hitData[0], out var ledHit) && int.TryParse(hitData[1], out var points))
+                if (hitData.Length >= 2 && int.TryParse(hitData[0], out var ledHit) && int.TryParse(hitData[1], out var hitTotalScore))
                 {
-                    _score += points;
+                    var pointsEarned = hitTotalScore - _score;
+                    _score = hitTotalScore; // Sync with Arduino score
                     HighlightLed(ledHit);
-                    StatusText.Text = $"🎯 Acerto! +{points} pontos";
+                    StatusText.Text = $"🎯 Acertou LED {ledHit}! +{pointsEarned} pontos (Total: {_score})";
                     UpdateUI();
+                    AddDebugMessage($"Acerto no LED {ledHit}, pontuação sincronizada: {_score}");
                 }
                 break;
 
             case "MISS":
-                StatusText.Text = "❌ Errou! Tente novamente.";
+                StatusText.Text = "❌ Muito lento! O LED apagou sozinho.";
+                break;
+
+            case "LED_ON":
+                if (int.TryParse(eventValue, out var ledOnIndex))
+                {
+                    HighlightLed(ledOnIndex);
+                    AddDebugMessage($"LED {ledOnIndex} aceso");
+                }
+                break;
+
+            case "LED_OFF":
+                if (int.TryParse(eventValue, out var ledOffIndex))
+                {
+                    RestoreLedColor(ledOffIndex);
+                    AddDebugMessage($"LED {ledOffIndex} apagado");
+                }
+                break;
+
+            case "WRONG_KEY":
+                if (int.TryParse(eventValue, out var wrongKey))
+                {
+                    StatusText.Text = $"❌ Tecla errada! Pressionou {wrongKey}, mas deveria ser outro LED.";
+                    AddDebugMessage($"Tecla incorreta pressionada: {wrongKey}");
+                }
+                break;
+
+            case "LEVEL_UP":
+                var levelData = eventValue.Split(',');
+                if (levelData.Length >= 1 && int.TryParse(levelData[0], out var level))
+                {
+                    _level = level;
+                    if (levelData.Length >= 2 && int.TryParse(levelData[1], out var score))
+                    {
+                        _score = score;
+                    }
+                    StatusText.Text = $"🆙 NÍVEL {level}! Dificuldade aumentada! Pontuação: {_score}";
+                    UpdateUI();
+                    AddDebugMessage($"Level up: {level}, Score: {_score}");
+                }
+                break;
+
+            case "GAME_STARTED":
+                if (int.TryParse(eventValue, out var gameMode))
+                {
+                    _currentGameMode = gameMode;
+                    _gameActive = true;
+                    StartGameButton.IsEnabled = false;
+                    StopGameButton.IsEnabled = true;
+                    StatusText.Text = "🎮 Jogo iniciado! Boa sorte!";
+                    AddDebugMessage($"Jogo iniciado: modo {gameMode}");
+                    UpdateUI();
+                }
+                break;
+
+            case "KEY_RELEASED":
+                if (int.TryParse(eventValue, out var releasedKey))
+                {
+                    AddDebugMessage($"Tecla {releasedKey} liberada");
+                }
+                break;
+
+            case "METEOR_HIT":
+                if (int.TryParse(eventValue, out var meteorPos))
+                {
+                    StatusText.Text = "💥 IMPACTO! Um meteoro te atingiu! Game Over!";
+                    HighlightLed(meteorPos);
+                    AddDebugMessage($"Meteoro atingiu posição: {meteorPos}");
+                }
+                break;
+
+            case "NOTE_HIT":
+                var noteHitData = eventValue.Split(',');
+                if (noteHitData.Length >= 1 && int.TryParse(noteHitData[0], out var column))
+                {
+                    var pointsEarned = 10;
+                    if (noteHitData.Length >= 2 && int.TryParse(noteHitData[1], out var noteTotalScore))
+                    {
+                        pointsEarned = noteTotalScore - _score;
+                        _score = noteTotalScore;
+                    }
+                    else
+                    {
+                        _score += pointsEarned;
+                    }
+                    StatusText.Text = $"🎵 NOTA PERFEITA! Coluna {column} +{pointsEarned} pontos (Total: {_score})";
+                    UpdateUI();
+                    AddDebugMessage($"Nota acertada coluna {column}, pontuação: {_score}");
+                }
+                break;
+
+            case "NOTE_MISS":
+                StatusText.Text = "🎵 Nota perdida! Muito cedo ou muito tarde. Siga o ritmo!";
                 break;
 
             case "SEQUENCE_START":
-                StatusText.Text = "👀 Observe a sequência...";
+                StatusText.Text = "👀 ATENÇÃO! Memorize a sequência de LEDs que vai piscar...";
                 break;
 
             case "SEQUENCE_REPEAT":
-                StatusText.Text = "🔄 Agora repita a sequência!";
+                StatusText.Text = "🔄 Sua vez! Repita a sequência na mesma ordem.";
                 break;
 
             case "PLAYER_MOVE":
@@ -334,16 +434,16 @@ public partial class MainWindow : Window
                 var roletaData = eventValue.Split(',');
                 if (roletaData.Length >= 2)
                 {
-                    StatusText.Text = $"🎲 Rodada {roletaData[0]} - Multiplicador: {roletaData[1]}x";
+                    StatusText.Text = $"🎲 Roleta Russa - Rodada {roletaData[0]} | Multiplicador: {roletaData[1]}x | Escolha um LED!";
                 }
                 break;
 
             case "ROLETA_SAFE":
-                StatusText.Text = "💚 SEGURO! Você sobreviveu! Continuar?";
+                StatusText.Text = "💚 SEGURO! Parabéns! Pontuação multiplicada. Continuar para próxima rodada?";
                 break;
 
             case "ROLETA_EXPLODE":
-                StatusText.Text = "💥 BOOM! Você perdeu tudo!";
+                StatusText.Text = "💥 EXPLODIU! Era o LED com bomba. Perdeu toda a pontuação!";
                 ClearLedMatrix();
                 break;
 
@@ -356,51 +456,51 @@ public partial class MainWindow : Window
                 var lightningData = eventValue.Split(',');
                 if (lightningData.Length >= 2)
                 {
-                    StatusText.Text = $"⚡ Memorize! {lightningData[0]} LEDs por {lightningData[1]}ms";
+                    StatusText.Text = $"⚡ Lightning Strike! Memorize {lightningData[0]} LEDs em apenas {lightningData[1]}ms!";
                 }
                 break;
 
             case "LIGHTNING_INPUT_START":
-                StatusText.Text = "⚡ AGORA! Reproduza o padrão!";
+                StatusText.Text = "⚡ RÁPIDO! Reproduza o padrão que você viu na ordem correta!";
                 break;
 
             case "LIGHTNING_COMPLETE":
-                StatusText.Text = "⚡ Correto! Preparando próximo nível...";
+                StatusText.Text = "⚡ PERFEITO! Reflexos incríveis! Próximo nível será mais difícil...";
                 break;
 
             case "LIGHTNING_WRONG":
-                StatusText.Text = "❌ Sequência errada! Padrão correto mostrado.";
+                StatusText.Text = "❌ Errou! O padrão correto está sendo mostrado agora. Game Over!";
                 break;
 
             // Sniper Mode Events
             case "SNIPER_TARGET_SPAWN":
-                StatusText.Text = "🎯 ALVO! Atire rápido!";
+                StatusText.Text = "🎯 ALVO À VISTA! Você tem 0.1 segundo para atirar!";
                 break;
 
             case "SNIPER_HIT":
                 var sniperData = eventValue.Split(',');
                 if (sniperData.Length >= 2)
                 {
-                    StatusText.Text = $"🎯 ACERTO! {sniperData[0]}/10 - {sniperData[1]}ms";
+                    StatusText.Text = $"🎯 TIRO CERTEIRO! Acertos: {sniperData[0]}/10 | Tempo: {sniperData[1]}ms";
                 }
                 break;
 
             case "SNIPER_MISS":
-                StatusText.Text = "❌ Errou o alvo! Tente novamente.";
+                StatusText.Text = "❌ Tiro errado! Mirou no lugar errado ou muito devagar.";
                 break;
 
             case "SNIPER_TIMEOUT":
-                StatusText.Text = "⏰ Muito lento! Perdeu o alvo.";
+                StatusText.Text = "⏰ MUITO LENTO! O alvo desapareceu antes de você atirar.";
                 break;
 
             case "SNIPER_VICTORY":
-                StatusText.Text = "🏆 IMPOSSÍVEL! Você é um atirador de elite!";
+                StatusText.Text = "🏆 LEGENDÁRIO! 10/10 acertos! Você é um sniper de elite!";
                 break;
 
             case "COMBO":
                 if (int.TryParse(eventValue, out var comboCount))
                 {
-                    StatusText.Text = $"🔥 COMBO x{comboCount}!";
+                    StatusText.Text = $"🔥 COMBO x{comboCount}! Pontuação multiplicada!";
                 }
                 break;
 
@@ -418,6 +518,96 @@ public partial class MainWindow : Window
                     StatusText.Text = $"⚡ Tempo de reação: {reactionMs}ms";
                 }
                 break;
+
+            // Additional missing events
+            case "TARGET_MISSED":
+                StatusText.Text = "❌ Alvo perdido! Muito devagar.";
+                break;
+
+            case "SPEED_BONUS":
+                if (int.TryParse(eventValue, out var bonus))
+                {
+                    _score += bonus;
+                    StatusText.Text = $"🚀 BÔNUS DE VELOCIDADE! +{bonus} pontos extras!";
+                    UpdateUI();
+                }
+                break;
+
+            case "PENALTY":
+                if (int.TryParse(eventValue, out var penalty))
+                {
+                    _score = Math.Max(0, _score - penalty);
+                    StatusText.Text = $"⚠️ Penalidade! -{penalty} pontos";
+                    UpdateUI();
+                }
+                break;
+
+            case "COUNTDOWN":
+                StatusText.Text = $"⏰ {eventValue}";
+                break;
+
+            case "ROUND_COMPLETE":
+                StatusText.Text = "✅ Rodada completa! Preparando próxima...";
+                break;
+
+            case "TIME_WARNING":
+                StatusText.Text = "⚠️ ATENÇÃO! Tempo acabando!";
+                break;
+
+            case "BONUS_ROUND":
+                StatusText.Text = "⭐ RODADA BÔNUS! Pontuação dobrada!";
+                break;
+
+            case "NEW_RECORD":
+                StatusText.Text = "🏆 NOVO RECORDE! Parabéns!";
+                break;
+
+            case "STREAK":
+                if (int.TryParse(eventValue, out var streak))
+                {
+                    StatusText.Text = $"🔥 SEQUÊNCIA! {streak} acertos consecutivos!";
+                }
+                break;
+
+            case "DIFFICULTY_UP":
+                StatusText.Text = "📈 Dificuldade aumentada! Prepare-se!";
+                break;
+
+            // Handle simple status messages without parameters
+            case "READY":
+                StatusText.Text = "🟢 Arduino pronto! Selecione um jogo e aperte Iniciar.";
+                break;
+
+            default:
+                AddDebugMessage($"Evento desconhecido: {eventType} = {eventValue}");
+                break;
+        }
+    }
+
+    private void PopulateGameModeComboBox()
+    {
+        GameModeComboBox.Items.Clear();
+        
+        var games = new[]
+        {
+            new { Id = 1, Name = "🎯 Pega-Luz", Description = "Reflexos rápidos" },
+            new { Id = 2, Name = "🧠 Sequência Maluca", Description = "Memória" },
+            new { Id = 3, Name = "🐱 Gato e Rato", Description = "Perseguição" },
+            new { Id = 4, Name = "☄️ Esquiva Meteoros", Description = "Sobrevivência" },
+            new { Id = 5, Name = "🎸 Guitar Hero", Description = "Ritmo" },
+            new { Id = 6, Name = "🎲 Roleta Russa", Description = "Sorte e Coragem" },
+            new { Id = 7, Name = "⚡ Lightning Strike", Description = "Velocidade Extrema" },
+            new { Id = 8, Name = "🎯 Sniper Mode", Description = "Precisão Máxima" }
+        };
+
+        foreach (var game in games)
+        {
+            var item = new ComboBoxItem
+            {
+                Content = game.Name,
+                Tag = game.Id
+            };
+            GameModeComboBox.Items.Add(item);
         }
     }
 
@@ -434,7 +624,10 @@ public partial class MainWindow : Window
         if (_currentGameMode > 0 && _currentGameMode <= _gameDescriptions.Count)
         {
             var gameNames = new[] { "", "Pega-Luz", "Sequência Maluca", "Gato e Rato", "Esquiva Meteoros", "Guitar Hero", "Roleta Russa", "Lightning Strike", "Sniper Mode" };
-            CurrentGameText.Text = gameNames[_currentGameMode];
+            if (_currentGameMode < gameNames.Length)
+            {
+                CurrentGameText.Text = gameNames[_currentGameMode];
+            }
         }
     }
 

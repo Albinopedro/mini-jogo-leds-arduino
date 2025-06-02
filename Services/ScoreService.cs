@@ -72,10 +72,10 @@ namespace miniJogo.Services
                 .ToList();
         }
 
-        public List<PlayerScore> GetHighScores(GameMode gameMode, int count = 10)
+        public List<PlayerScore> GetHighScores(Models.GameMode gameMode, int count = 10)
         {
             return _scores
-                .Where(s => s.Game == gameMode)
+                .Where(s => s.Game.Equals(gameMode))
                 .OrderByDescending(s => s.Score)
                 .ThenByDescending(s => s.Level)
                 .ThenBy(s => s.Duration)
@@ -83,13 +83,13 @@ namespace miniJogo.Services
                 .ToList();
         }
 
-        public List<PlayerScore> GetPlayerScores(string playerName, GameMode? gameMode = null)
+        public List<PlayerScore> GetPlayerScores(string playerName, Models.GameMode? gameMode = null)
         {
             var query = _scores.Where(s => s.PlayerName.Equals(playerName, StringComparison.OrdinalIgnoreCase));
             
             if (gameMode.HasValue)
             {
-                query = query.Where(s => s.Game == gameMode.Value);
+                query = query.Where(s => s.Game.Equals(gameMode.Value));
             }
             
             return query
@@ -102,16 +102,16 @@ namespace miniJogo.Services
             return _scores.OrderByDescending(s => s.Date).ToList();
         }
 
-        public Dictionary<GameMode, PlayerScore> GetBestScoresByGame()
+        public Dictionary<Models.GameMode, PlayerScore> GetBestScoresByGame()
         {
-            var result = new Dictionary<GameMode, PlayerScore>();
+            var result = new Dictionary<Models.GameMode, PlayerScore>();
             
-            foreach (GameMode game in Enum.GetValues<GameMode>())
+            foreach (Models.GameMode game in Enum.GetValues<Models.GameMode>())
             {
-                if (game == GameMode.Menu) continue;
+                if (game == Models.GameMode.Menu) continue;
                 
                 var bestScore = _scores
-                    .Where(s => s.Game == game)
+                    .Where(s => s.Game.Equals(game))
                     .OrderByDescending(s => s.Score)
                     .ThenByDescending(s => s.Level)
                     .ThenBy(s => s.Duration)
@@ -148,16 +148,16 @@ namespace miniJogo.Services
             };
 
             // Game-specific stats
-            foreach (GameMode game in Enum.GetValues<GameMode>())
+            foreach (Models.GameMode game in Enum.GetValues<Models.GameMode>())
             {
-                if (game == GameMode.Menu) continue;
+                if (game == Models.GameMode.Menu) continue;
                 
-                var gameScores = playerScores.Where(s => s.Game == game).ToList();
+                var gameScores = playerScores.Where(s => s.Game.Equals(game)).ToList();
                 if (gameScores.Any())
                 {
                     stats.GameStats[game] = new GameStats
                     {
-                        GamesPlayed = gameScores.Count,
+                        GamesPlayed = gameScores.Count(),
                         BestScore = gameScores.Max(s => s.Score),
                         AverageScore = gameScores.Average(s => s.Score),
                         BestLevel = gameScores.Max(s => s.Level),
@@ -262,7 +262,7 @@ namespace miniJogo.Services
         public TimeSpan TotalPlayTime { get; set; }
         public DateTime FirstGameDate { get; set; }
         public DateTime LastGameDate { get; set; }
-        public Dictionary<GameMode, GameStats> GameStats { get; set; } = new();
+        public Dictionary<Models.GameMode, GameStats> GameStats { get; set; } = new();
 
         public string FormattedTotalPlayTime => $"{TotalPlayTime:hh\\:mm\\:ss}";
         public string FormattedAverageScore => $"{AverageScore:F1}";

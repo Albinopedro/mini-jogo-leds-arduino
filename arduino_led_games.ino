@@ -163,6 +163,7 @@ void processSerialCommands() {
     if (command.startsWith("START_GAME:")) startGame((GameMode)command.substring(11).toInt());
     else if (command == "STOP_GAME") stopGame();
     else if (command.startsWith("KEY_PRESS:")) handleKeyPress(command.substring(10).toInt());
+    else if (command.startsWith("KEY_RELEASE:")) handleKeyRelease(command.substring(12).toInt());
     else if (command == "INIT") Serial.println("READY");
     else if (command == "DISCONNECT") clearAllLEDs();
   }
@@ -707,6 +708,13 @@ void handleKeyPress(int key) {
     case SNIPER_MODE: handleSniperModeKey(key); break;
     default: break;
   }
+}
+
+void handleKeyRelease(int key) {
+  if (!game.gameActive || key < 0 || key >= NUM_LEDS) return;
+  // Most games don't need key release handling, but some might
+  // For now, just acknowledge the release
+  sendGameEvent("KEY_RELEASED", key);
 }
 
 void startGame(GameMode mode) {
