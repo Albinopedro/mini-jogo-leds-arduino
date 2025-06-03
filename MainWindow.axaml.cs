@@ -30,7 +30,7 @@ public partial class MainWindow : Window
     private DateTime _gameStartTime;
     private ScoreService _scoreService;
     private DebugWindow? _debugWindow;
-    private bool _isFullScreen = false;
+    private bool _isFullScreen = true;
     private User _currentUser;
     private bool _isClientMode = false;
 
@@ -85,12 +85,115 @@ public partial class MainWindow : Window
         
         ConfigureInterfaceForUser(selectedGameMode);
         
+        // Start in fullscreen
+        WindowState = WindowState.FullScreen;
+        _isFullScreen = true;
+        
         RefreshPorts();
         
         // Auto-connect for clients
         if (_isClientMode)
         {
             _ = Task.Run(AutoConnectArduino);
+        }
+    }
+
+    public class CodeGeneratorDialog : Window
+    {
+        private NumericUpDown _countInput;
+
+        public CodeGeneratorDialog()
+        {
+            Title = "Gerar Códigos de Cliente";
+            Width = 450;
+            Height = 300;
+            WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            CanResize = false;
+            Background = new SolidColorBrush(Color.FromRgb(26, 32, 44));
+
+            var stack = new StackPanel
+            {
+                Margin = new Avalonia.Thickness(30),
+                Spacing = 25
+            };
+
+            stack.Children.Add(new TextBlock
+            {
+                Text = "📄 Gerador de Códigos de Cliente",
+                FontSize = 20,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+            });
+
+            stack.Children.Add(new TextBlock
+            {
+                Text = "Quantos códigos deseja gerar para impressão?",
+                FontSize = 16,
+                Foreground = new SolidColorBrush(Color.FromRgb(203, 213, 224)),
+                TextAlignment = Avalonia.Media.TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap
+            });
+
+            _countInput = new NumericUpDown
+            {
+                Minimum = 1,
+                Maximum = 10000,
+                Value = 50,
+                Increment = 10,
+                ShowButtonSpinner = true,
+                Padding = new Avalonia.Thickness(15),
+                FontSize = 18,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
+            };
+            stack.Children.Add(_countInput);
+
+            stack.Children.Add(new TextBlock
+            {
+                Text = "💡 Os códigos serão salvos em um arquivo de texto formatado e pronto para impressão e corte em bilhetes individuais.",
+                FontSize = 13,
+                Foreground = new SolidColorBrush(Color.FromRgb(160, 174, 192)),
+                TextAlignment = Avalonia.Media.TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap
+            });
+
+            var buttonPanel = new StackPanel
+            {
+                Orientation = Avalonia.Layout.Orientation.Horizontal,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                Spacing = 20
+            };
+
+            var generateButton = new Button
+            {
+                Content = "✅ Gerar Códigos",
+                Padding = new Avalonia.Thickness(25, 12),
+                Background = new SolidColorBrush(Color.FromRgb(56, 161, 105)),
+                Foreground = Brushes.White,
+                CornerRadius = new Avalonia.CornerRadius(8),
+                FontWeight = FontWeight.Medium
+            };
+            generateButton.Click += (s, e) =>
+            {
+                Close((int)_countInput.Value);
+            };
+
+            var cancelButton = new Button
+            {
+                Content = "❌ Cancelar",
+                Padding = new Avalonia.Thickness(25, 12),
+                Background = new SolidColorBrush(Color.FromRgb(229, 62, 62)),
+                Foreground = Brushes.White,
+                CornerRadius = new Avalonia.CornerRadius(8),
+                FontWeight = FontWeight.Medium
+            };
+            cancelButton.Click += (s, e) => Close();
+
+            buttonPanel.Children.Add(generateButton);
+            buttonPanel.Children.Add(cancelButton);
+            stack.Children.Add(buttonPanel);
+
+            Content = stack;
         }
     }
 
@@ -149,6 +252,8 @@ public partial class MainWindow : Window
             // Hide admin features for clients
             OpenDebugButton.IsVisible = false;
             SettingsButton.IsVisible = false;
+            GenerateCodesButton.IsVisible = false;
+            LogoutButton.IsVisible = false;
             
             // Hide manual connection controls
             RefreshPortsButton.IsVisible = false;
@@ -161,13 +266,150 @@ public partial class MainWindow : Window
         }
         else
         {
-            // Admin has access to everything
+            // Admin has access to everything including new buttons
+            GenerateCodesButton.IsVisible = true;
+            LogoutButton.IsVisible = true;
             StatusText.Text = "🔧 Modo Administrador - Acesso completo ativado";
         }
         
         // Set game description
         GameDescriptionText.Text = GetGameDescription(selectedGameMode);
         CurrentGameText.Text = GetGameName(selectedGameMode);
+    }
+
+    private async void LogoutButton_Click(object? sender, RoutedEventArgs e)
+    {
+        // Stop any active games
+        if (_gameActive)
+        {
+            StopGameButton_Click(null, new RoutedEventArgs());
+        }
+
+        // Disconnect Arduino
+        if (_serialPort?.IsOpen == true)
+        {
+            _serialPort.Close();
+            _serialPort = null;
+        }
+
+        // Show confirmation dialog
+        var result = await ShowConfirmDialog("Logout", "Tem certeza que deseja fazer logout?\nO jogo será fechado e você retornará à tela de login.");
+        
+        if (result)
+        {
+            // Close current window and show login again
+            var loginWindow = new Views.LoginWindow();
+            loginWindow.Show();
+            this.Close();
+        }
+    }
+
+    private async void GenerateCodesButton_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_currentUser?.Type != UserType.Admin)
+        {
+            await ShowMessage("Acesso Negado", "Apenas administradores podem gerar códigos de cliente.");
+            return;
+        }
+
+        try
+        {
+            var dialog = new CodeGeneratorDialog();
+            var result = await dialog.ShowDialog<int?>(this);
+            
+            if (result.HasValue && result.Value > 0)
+            {
+                var authService = new AuthService();
+                var codes = authService.GenerateClientCodes(result.Value);
+                var fileName = $"bilhetes_jogo_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+                authService.SaveCodesToFile(codes, fileName);
+                
+                await ShowMessage("Códigos Gerados", $"✅ {codes.Count} códigos gerados com sucesso!\n\nArquivo salvo: {fileName}\n\nOs códigos estão prontos para impressão e corte em bilhetes.");
+                AddDebugMessage($"Admin gerou {codes.Count} códigos de cliente. Arquivo: {fileName}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowMessage("Erro", $"Erro ao gerar códigos: {ex.Message}");
+            AddDebugMessage($"Erro na geração de códigos: {ex.Message}");
+        }
+    }
+
+    private async Task<bool> ShowConfirmDialog(string title, string message)
+    {
+        var confirmWindow = new Window
+        {
+            Title = title,
+            Width = 450,
+            Height = 250,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Background = new SolidColorBrush(Color.FromRgb(26, 32, 44))
+        };
+
+        var stackPanel = new StackPanel { Margin = new Avalonia.Thickness(30), Spacing = 20 };
+
+        stackPanel.Children.Add(new TextBlock
+        {
+            Text = message,
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = Brushes.White,
+            FontSize = 16,
+            TextAlignment = Avalonia.Media.TextAlignment.Center
+        });
+
+        var buttonPanel = new StackPanel
+        {
+            Orientation = Avalonia.Layout.Orientation.Horizontal,
+            HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+            Spacing = 20
+        };
+
+        var yesButton = new Button
+        {
+            Content = "✅ Sim",
+            Padding = new Avalonia.Thickness(20, 10),
+            Background = new SolidColorBrush(Color.FromRgb(229, 62, 62)),
+            Foreground = Brushes.White,
+            CornerRadius = new Avalonia.CornerRadius(8)
+        };
+
+        var noButton = new Button
+        {
+            Content = "❌ Não",
+            Padding = new Avalonia.Thickness(20, 10),
+            Background = new SolidColorBrush(Color.FromRgb(74, 85, 104)),
+            Foreground = Brushes.White,
+            CornerRadius = new Avalonia.CornerRadius(8)
+        };
+
+        bool result = false;
+        yesButton.Click += (s, e) => { result = true; confirmWindow.Close(); };
+        noButton.Click += (s, e) => { result = false; confirmWindow.Close(); };
+
+        buttonPanel.Children.Add(yesButton);
+        buttonPanel.Children.Add(noButton);
+        stackPanel.Children.Add(buttonPanel);
+
+        confirmWindow.Content = stackPanel;
+        await confirmWindow.ShowDialog(this);
+
+        return result;
+    }
+
+    private string GetGameName(int gameMode)
+    {
+        return gameMode switch
+        {
+            1 => "🎯 Pega-Luz",
+            2 => "🧠 Sequência Maluca", 
+            3 => "🐱 Gato e Rato",
+            4 => "☄️ Esquiva Meteoros",
+            5 => "🎸 Guitar Hero",
+            6 => "🎲 Roleta Russa",
+            7 => "⚡ Lightning Strike",
+            8 => "🎯 Sniper Mode",
+            _ => "Nenhum"
+        };
     }
 
     private async Task AutoConnectArduino()
@@ -1554,22 +1796,6 @@ O Arduino possui animações épicas para:
         return _gameDescriptions.TryGetValue(gameMode, out var description) 
             ? description 
             : "Selecione um jogo para ver a descrição...";
-    }
-
-    private string GetGameName(int gameMode)
-    {
-        return gameMode switch
-        {
-            1 => "🎯 Pega-Luz",
-            2 => "🧠 Sequência Maluca", 
-            3 => "🐱 Gato e Rato",
-            4 => "☄️ Esquiva Meteoros",
-            5 => "🎸 Guitar Hero",
-            6 => "🎲 Roleta Russa",
-            7 => "⚡ Lightning Strike",
-            8 => "🎯 Sniper Mode",
-            _ => "Nenhum"
-        };
     }
 
     private async Task ShowMessage(string title, string message)

@@ -13,6 +13,7 @@
     MinWidth="1000"
     MinHeight="600"
     WindowStartupLocation="CenterScreen"
+    WindowState="FullScreen"
     KeyDown="Window_KeyDown"
     KeyUp="Window_KeyUp"
     Focusable="True"
@@ -551,6 +552,28 @@
                             FontWeight="Medium"
                             Background="#805AD5"
                             Foreground="White"
+                        />
+            <Button
+                            x:Name="GenerateCodesButton"
+                            Content="📄 Gerar Códigos"
+                            Click="GenerateCodesButton_Click"
+                            Padding="15,8"
+                            CornerRadius="8"
+                            FontWeight="Medium"
+                            Background="#38A169"
+                            Foreground="White"
+                            IsVisible="False"
+                        />
+            <Button
+                            x:Name="LogoutButton"
+                            Content="🚪 Logout"
+                            Click="LogoutButton_Click"
+                            Padding="15,8"
+                            CornerRadius="8"
+                            FontWeight="Medium"
+                            Background="#E53E3E"
+                            Foreground="White"
+                            IsVisible="False"
                         />
 
           </StackPanel>

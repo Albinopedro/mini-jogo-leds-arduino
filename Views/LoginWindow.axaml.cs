@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
@@ -7,14 +8,17 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using miniJogo.Models.Auth;
 using miniJogo.Services;
+using miniJogo.Models;
 
 namespace miniJogo.Views
 {
     public partial class LoginWindow : Window
     {
         private AuthService _authService;
+        private ScoreService _scoreService;
         private User? _currentUser;
         private int _selectedGameMode = 1;
+        private bool _isFullScreen = true;
 
         public User? AuthenticatedUser => _currentUser;
         public int SelectedGameMode => _selectedGameMode;
@@ -23,7 +27,13 @@ namespace miniJogo.Views
         {
             InitializeComponent();
             _authService = new AuthService();
+            _scoreService = new ScoreService();
             InitializeGameModeSelector();
+            LoadRankings();
+            
+            // Start in fullscreen
+            WindowState = WindowState.FullScreen;
+            _isFullScreen = true;
             
             // Focus on name field initially
             NameTextBox.Focus();
@@ -35,6 +45,164 @@ namespace miniJogo.Views
             _selectedGameMode = 1;
             GameModeComboBox.SelectedIndex = 0;
             UpdateGameInstructions(1);
+        }
+
+        private void LoadRankings()
+        {
+            try
+            {
+                var allScores = _scoreService.GetAllScores();
+                var topScores = allScores
+                    .OrderByDescending(s => s.Score)
+                    .Take(10)
+                    .ToList();
+
+                RankingsPanel.Children.Clear();
+
+                if (topScores.Any())
+                {
+                    for (int i = 0; i < topScores.Count; i++)
+                    {
+                        var score = topScores[i];
+                        var rankBorder = CreateRankingItem(i + 1, score.PlayerName, score.Score, 1);
+                        RankingsPanel.Children.Add(rankBorder);
+                    }
+                }
+                else
+                {
+                    var noDataBorder = new Border
+                    {
+                        Background = new SolidColorBrush(Color.FromRgb(74, 85, 104)),
+                        CornerRadius = new Avalonia.CornerRadius(8),
+                        Padding = new Avalonia.Thickness(15)
+                    };
+
+                    var noDataText = new TextBlock
+                    {
+                        Text = "Nenhum ranking disponível ainda.\nSeja o primeiro a jogar!",
+                        Foreground = new SolidColorBrush(Color.FromRgb(203, 213, 224)),
+                        TextAlignment = Avalonia.Media.TextAlignment.Center,
+                        FontSize = 14
+                    };
+
+                    noDataBorder.Child = noDataText;
+                    RankingsPanel.Children.Add(noDataBorder);
+                }
+            }
+            catch
+            {
+                // If no rankings available, show placeholder
+                RankingsPanel.Children.Clear();
+                var errorBorder = new Border
+                {
+                    Background = new SolidColorBrush(Color.FromRgb(74, 85, 104)),
+                    CornerRadius = new Avalonia.CornerRadius(8),
+                    Padding = new Avalonia.Thickness(15)
+                };
+
+                var errorText = new TextBlock
+                {
+                    Text = "Rankings serão exibidos\napós as primeiras partidas!",
+                    Foreground = new SolidColorBrush(Color.FromRgb(203, 213, 224)),
+                    TextAlignment = Avalonia.Media.TextAlignment.Center,
+                    FontSize = 14
+                };
+
+                errorBorder.Child = errorText;
+                RankingsPanel.Children.Add(errorBorder);
+            }
+        }
+
+        private Border CreateRankingItem(int position, string playerName, int score, int gameMode)
+        {
+            var border = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(74, 85, 104)),
+                CornerRadius = new Avalonia.CornerRadius(8),
+                Padding = new Avalonia.Thickness(15)
+            };
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+            grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+            grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+
+            // Position emoji
+            var positionEmoji = position switch
+            {
+                1 => "🥇",
+                2 => "🥈", 
+                3 => "🥉",
+                _ => $"{position}°"
+            };
+
+            var positionText = new TextBlock
+            {
+                Text = positionEmoji,
+                FontSize = 18,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+
+            // Player info
+            var playerStack = new StackPanel
+            {
+                Margin = new Avalonia.Thickness(10, 0)
+            };
+
+            var nameText = new TextBlock
+            {
+                Text = playerName,
+                Foreground = Brushes.White,
+                FontWeight = FontWeight.Medium,
+                FontSize = 14
+            };
+
+            var gameText = new TextBlock
+            {
+                Text = GetGameName(gameMode),
+                Foreground = new SolidColorBrush(Color.FromRgb(203, 213, 224)),
+                FontSize = 11
+            };
+
+            playerStack.Children.Add(nameText);
+            playerStack.Children.Add(gameText);
+
+            // Score
+            var scoreText = new TextBlock
+            {
+                Text = score.ToString("N0"),
+                Foreground = new SolidColorBrush(Color.FromRgb(226, 232, 240)),
+                FontWeight = FontWeight.Bold,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                FontSize = 16
+            };
+
+            Grid.SetColumn(positionText, 0);
+            Grid.SetColumn(playerStack, 1);
+            Grid.SetColumn(scoreText, 2);
+
+            grid.Children.Add(positionText);
+            grid.Children.Add(playerStack);
+            grid.Children.Add(scoreText);
+
+            border.Child = grid;
+            return border;
+        }
+
+        private string GetGameName(int gameMode)
+        {
+            return gameMode switch
+            {
+                1 => "🎯 Pega-Luz",
+                2 => "🧠 Sequência Maluca",
+                3 => "🐱 Gato e Rato", 
+                4 => "☄️ Esquiva Meteoros",
+                5 => "🎸 Guitar Hero",
+                6 => "🎲 Roleta Russa",
+                7 => "⚡ Lightning Strike",
+                8 => "🎯 Sniper Mode",
+                _ => "Desconhecido"
+            };
         }
 
         private void NameTextBox_KeyDown(object? sender, KeyEventArgs e)
@@ -181,21 +349,54 @@ namespace miniJogo.Views
             }
         }
 
+        private void Window_KeyDown(object? sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F11)
+            {
+                ToggleFullScreen();
+                e.Handled = true;
+            }
+        }
+
+        private void ToggleFullScreen()
+        {
+            try
+            {
+                if (_isFullScreen)
+                {
+                    // Exit full-screen
+                    WindowState = WindowState.Normal;
+                    _isFullScreen = false;
+                }
+                else
+                {
+                    // Enter full-screen
+                    WindowState = WindowState.FullScreen;
+                    _isFullScreen = true;
+                }
+            }
+            catch
+            {
+                // Ignore fullscreen errors
+            }
+        }
+
         private void UpdateGameInstructions(int gameMode)
         {
-            var instructions = gameMode switch
+            var (title, instructions) = gameMode switch
             {
-                1 => "🎯 PEGA-LUZ:\n• Pressione 0-9, A-F quando o LED acender\n• Seja rápido! LEDs apagam sozinhos\n• +10 pontos por acerto\n• +5 pontos por velocidade",
-                2 => "🧠 SEQUÊNCIA MALUCA:\n• Observe a sequência de LEDs\n• Repita pressionando 0-9, A-F\n• Cada nível adiciona +1 LED\n• Erro = Game Over",
-                3 => "🐱 GATO E RATO:\n• Use setas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas azuis\n• +20 pontos por captura",
-                4 => "☄️ ESQUIVA METEOROS:\n• Use ↑↓←→ para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo",
-                5 => "🎸 GUITAR HERO:\n• Pressione 0-9, A-F no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental",
-                6 => "🎲 ROLETA RUSSA:\n• Escolha um LED pressionando 0-9, A-F\n• Multiplicador: 2x, 4x, 8x, 16x...\n• Acerte = continua com multiplicador maior\n• Erre = perde TODA a pontuação!",
-                7 => "⚡ LIGHTNING STRIKE:\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo de exibição diminui por nível\n• Erro = Game Over instantâneo",
-                8 => "🎯 SNIPER MODE:\n• Alvos piscam por apenas 0.1 segundo\n• Pressione a tecla exata no tempo\n• 10 acertos = vitória impossível\n• Bônus x10 se completar!",
-                _ => "Selecione um jogo para ver as instruções..."
+                1 => ("🎯 Pega-Luz", "🎯 PEGA-LUZ:\n\n• Pressione 0-9, A-F quando o LED acender\n• Seja rápido! LEDs apagam sozinhos\n• +10 pontos por acerto\n• +5 pontos por velocidade\n\n⌨️ Controles:\nTeclas 0-9, A-F = LEDs da matriz\n\n🎯 Objetivo:\nConseguir a maior pontuação possível!"),
+                2 => ("🧠 Sequência Maluca", "🧠 SEQUÊNCIA MALUCA:\n\n• Observe a sequência de LEDs\n• Repita pressionando 0-9, A-F\n• Cada nível adiciona +1 LED\n• Erro = Game Over\n\n⌨️ Controles:\nTeclas 0-9, A-F = LEDs da matriz\n\n🎯 Objetivo:\nMemoizar sequências cada vez maiores!"),
+                3 => ("🐱 Gato e Rato", "🐱 GATO E RATO:\n\n• Use setas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas azuis\n• +20 pontos por captura\n\n⌨️ Controles:\nSetas ↑↓←→ = Movimento\n\n🎯 Objetivo:\nCapturar o máximo de ratos possível!"),
+                4 => ("☄️ Esquiva Meteoros", "☄️ ESQUIVA METEOROS:\n\n• Use ↑↓←→ para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo\n\n⌨️ Controles:\nSetas ↑↓←→ = Movimento\n\n🎯 Objetivo:\nSobreviver o máximo de tempo!"),
+                5 => ("🎸 Guitar Hero", "🎸 GUITAR HERO:\n\n• Pressione 0-9, A-F no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental\n\n⌨️ Controles:\nTeclas 0-9, A-F = Notas musicais\n\n🎯 Objetivo:\nTocar no ritmo perfeito!"),
+                6 => ("🎲 Roleta Russa", "🎲 ROLETA RUSSA:\n\n• Escolha um LED pressionando 0-9, A-F\n• Multiplicador: 2x, 4x, 8x, 16x...\n• Acerte = continua com multiplicador maior\n• Erre = perde TODA a pontuação!\n\n⌨️ Controles:\nTeclas 0-9, A-F = Escolha do LED\n\n🎯 Objetivo:\nArriscar para multiplicar pontos!"),
+                7 => ("⚡ Lightning Strike", "⚡ LIGHTNING STRIKE:\n\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo de exibição diminui por nível\n• Erro = Game Over instantâneo\n\n⌨️ Controles:\nTeclas 0-9, A-F = LEDs da matriz\n\n🎯 Objetivo:\nMemória e reflexos ultra-rápidos!"),
+                8 => ("🎯 Sniper Mode", "🎯 SNIPER MODE:\n\n• Alvos piscam por apenas 0.1 segundo\n• Pressione a tecla exata no tempo\n• 10 acertos = vitória impossível\n• Bônus x10 se completar!\n\n⌨️ Controles:\nTeclas 0-9, A-F = Mira precisa\n\n🎯 Objetivo:\nPrecisão absoluta em tempo mínimo!"),
+                _ => ("Selecione um Jogo", "Selecione um jogo na lista para ver as instruções detalhadas.")
             };
 
+            GameTitleText.Text = title;
             GameInstructionsText.Text = instructions;
         }
 
