@@ -519,8 +519,8 @@ namespace miniJogo.Views
             var messageWindow = new Window
             {
                 Title = title,
-                Width = 400,
-                Height = 200,
+                Width = 600,
+                Height = 400,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner
             };
 

@@ -36,7 +36,7 @@ public partial class MainWindow : Window
 
     // LED Matrix (4x4)
     private readonly Ellipse[,] _ledMatrix = new Ellipse[4, 4];
-    
+
     // LED auto-restore timer
     private readonly Dictionary<int, System.Threading.Timer> _ledTimers = new();
     private readonly object _ledTimersLock = new();
@@ -78,19 +78,19 @@ public partial class MainWindow : Window
         InitializeLedMatrix();
         InitializeTimer();
         _scoreService = new ScoreService();
-        
+
         // Set user and configure interface
         _currentUser = user ?? new User { Name = "Designer", Type = UserType.Admin };
         _isClientMode = _currentUser.Type == UserType.Client;
-        
+
         ConfigureInterfaceForUser(selectedGameMode);
-        
+
         // Start in fullscreen
         WindowState = WindowState.FullScreen;
         _isFullScreen = true;
-        
+
         RefreshPorts();
-        
+
         // Auto-connect for clients
         if (_isClientMode)
         {
@@ -105,34 +105,38 @@ public partial class MainWindow : Window
         public CodeGeneratorDialog()
         {
             Title = "Gerar Códigos de Cliente";
-            Width = 450;
-            Height = 300;
+            Width = 600;
+            Height = 450;
+            MinWidth = 500;
+            MinHeight = 400;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            CanResize = false;
+            CanResize = true;
             Background = new SolidColorBrush(Color.FromRgb(26, 32, 44));
 
             var stack = new StackPanel
             {
-                Margin = new Avalonia.Thickness(30),
-                Spacing = 25
+                Margin = new Avalonia.Thickness(40),
+                Spacing = 30
             };
 
             stack.Children.Add(new TextBlock
             {
                 Text = "📄 Gerador de Códigos de Cliente",
-                FontSize = 20,
+                FontSize = 24,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 0, 0, 10)
             });
 
             stack.Children.Add(new TextBlock
             {
                 Text = "Quantos códigos deseja gerar para impressão?",
-                FontSize = 16,
+                FontSize = 18,
                 Foreground = new SolidColorBrush(Color.FromRgb(203, 213, 224)),
                 TextAlignment = Avalonia.Media.TextAlignment.Center,
-                TextWrapping = TextWrapping.Wrap
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Avalonia.Thickness(0, 10, 0, 10)
             });
 
             _countInput = new NumericUpDown
@@ -142,36 +146,40 @@ public partial class MainWindow : Window
                 Value = 50,
                 Increment = 10,
                 ShowButtonSpinner = true,
-                Padding = new Avalonia.Thickness(15),
-                FontSize = 18,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
+                Padding = new Avalonia.Thickness(20),
+                FontSize = 20,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                Margin = new Avalonia.Thickness(50, 0, 50, 0)
             };
             stack.Children.Add(_countInput);
 
             stack.Children.Add(new TextBlock
             {
                 Text = "💡 Os códigos serão salvos em um arquivo de texto formatado e pronto para impressão e corte em bilhetes individuais.",
-                FontSize = 13,
+                FontSize = 15,
                 Foreground = new SolidColorBrush(Color.FromRgb(160, 174, 192)),
                 TextAlignment = Avalonia.Media.TextAlignment.Center,
-                TextWrapping = TextWrapping.Wrap
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Avalonia.Thickness(20, 15, 20, 15)
             });
 
             var buttonPanel = new StackPanel
             {
                 Orientation = Avalonia.Layout.Orientation.Horizontal,
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                Spacing = 20
+                Spacing = 30,
+                Margin = new Avalonia.Thickness(0, 20, 0, 0)
             };
 
             var generateButton = new Button
             {
                 Content = "✅ Gerar Códigos",
-                Padding = new Avalonia.Thickness(25, 12),
+                Padding = new Avalonia.Thickness(30, 15),
                 Background = new SolidColorBrush(Color.FromRgb(56, 161, 105)),
                 Foreground = Brushes.White,
                 CornerRadius = new Avalonia.CornerRadius(8),
-                FontWeight = FontWeight.Medium
+                FontWeight = FontWeight.Medium,
+                FontSize = 16
             };
             generateButton.Click += (s, e) =>
             {
@@ -181,11 +189,12 @@ public partial class MainWindow : Window
             var cancelButton = new Button
             {
                 Content = "❌ Cancelar",
-                Padding = new Avalonia.Thickness(25, 12),
+                Padding = new Avalonia.Thickness(30, 15),
                 Background = new SolidColorBrush(Color.FromRgb(229, 62, 62)),
                 Foreground = Brushes.White,
                 CornerRadius = new Avalonia.CornerRadius(8),
-                FontWeight = FontWeight.Medium
+                FontWeight = FontWeight.Medium,
+                FontSize = 16
             };
             cancelButton.Click += (s, e) => Close();
 
@@ -241,11 +250,11 @@ public partial class MainWindow : Window
     {
         // Set player name
         PlayerDisplayText.Text = $"👤 {(_isClientMode ? "Jogador" : "Admin")}: {_currentUser.Name}";
-        
+
         // Set initial game mode
         PopulateGameModeComboBox();
         GameModeComboBox.SelectedIndex = selectedGameMode - 1;
-        
+
         // Configure UI based on user type
         if (_isClientMode)
         {
@@ -254,13 +263,13 @@ public partial class MainWindow : Window
             SettingsButton.IsVisible = false;
             GenerateCodesButton.IsVisible = false;
             LogoutButton.IsVisible = false;
-            
+
             // Hide manual connection controls
             RefreshPortsButton.IsVisible = false;
-            
+
             // Set player name directly
             _playerName = _currentUser.Name;
-            
+
             // Update status
             StatusText.Text = $"🎮 Bem-vindo, {_currentUser.Name}! Conectando ao Arduino...";
         }
@@ -271,7 +280,7 @@ public partial class MainWindow : Window
             LogoutButton.IsVisible = true;
             StatusText.Text = "🔧 Modo Administrador - Acesso completo ativado";
         }
-        
+
         // Set game description
         GameDescriptionText.Text = GetGameDescription(selectedGameMode);
         CurrentGameText.Text = GetGameName(selectedGameMode);
@@ -294,7 +303,7 @@ public partial class MainWindow : Window
 
         // Show confirmation dialog
         var result = await ShowConfirmDialog("Logout", "Tem certeza que deseja fazer logout?\nO jogo será fechado e você retornará à tela de login.");
-        
+
         if (result)
         {
             // Close current window and show login again
@@ -316,14 +325,14 @@ public partial class MainWindow : Window
         {
             var dialog = new CodeGeneratorDialog();
             var result = await dialog.ShowDialog<int?>(this);
-            
+
             if (result.HasValue && result.Value > 0)
             {
                 var authService = new AuthService();
                 var codes = authService.GenerateClientCodes(result.Value);
                 var fileName = $"bilhetes_jogo_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
                 authService.SaveCodesToFile(codes, fileName);
-                
+
                 await ShowMessage("Códigos Gerados", $"✅ {codes.Count} códigos gerados com sucesso!\n\nArquivo salvo: {fileName}\n\nOs códigos estão prontos para impressão e corte em bilhetes.");
                 AddDebugMessage($"Admin gerou {codes.Count} códigos de cliente. Arquivo: {fileName}");
             }
@@ -340,46 +349,55 @@ public partial class MainWindow : Window
         var confirmWindow = new Window
         {
             Title = title,
-            Width = 450,
-            Height = 250,
+            Width = 550,
+            Height = 350,
+            MinWidth = 450,
+            MinHeight = 300,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            CanResize = true,
             Background = new SolidColorBrush(Color.FromRgb(26, 32, 44))
         };
 
-        var stackPanel = new StackPanel { Margin = new Avalonia.Thickness(30), Spacing = 20 };
+        var stackPanel = new StackPanel { Margin = new Avalonia.Thickness(40), Spacing = 30 };
 
         stackPanel.Children.Add(new TextBlock
         {
             Text = message,
             TextWrapping = TextWrapping.Wrap,
             Foreground = Brushes.White,
-            FontSize = 16,
-            TextAlignment = Avalonia.Media.TextAlignment.Center
+            FontSize = 18,
+            TextAlignment = Avalonia.Media.TextAlignment.Center,
+            Margin = new Avalonia.Thickness(20)
         });
 
         var buttonPanel = new StackPanel
         {
             Orientation = Avalonia.Layout.Orientation.Horizontal,
             HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-            Spacing = 20
+            Spacing = 30,
+            Margin = new Avalonia.Thickness(0, 20, 0, 0)
         };
 
         var yesButton = new Button
         {
             Content = "✅ Sim",
-            Padding = new Avalonia.Thickness(20, 10),
+            Padding = new Avalonia.Thickness(30, 15),
             Background = new SolidColorBrush(Color.FromRgb(229, 62, 62)),
             Foreground = Brushes.White,
-            CornerRadius = new Avalonia.CornerRadius(8)
+            CornerRadius = new Avalonia.CornerRadius(8),
+            FontSize = 16,
+            FontWeight = FontWeight.Medium
         };
 
         var noButton = new Button
         {
             Content = "❌ Não",
-            Padding = new Avalonia.Thickness(20, 10),
+            Padding = new Avalonia.Thickness(30, 15),
             Background = new SolidColorBrush(Color.FromRgb(74, 85, 104)),
             Foreground = Brushes.White,
-            CornerRadius = new Avalonia.CornerRadius(8)
+            CornerRadius = new Avalonia.CornerRadius(8),
+            FontSize = 16,
+            FontWeight = FontWeight.Medium
         };
 
         bool result = false;
@@ -401,7 +419,7 @@ public partial class MainWindow : Window
         return gameMode switch
         {
             1 => "🎯 Pega-Luz",
-            2 => "🧠 Sequência Maluca", 
+            2 => "🧠 Sequência Maluca",
             3 => "🐱 Gato e Rato",
             4 => "☄️ Esquiva Meteoros",
             5 => "🎸 Guitar Hero",
@@ -415,13 +433,13 @@ public partial class MainWindow : Window
     private async Task AutoConnectArduino()
     {
         await Task.Delay(1000); // Wait for UI to load
-        
+
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
             try
             {
                 var ports = SerialPort.GetPortNames();
-                
+
                 if (ports.Length > 0)
                 {
                     // Try to connect to the first available port
@@ -432,7 +450,7 @@ public partial class MainWindow : Window
                             _serialPort = new SerialPort(port, 9600);
                             _serialPort.DataReceived += SerialPort_DataReceived;
                             _serialPort.Open();
-                            
+
                             // Update UI
                             ConnectionText.Text = "Conectado";
                             ConnectionStatus.Fill = Brushes.LimeGreen;
@@ -440,7 +458,7 @@ public partial class MainWindow : Window
                             StartGameButton.IsEnabled = true;
                             StatusText.Text = $"✅ Arduino conectado automaticamente na porta {port}";
                             AddDebugMessage($"Arduino conectado automaticamente na porta {port}");
-                            
+
                             break; // Successfully connected
                         }
                         catch
@@ -449,7 +467,7 @@ public partial class MainWindow : Window
                             continue;
                         }
                     }
-                    
+
                     if (_serialPort?.IsOpen != true)
                     {
                         StatusText.Text = "⚠️ Arduino não encontrado. Conecte o dispositivo e tente novamente.";
@@ -626,13 +644,13 @@ public partial class MainWindow : Window
                 _gameActive = false;
                 StartGameButton.IsEnabled = true;
                 StopGameButton.IsEnabled = false;
-                
+
                 // Sync final score from Arduino if provided
                 if (int.TryParse(eventValue, out var finalScore))
                 {
                     _score = finalScore;
                 }
-                
+
                 StatusText.Text = $"🎮 GAME OVER! Pontuação Final: {_score}";
                 SaveGameScore();
                 AddDebugMessage($"Fim de jogo - Pontuação final: {_score}");
@@ -950,7 +968,7 @@ public partial class MainWindow : Window
     private void PopulateGameModeComboBox()
     {
         GameModeComboBox.Items.Clear();
-        
+
         var games = new[]
         {
             new { Id = 1, Name = "🎯 Pega-Luz", Description = "Reflexos rápidos" },
@@ -1060,7 +1078,7 @@ public partial class MainWindow : Window
         if (row < 4 && col < 4)
         {
             _ledMatrix[row, col].Fill = GetLedActiveColor(row);
-            
+
             // Auto-restore LED after 200ms as fallback (in case KeyUp is missed)
             lock (_ledTimersLock)
             {
@@ -1069,10 +1087,10 @@ public partial class MainWindow : Window
                 {
                     existingTimer.Dispose();
                 }
-                
+
                 // Create new timer to restore LED color
                 _ledTimers[ledIndex] = new System.Threading.Timer(
-                    _ => 
+                    _ =>
                     {
                         Dispatcher.UIThread.InvokeAsync(() => RestoreLedColor(ledIndex));
                         lock (_ledTimersLock)
@@ -1279,12 +1297,12 @@ public partial class MainWindow : Window
         if (ledIndex >= 0)
         {
             RestoreLedColor(ledIndex);
-            
+
             // Send key release command to Arduino
             string command = $"KEY_RELEASE:{ledIndex}";
             _serialPort.WriteLine(command);
             AddDebugMessage($"Comando enviado: {command}");
-            
+
             e.Handled = true;
         }
     }
@@ -1299,7 +1317,7 @@ public partial class MainWindow : Window
         if (row < 4 && col < 4)
         {
             _ledMatrix[row, col].Fill = GetLedDefaultColor(row);
-            
+
             // Cancel auto-restore timer since we're manually restoring
             lock (_ledTimersLock)
             {
@@ -1316,7 +1334,7 @@ public partial class MainWindow : Window
     {
         // This is only for admin mode now
         if (_isClientMode) return;
-        
+
         var name = PlayerNameTextBox.Text?.Trim();
         if (!string.IsNullOrEmpty(name))
         {
@@ -1357,7 +1375,7 @@ public partial class MainWindow : Window
     {
         // Only admins can access debug
         if (_isClientMode) return;
-        
+
         if (_debugWindow == null)
         {
             _debugWindow = new DebugWindow();
@@ -1508,7 +1526,7 @@ public partial class MainWindow : Window
         }
 
         StatusText.Text = "🎆 Demonstração de Efeitos Visuais em andamento...";
-        
+
         // Sequência de demonstração dos efeitos
         var effects = new[]
         {
@@ -1539,7 +1557,7 @@ public partial class MainWindow : Window
 
         // Teste rápido de todos os efeitos para debug
         var testEffects = new[] { "RAINBOW", "MATRIX", "PULSE", "FIREWORKS" };
-        
+
         foreach (var effect in testEffects)
         {
             AddDebugMessage($"Testando efeito: {effect}");
@@ -1793,8 +1811,8 @@ O Arduino possui animações épicas para:
 
     private string GetGameDescription(int gameMode)
     {
-        return _gameDescriptions.TryGetValue(gameMode, out var description) 
-            ? description 
+        return _gameDescriptions.TryGetValue(gameMode, out var description)
+            ? description
             : "Selecione um jogo para ver a descrição...";
     }
 
@@ -1803,8 +1821,8 @@ O Arduino possui animações épicas para:
         var messageWindow = new Window
         {
             Title = title,
-            Width = 400,
-            Height = 200,
+            Width = 600,
+            Height = 400,
             WindowStartupLocation = WindowStartupLocation.CenterOwner
         };
 

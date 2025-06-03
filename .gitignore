@@ -231,7 +231,7 @@ orleans.codegen.cs
 #*.snk
 
 # Since there are multiple workflows, uncomment next line to ignore bower_components
-# (https://github.com/github/gitignore/pull/1529#issuecomment-104372622)
+# (https://github.com/github/gitignore/pull/1529#issue-259490424)
 #bower_components/
 
 # RIA/Silverlight projects
@@ -276,8 +276,10 @@ node_modules/
 # Visual Studio 6 workspace options file
 *.opt
 
-# Visual Studio 6 auto-generated workspace file (contains which files were open etc.)
+# Visual Studio 6 workspace and project files
 *.vbw
+*.dsw
+*.dsp
 
 # Visual Studio LightSwitch build output
 **/*.HTMLClient/GeneratedArtifacts
@@ -357,5 +359,78 @@ FodyWeavers.xsd
 # Mac
 .DS_Store
 
-# User-specific scores data
+# ====================================
+# PROJECT SPECIFIC - Mini Jogo LEDs
+# ====================================
+
+# Game data files (runtime generated)
+scores.json
 **/scores.json
+client_codes.json
+used_codes.json
+
+# Generated ticket files
+bilhetes_*.txt
+bilhetes_jogo_*.txt
+
+# Arduino IDE files
+*.ino.hex
+*.ino.elf
+*.ino.eep
+*.ino.map
+
+# Serial communication logs
+serial_*.log
+arduino_*.log
+debug_*.log
+
+# User configuration files
+config.json
+settings.json
+user_settings.json
+
+# Game screenshots/exports
+screenshots/
+exports/
+game_exports/
+
+# Temporary game files
+temp/
+tmp/
+.temp/
+
+# Windows system files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux system files
+*~
+.directory
+
+# Package files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE specific folders
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json

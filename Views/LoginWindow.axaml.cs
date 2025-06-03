@@ -30,11 +30,11 @@ namespace miniJogo.Views
             _scoreService = new ScoreService();
             InitializeGameModeSelector();
             LoadRankings();
-            
+
             // Start in fullscreen
             WindowState = WindowState.FullScreen;
             _isFullScreen = true;
-            
+
             // Focus on name field initially
             NameTextBox.Focus();
         }
@@ -131,7 +131,7 @@ namespace miniJogo.Views
             var positionEmoji = position switch
             {
                 1 => "🥇",
-                2 => "🥈", 
+                2 => "🥈",
                 3 => "🥉",
                 _ => $"{position}°"
             };
@@ -195,7 +195,7 @@ namespace miniJogo.Views
             {
                 1 => "🎯 Pega-Luz",
                 2 => "🧠 Sequência Maluca",
-                3 => "🐱 Gato e Rato", 
+                3 => "🐱 Gato e Rato",
                 4 => "☄️ Esquiva Meteoros",
                 5 => "🎸 Guitar Hero",
                 6 => "🎲 Roleta Russa",
@@ -212,14 +212,14 @@ namespace miniJogo.Views
                 CodeTextBox.Focus();
                 e.Handled = true;
             }
-            
+
             UpdateLoginButtonState();
         }
 
         private void CodeTextBox_TextChanged(object? sender, TextChangedEventArgs e)
         {
             var code = CodeTextBox.Text?.ToUpper() ?? "";
-            
+
             // Check if it's admin code
             if (code.ToUpper() == "ADMIN2024")
             {
@@ -236,7 +236,7 @@ namespace miniJogo.Views
                 AdminPanel.IsVisible = false;
                 StatusText.Text = "";
             }
-            
+
             UpdateLoginButtonState();
         }
 
@@ -253,17 +253,17 @@ namespace miniJogo.Views
         {
             var code = CodeTextBox.Text?.Trim() ?? "";
             var name = NameTextBox.Text?.Trim() ?? "";
-            
+
             // Admin doesn't need name
             if (code.ToUpper() == "ADMIN2024")
             {
                 LoginButton.IsEnabled = true;
                 return;
             }
-            
+
             // Clients need both name and code
-            LoginButton.IsEnabled = !string.IsNullOrWhiteSpace(code) && 
-                                   !string.IsNullOrWhiteSpace(name) && 
+            LoginButton.IsEnabled = !string.IsNullOrWhiteSpace(code) &&
+                                   !string.IsNullOrWhiteSpace(name) &&
                                    code.Length >= 4;
         }
 
@@ -271,7 +271,7 @@ namespace miniJogo.Views
         {
             var code = CodeTextBox.Text?.Trim() ?? "";
             var name = NameTextBox.Text?.Trim() ?? "";
-            
+
             if (string.IsNullOrWhiteSpace(code))
             {
                 ShowStatus("❌ Digite um código de acesso!", Brushes.Red);
@@ -280,25 +280,25 @@ namespace miniJogo.Views
 
             LoginButton.IsEnabled = false;
             LoginButton.Content = "🔄 Verificando...";
-            
+
             try
             {
                 var result = _authService.Authenticate(code, name);
-                
+
                 if (result.Success)
                 {
                     _currentUser = result.User;
                     ShowStatus($"✅ {result.Message}", Brushes.LimeGreen);
-                    
+
                     // Wait a moment to show success message
                     await Task.Delay(1000);
-                    
+
                     Close(true);
                 }
                 else
                 {
                     ShowStatus($"❌ {result.Message}", Brushes.Red);
-                    
+
                     // Clear sensitive information on failure
                     if (result.Message.Contains("já foi utilizado") || result.Message.Contains("inválido"))
                     {
@@ -322,7 +322,7 @@ namespace miniJogo.Views
         {
             var dialog = new CodeGeneratorDialog();
             var result = await dialog.ShowDialog<int?>(this);
-            
+
             if (result.HasValue && result.Value > 0)
             {
                 try
@@ -330,7 +330,7 @@ namespace miniJogo.Views
                     var codes = _authService.GenerateClientCodes(result.Value);
                     var fileName = $"bilhetes_jogo_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
                     _authService.SaveCodesToFile(codes, fileName);
-                    
+
                     ShowStatus($"✅ {codes.Count} códigos gerados e salvos em {fileName}", Brushes.LimeGreen);
                 }
                 catch (Exception ex)
@@ -415,32 +415,37 @@ namespace miniJogo.Views
         public CodeGeneratorDialog()
         {
             Title = "Gerar Códigos de Cliente";
-            Width = 400;
-            Height = 250;
+            Width = 600;
+            Height = 450;
+            MinWidth = 500;
+            MinHeight = 400;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            CanResize = false;
+            CanResize = true;
             Background = new SolidColorBrush(Color.FromRgb(26, 32, 44));
 
             var stack = new StackPanel
             {
-                Margin = new Avalonia.Thickness(30),
-                Spacing = 20
+                Margin = new Avalonia.Thickness(40),
+                Spacing = 30
             };
 
             stack.Children.Add(new TextBlock
             {
                 Text = "📄 Gerador de Códigos de Cliente",
-                FontSize = 18,
+                FontSize = 24,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 0, 0, 10)
             });
 
             stack.Children.Add(new TextBlock
             {
                 Text = "Quantos códigos deseja gerar?",
-                FontSize = 14,
-                Foreground = new SolidColorBrush(Color.FromRgb(203, 213, 224))
+                FontSize = 18,
+                Foreground = new SolidColorBrush(Color.FromRgb(203, 213, 224)),
+                TextAlignment = Avalonia.Media.TextAlignment.Center,
+                Margin = new Avalonia.Thickness(0, 10, 0, 10)
             });
 
             _countInput = new NumericUpDown
@@ -450,17 +455,21 @@ namespace miniJogo.Views
                 Value = 50,
                 Increment = 10,
                 ShowButtonSpinner = true,
-                Padding = new Avalonia.Thickness(10),
-                FontSize = 16
+                Padding = new Avalonia.Thickness(20),
+                FontSize = 20,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                Margin = new Avalonia.Thickness(50, 0, 50, 0)
             };
             stack.Children.Add(_countInput);
 
             _infoText = new TextBlock
             {
-                Text = "Os códigos serão salvos em um arquivo de texto\npronto para impressão e corte.",
-                FontSize = 12,
+                Text = "💡 Os códigos serão salvos em um arquivo de texto formatado e pronto para impressão e corte em bilhetes individuais.",
+                FontSize = 15,
                 Foreground = new SolidColorBrush(Color.FromRgb(160, 174, 192)),
-                TextAlignment = Avalonia.Media.TextAlignment.Center
+                TextAlignment = Avalonia.Media.TextAlignment.Center,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Avalonia.Thickness(20, 15, 20, 15)
             };
             stack.Children.Add(_infoText);
 
@@ -468,16 +477,19 @@ namespace miniJogo.Views
             {
                 Orientation = Avalonia.Layout.Orientation.Horizontal,
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                Spacing = 15
+                Spacing = 30,
+                Margin = new Avalonia.Thickness(0, 20, 0, 0)
             };
 
             var generateButton = new Button
             {
-                Content = "✅ Gerar",
-                Padding = new Avalonia.Thickness(20, 10),
+                Content = "✅ Gerar Códigos",
+                Padding = new Avalonia.Thickness(30, 15),
                 Background = new SolidColorBrush(Color.FromRgb(56, 161, 105)),
                 Foreground = Brushes.White,
-                CornerRadius = new Avalonia.CornerRadius(6)
+                CornerRadius = new Avalonia.CornerRadius(8),
+                FontWeight = FontWeight.Medium,
+                FontSize = 16
             };
             generateButton.Click += (s, e) =>
             {
@@ -487,10 +499,12 @@ namespace miniJogo.Views
             var cancelButton = new Button
             {
                 Content = "❌ Cancelar",
-                Padding = new Avalonia.Thickness(20, 10),
+                Padding = new Avalonia.Thickness(30, 15),
                 Background = new SolidColorBrush(Color.FromRgb(229, 62, 62)),
                 Foreground = Brushes.White,
-                CornerRadius = new Avalonia.CornerRadius(6)
+                CornerRadius = new Avalonia.CornerRadius(8),
+                FontWeight = FontWeight.Medium,
+                FontSize = 16
             };
             cancelButton.Click += (s, e) => Close();
 
