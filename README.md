@@ -1,14 +1,67 @@
-# 🎮 Mini Jogo LEDs - Arduino
+# 🎮 Mini Jogo LEDs - Arduino Gaming Platform
 
-Sistema de jogos interativos com matriz 4x4 de LEDs conectada ao Arduino, controlado por aplicação desktop Avalonia UI.
+Sistema de jogos interativos com matriz 4x4 de LEDs conectada ao Arduino, controlado por aplicação desktop Avalonia UI com **sistema de autenticação completo**.
+
+## 🔐 Sistema de Autenticação
+
+### 👥 **Dois Tipos de Usuários**
+
+#### 🔧 **Administradores**
+- **Código Fixo**: `ADMIN2024`
+- **Acesso Completo**: Debug, configurações, geração de códigos
+- **Sem Restrições**: Acesso a todas as funcionalidades
+- **Conexão Manual**: Configuração total do Arduino
+
+#### 🎮 **Clientes/Jogadores** 
+- **Códigos Únicos**: Bilhetes de 6 caracteres (ex: `AB1234`)
+- **Nome Obrigatório**: Identificação personalizada
+- **Auto-Conexão**: Arduino conecta automaticamente
+- **Interface Simplificada**: Foco apenas no jogo
+- **Modo de Jogo**: Seleção prévia na tela de login
+
+### 🎫 **Sistema de Códigos de Cliente**
+
+#### 📋 **Características dos Códigos**
+- **Formato**: 2 letras + 4 números (ex: `MX7391`)
+- **Únicos**: Cada código pode ser usado apenas 1 vez
+- **Imprevisíveis**: Geração criptograficamente segura
+- **Curtos**: Fáceis de digitar e imprimir
+- **Validação**: Sistema anti-fraude integrado
+
+#### 🏷️ **Geração para Bilhetes**
+1. Admin faz login com `ADMIN2024`
+2. Clica em "📄 Gerar Códigos de Cliente"
+3. Define quantidade (1-10.000 códigos)
+4. Sistema gera arquivo `.txt` formatado para impressão
+5. Códigos prontos para corte em bilhetes
+
+#### 💳 **Exemplo de Bilhete**
+```
+╔══════════════════════╗
+║  🎮 MINI JOGO LEDS   ║
+║                      ║
+║    Código: AB1234    ║
+║                      ║
+║  Valid: ___/___/___  ║
+╚══════════════════════╝
+```
 
 ## 🚀 Quick Start
 
-1. **Hardware**: Monte 16 LEDs em matriz 4x4 no Arduino Uno (pinos 2-13, A0-A3)
-2. **Arduino**: Upload do arquivo `arduino_led_games.ino`
-3. **Software**: Execute `dotnet run` no diretório do projeto
-4. **Conectar**: Selecione porta COM e clique "Conectar"
-5. **Jogar**: Escolha um jogo e pressione F1!
+### 🎯 **Para Clientes**
+1. Digite seu **nome**
+2. Digite o **código do bilhete**
+3. Escolha o **jogo desejado** (com instruções)
+4. Clique **"🚀 Entrar no Jogo"**
+5. **Arduino conecta automaticamente**
+6. **Jogue imediatamente!**
+
+### 🔧 **Para Administradores**
+1. Digite apenas: `ADMIN2024`
+2. Acesso completo liberado
+3. Configure Arduino manualmente
+4. Gere códigos de cliente
+5. Acesse debug e estatísticas
 
 ## 🎯 Jogos Disponíveis
 
@@ -34,7 +87,7 @@ Matriz 4x4:    Teclas:
 
 F1: Iniciar   | F2: Parar    | F3: Reset   | F4: Rankings
 F5: 🌈 Arco-íris | F6: ⏹️ Parar FX | F7: 💚 Matrix | F8: 💓 Pulso
-F9: 🎆 Fogos   | F10: ✨ Demo Completa
+F9: 🎆 Fogos   | F10: ✨ Demo Completa | F11: 🖥️ Tela Cheia (secreto)
 ```
 
 ## 🔧 Hardware Setup
@@ -75,12 +128,52 @@ dotnet run
 miniJogo/
 ├── arduino_led_games.ino     # Código Arduino (8 jogos)
 ├── MainWindow.axaml.cs       # Interface principal
-├── Models/GameData.cs        # Dados dos jogos
+├── Views/LoginWindow.axaml   # Sistema de autenticação
+├── Models/Auth/              # Modelos de usuário
 ├── Services/               
+│   ├── AuthService.cs        # Autenticação e códigos
 │   ├── ArduinoService.cs     # Comunicação serial
 │   └── ScoreService.cs       # Sistema de pontuação
-└── Views/                    # Janelas de ranking e debug
+├── client_codes.json         # Códigos válidos
+└── used_codes.json          # Códigos já utilizados
 ```
+
+## 🎫 Gerenciamento de Códigos
+
+### 📊 **Arquivos do Sistema**
+- `client_codes.json`: Lista de todos os códigos válidos
+- `used_codes.json`: Códigos já utilizados (não podem ser reutilizados)
+- `bilhetes_jogo_YYYYMMDD_HHMMSS.txt`: Arquivo de impressão gerado
+
+### 🔄 **Fluxo de Geração**
+1. **Admin acessa** ferramenta de geração
+2. **Define quantidade** de códigos necessários
+3. **Sistema gera** códigos únicos e seguros
+4. **Salva automaticamente** nos arquivos JSON
+5. **Cria arquivo** formatado para impressão
+6. **Pronto para** corte em bilhetes
+
+### 📈 **Estatísticas em Tempo Real**
+- Total de códigos gerados
+- Códigos utilizados
+- Códigos disponíveis
+- Taxa de utilização
+
+## 🛡️ Segurança
+
+### 🔐 **Proteções Implementadas**
+- **Código único**: Cada bilhete pode ser usado apenas 1 vez
+- **Validação criptográfica**: Códigos imprevisíveis
+- **Armazenamento seguro**: JSON local encriptado
+- **Auditoria completa**: Log de todos os acessos
+- **Separação de privilégios**: Admin vs Cliente
+
+### 🚫 **Restrições para Clientes**
+- ❌ Sem acesso ao console debug
+- ❌ Sem acesso às configurações
+- ❌ Sem geração de códigos
+- ❌ Conexão manual do Arduino
+- ✅ Interface simplificada e limpa
 
 ## 📊 Sistema de Pontuação
 
@@ -93,40 +186,31 @@ miniJogo/
 
 | Problema | Solução |
 |----------|---------|
-| Arduino não conecta | Verifique porta COM, reinicie Arduino |
+| Código inválido | Verifique digitação, código pode ter sido usado |
+| Arduino não conecta | Admin: verificar porta COM. Cliente: automático |
 | LEDs não acendem | Confira conexões e resistores 220Ω |
-| Teclas não respondem | Jogo iniciado? Arduino conectado? |
-| Performance lenta | Feche outros programas, use cabo USB direto |
-| Efeitos não funcionam | Pressione F6 para resetar, reconecte Arduino |
-| Animações travadas | Use F6 (Stop) + F10 (Demo) para testar |
+| Login falha | Admin: `ADMIN2024`. Cliente: nome + código válido |
+| Auto-conexão falha | Reconecte Arduino USB, aguarde 5 segundos |
 
-## 🔌 Protocolo de Comunicação
+## 🎮 Interface por Tipo de Usuário
 
-### PC → Arduino
+### 👨‍💼 **Interface Admin**
 ```
-START_GAME:[1-8]    # Iniciar jogo
-STOP_GAME           # Parar jogo
-KEY_PRESS:[0-15]    # Tecla pressionada
-KEY_RELEASE:[0-15]  # Tecla solta
-```
-
-### Arduino → PC
-```
-READY                           # Arduino pronto
-GAME_EVENT:[tipo]:[dados]       # Eventos do jogo
-LED_ON:[index]                  # Acender LED
-LED_OFF:[index]                 # Apagar LED
+┌─ PAINEL ADMINISTRATIVO ─────────────────┐
+│ ✅ Console Debug         ✅ Configurações │
+│ ✅ Conexão Manual        ✅ Gerar Códigos │
+│ ✅ Todas as Estatísticas ✅ Modo Completo │
+└─────────────────────────────────────────┘
 ```
 
-## 🎮 Funcionalidades
-
-- ✅ **8 jogos completos** com dificuldades variadas
-- ✅ **Interface intuitiva** 1200x800 responsiva
-- ✅ **Sistema de debug** em tempo real
-- ✅ **Comunicação robusta** Arduino-PC
-- ✅ **Rankings persistentes** com estatísticas
-- ✅ **20+ efeitos visuais espetaculares** animados
-- ✅ **Feedback visual/sonoro** para todos os eventos
+### 👤 **Interface Cliente**
+```
+┌─ MODO JOGO SIMPLIFICADO ────────────────┐
+│ 🎮 Seleção de Jogo      🏆 Rankings      │
+│ ⚡ Conexão Automática   📊 Sua Pontuação │  
+│ 🎯 Foco no Jogo         ❌ Sem Debug     │
+└─────────────────────────────────────────┘
+```
 
 ## ✨ Sistema de Efeitos Visuais
 
@@ -138,7 +222,6 @@ LED_OFF:[index]                 # Apagar LED
 - **🆙 Level Up**: Ondas de energia + estrela de vitória
 - **💥 Game Over**: Implosão dramática + flash vermelho
 - **🏆 Vitórias**: Fogos de artifício + chuva de estrelas
-- **👋 Desconexão**: Espiral de despedida suave
 
 ### 🎪 **Efeitos Especiais (F5-F10)**
 - **F5 - 🌈 Arco-íris**: Ondas coloridas contínuas por linha
@@ -148,28 +231,52 @@ LED_OFF:[index]                 # Apagar LED
 - **F9 - 🎆 Fogos**: Múltiplas explosões sequenciais
 - **F10 - ✨ Demo Completa**: Apresentação de 10 segundos
 
-### 🎮 **Efeitos por Jogo**
-- **Pega-Luz**: Feedback instantâneo de precisão (perfeito vs normal)
-- **Sequência**: Confirmação visual para cada LED correto
-- **Roleta Russa**: Explosão massiva quando "explode"
-- **Lightning**: Padrões ultra-rápidos impossíveis de acompanhar
-- **Sniper**: Vitória legendária com celebração épica
-- **Combos**: Ondas laterais convergindo no centro
+## 💰 Modelo de Negócio
 
-## 🏆 Jogos Premium
+### 🎫 **Sistema de Bilhetes**
+- **Geração em Lote**: 10, 50, 100, 500, 1000+ códigos
+- **Impressão Otimizada**: Formato pronto para corte
+- **Controle Total**: Rastreamento de uso em tempo real
+- **Segurança Anti-Fraude**: Códigos únicos e imprevisíveis
 
-Os últimos 3 jogos são **extremamente difíceis** e ideais para monetização:
+### 📈 **Monetização**
+- **Pay-per-Play**: Cada código = 1 sessão de jogo
+- **Diferentes Valores**: Jogos premium (Roleta, Lightning, Sniper)
+- **Controle de Estoque**: Saber quantos bilhetes restam
+- **Relatórios**: Estatísticas de vendas e uso
 
-- **🎲 Roleta Russa**: Apenas 6.25% chance por rodada + explosão visual épica
-- **⚡ Lightning Strike**: Padrões impossíveis + animações ultra-rápidas
-- **🎯 Sniper Mode**: 0.000000095% chance + celebração legendária
+## 🏆 Recursos Premium
+
+### 🎲 **Jogos de Alta Dificuldade**
+- **Roleta Russa**: 6.25% chance + explosão visual épica
+- **Lightning Strike**: Padrões impossíveis + animações ultra-rápidas
+- **Sniper Mode**: 0.000000095% chance + celebração legendária
 
 ### 🎬 **Experiência Cinematográfica**
-Cada momento do jogo possui animações únicas que transformam a experiência:
 - **20+ animações** diferentes para situações específicas
 - **Timing perfeito** sincronizado com eventos do jogo  
 - **Feedback visual** que recompensa habilidade e precisão
-- **Efeitos épicos** para vitórias raras (Sniper 10/10, Roleta 8 rodadas)
+- **Efeitos épicos** para vitórias raras
+
+## 🔌 Protocolo de Comunicação
+
+### PC → Arduino
+```
+START_GAME:[1-8]    # Iniciar jogo
+STOP_GAME           # Parar jogo
+KEY_PRESS:[0-15]    # Tecla pressionada
+KEY_RELEASE:[0-15]  # Tecla solta
+INIT                # Inicializar sistema
+```
+
+### Arduino → PC
+```
+READY                           # Arduino pronto
+GAME_EVENT:[tipo]:[dados]       # Eventos do jogo
+LED_ON:[index]                  # Acender LED
+LED_OFF:[index]                 # Apagar LED
+SCORE:[pontos]                  # Pontuação atual
+```
 
 ## 📄 Licença
 
@@ -179,11 +286,11 @@ MIT License - Open Source
 
 Issues e PRs são bem-vindos! Áreas para melhoria:
 - Novos jogos e mecânicas
-- Otimizações de performance  
-- Sistema de achievements
+- Sistema de achievements online
 - Modo multiplayer
-- Integração online
+- Integração com pagamentos
+- Dashboard web de administração
 
 ---
 
-**Versão 2.0.0** | **Suporte**: Issues no GitHub | **Compatibilidade**: .NET 9.0 + Arduino IDE 2.x
+**Versão 2.1.0** | **Sistema de Auth Completo** | **Suporte**: Issues no GitHub | **Compatibilidade**: .NET 9.0 + Arduino IDE 2.x

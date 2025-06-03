@@ -13,6 +13,8 @@ using Avalonia.Controls.Shapes;
 using miniJogo.Models;
 using miniJogo.Services;
 using miniJogo.Views;
+using miniJogo.Models.Auth;
+using System.Linq;
 
 namespace miniJogo;
 
@@ -28,6 +30,9 @@ public partial class MainWindow : Window
     private DateTime _gameStartTime;
     private ScoreService _scoreService;
     private DebugWindow? _debugWindow;
+    private bool _isFullScreen = false;
+    private User _currentUser;
+    private bool _isClientMode = false;
 
     // LED Matrix (4x4)
     private readonly Ellipse[,] _ledMatrix = new Ellipse[4, 4];
@@ -62,24 +67,31 @@ public partial class MainWindow : Window
         { 8, "SNIPER MODE:\n• Alvos piscam por apenas 0.1 segundo\n• Pressione a tecla exata no tempo\n• 10 acertos = vitória impossível\n• Bônus x10 se completar!" }
     };
 
-    public MainWindow()
+    public MainWindow() : this(null, 1)
+    {
+        // Default constructor for designer
+    }
+
+    public MainWindow(User? user, int selectedGameMode = 1)
     {
         InitializeComponent();
         InitializeLedMatrix();
         InitializeTimer();
         _scoreService = new ScoreService();
-        RefreshPorts();
-
-        // Set initial values
-        PlayerDisplayText.Text = "👤 Jogador: Não definido";
-        GameDescriptionText.Text = "Selecione um jogo para ver a descrição...";
-        CurrentGameText.Text = "Nenhum";
-
-        // Populate game mode combo box
-        PopulateGameModeComboBox();
         
-        // Set first game as default
-        GameModeComboBox.SelectedIndex = 0;
+        // Set user and configure interface
+        _currentUser = user ?? new User { Name = "Designer", Type = UserType.Admin };
+        _isClientMode = _currentUser.Type == UserType.Client;
+        
+        ConfigureInterfaceForUser(selectedGameMode);
+        
+        RefreshPorts();
+        
+        // Auto-connect for clients
+        if (_isClientMode)
+        {
+            _ = Task.Run(AutoConnectArduino);
+        }
     }
 
     private void InitializeLedMatrix()
@@ -122,14 +134,108 @@ public partial class MainWindow : Window
         }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
     }
 
+    private void ConfigureInterfaceForUser(int selectedGameMode)
+    {
+        // Set player name
+        PlayerDisplayText.Text = $"👤 {(_isClientMode ? "Jogador" : "Admin")}: {_currentUser.Name}";
+        
+        // Set initial game mode
+        PopulateGameModeComboBox();
+        GameModeComboBox.SelectedIndex = selectedGameMode - 1;
+        
+        // Configure UI based on user type
+        if (_isClientMode)
+        {
+            // Hide admin features for clients
+            OpenDebugButton.IsVisible = false;
+            SettingsButton.IsVisible = false;
+            
+            // Hide manual connection controls
+            RefreshPortsButton.IsVisible = false;
+            
+            // Set player name directly
+            _playerName = _currentUser.Name;
+            
+            // Update status
+            StatusText.Text = $"🎮 Bem-vindo, {_currentUser.Name}! Conectando ao Arduino...";
+        }
+        else
+        {
+            // Admin has access to everything
+            StatusText.Text = "🔧 Modo Administrador - Acesso completo ativado";
+        }
+        
+        // Set game description
+        GameDescriptionText.Text = GetGameDescription(selectedGameMode);
+        CurrentGameText.Text = GetGameName(selectedGameMode);
+    }
+
+    private async Task AutoConnectArduino()
+    {
+        await Task.Delay(1000); // Wait for UI to load
+        
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            try
+            {
+                var ports = SerialPort.GetPortNames();
+                
+                if (ports.Length > 0)
+                {
+                    // Try to connect to the first available port
+                    foreach (var port in ports)
+                    {
+                        try
+                        {
+                            _serialPort = new SerialPort(port, 9600);
+                            _serialPort.DataReceived += SerialPort_DataReceived;
+                            _serialPort.Open();
+                            
+                            // Update UI
+                            ConnectionText.Text = "Conectado";
+                            ConnectionStatus.Fill = Brushes.LimeGreen;
+                            ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(56, 161, 105));
+                            StartGameButton.IsEnabled = true;
+                            StatusText.Text = $"✅ Arduino conectado automaticamente na porta {port}";
+                            AddDebugMessage($"Arduino conectado automaticamente na porta {port}");
+                            
+                            break; // Successfully connected
+                        }
+                        catch
+                        {
+                            // Try next port
+                            continue;
+                        }
+                    }
+                    
+                    if (_serialPort?.IsOpen != true)
+                    {
+                        StatusText.Text = "⚠️ Arduino não encontrado. Conecte o dispositivo e tente novamente.";
+                    }
+                }
+                else
+                {
+                    StatusText.Text = "⚠️ Nenhuma porta serial encontrada. Verifique a conexão do Arduino.";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusText.Text = $"❌ Erro na conexão automática: {ex.Message}";
+                AddDebugMessage($"Erro na conexão automática: {ex.Message}");
+            }
+        });
+    }
+
     private void RefreshPorts()
     {
         PortComboBox.Items.Clear();
+
         var ports = SerialPort.GetPortNames();
         foreach (var port in ports)
         {
             PortComboBox.Items.Add(port);
         }
+
         if (ports.Length > 0)
         {
             PortComboBox.SelectedIndex = 0;
@@ -170,15 +276,19 @@ public partial class MainWindow : Window
                     // Send initialization command
                     await Task.Delay(2000); // Wait for Arduino to initialize
                     _serialPort.WriteLine("INIT");
-                }
-                catch (Exception ex)
-                {
-                    AddDebugMessage($"Erro ao conectar: {ex.Message}");
-                    await ShowMessage("Erro de Conexão", $"Não foi possível conectar ao Arduino:\n{ex.Message}");
+                AddDebugMessage($"Arduino conectado na porta {selectedPort}");
+                    }
+                    catch (Exception ex)
+                    {
+                        AddDebugMessage($"Erro ao conectar: {ex.Message}");
+                        if (!_isClientMode) // Only show error dialogs to admins
+                        {
+                            await ShowMessage("Erro de Conexão", $"Não foi possível conectar ao Arduino:\n{ex.Message}");
+                        }
+                    }
                 }
             }
         }
-    }
 
     private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
     {
@@ -884,6 +994,11 @@ public partial class MainWindow : Window
                 }
                 e.Handled = true;
                 return;
+            case Key.F11:
+                // Toggle full-screen
+                ToggleFullScreen();
+                e.Handled = true;
+                return;
         }
 
         if (!_gameActive || _serialPort?.IsOpen != true) return;
@@ -957,12 +1072,14 @@ public partial class MainWindow : Window
 
     private void SavePlayerButton_Click(object? sender, RoutedEventArgs e)
     {
+        // This is only for admin mode now
+        if (_isClientMode) return;
+        
         var name = PlayerNameTextBox.Text?.Trim();
-        if (!string.IsNullOrWhiteSpace(name))
+        if (!string.IsNullOrEmpty(name))
         {
             _playerName = name;
-            PlayerDisplayText.Text = $"👤 Jogador: {_playerName}";
-            AddDebugMessage($"Nome do jogador definido: {_playerName}");
+            PlayerDisplayText.Text = $"👤 Jogador: {name}";
         }
     }
 
@@ -996,10 +1113,13 @@ public partial class MainWindow : Window
 
     private void OpenDebugButton_Click(object? sender, RoutedEventArgs e)
     {
+        // Only admins can access debug
+        if (_isClientMode) return;
+        
         if (_debugWindow == null)
         {
             _debugWindow = new DebugWindow();
-            _debugWindow.Closed += (s, e) => _debugWindow = null;
+            _debugWindow.Closed += (s, args) => _debugWindow = null;
         }
         _debugWindow.Show();
         _debugWindow.Activate();
@@ -1400,6 +1520,56 @@ O Arduino possui animações épicas para:
 
         _debugWindow?.Close();
         base.OnClosed(e);
+    }
+
+    private void ToggleFullScreen()
+    {
+        try
+        {
+            if (_isFullScreen)
+            {
+                // Exit full-screen
+                WindowState = WindowState.Normal;
+                _isFullScreen = false;
+                AddDebugMessage("Modo tela cheia desabilitado (F11)");
+            }
+            else
+            {
+                // Enter full-screen
+                WindowState = WindowState.FullScreen;
+                _isFullScreen = true;
+                AddDebugMessage("Modo tela cheia habilitado (F11)");
+            }
+        }
+        catch (Exception ex)
+        {
+            AddDebugMessage($"Erro ao alternar tela cheia: {ex.Message}");
+        }
+    }
+
+
+
+    private string GetGameDescription(int gameMode)
+    {
+        return _gameDescriptions.TryGetValue(gameMode, out var description) 
+            ? description 
+            : "Selecione um jogo para ver a descrição...";
+    }
+
+    private string GetGameName(int gameMode)
+    {
+        return gameMode switch
+        {
+            1 => "🎯 Pega-Luz",
+            2 => "🧠 Sequência Maluca", 
+            3 => "🐱 Gato e Rato",
+            4 => "☄️ Esquiva Meteoros",
+            5 => "🎸 Guitar Hero",
+            6 => "🎲 Roleta Russa",
+            7 => "⚡ Lightning Strike",
+            8 => "🎯 Sniper Mode",
+            _ => "Nenhum"
+        };
     }
 
     private async Task ShowMessage(string title, string message)
