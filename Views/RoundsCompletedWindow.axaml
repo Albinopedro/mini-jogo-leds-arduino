@@ -1,0 +1,91 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="miniJogo.Views.RoundsCompletedWindow"
+        Title="🎮 GAME OVER - Sessão Finalizada"
+        Width="800"
+        Height="600"
+        WindowState="FullScreen"
+        WindowStartupLocation="CenterScreen"
+        CanResize="False"
+        Background="#1A202C"
+        Topmost="True">
+
+    <Grid>
+        <!-- Background overlay -->
+        <Rectangle Fill="#000000" Opacity="0.8" />
+        
+        <!-- Main content -->
+        <StackPanel HorizontalAlignment="Center" 
+                    VerticalAlignment="Center" 
+                    Spacing="40">
+            
+            <!-- Game Over Title -->
+            <TextBlock x:Name="GameOverTitle"
+                       Text="🎮 GAME OVER"
+                       FontSize="72"
+                       FontWeight="Bold"
+                       Foreground="#FF6B6B"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center" />
+            
+            <!-- Session Complete Message -->
+            <TextBlock x:Name="SessionMessage"
+                       Text="Sua sessão foi finalizada!"
+                       FontSize="36"
+                       FontWeight="Medium"
+                       Foreground="White"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center" />
+            
+            <!-- Player Name -->
+            <TextBlock x:Name="PlayerNameText"
+                       Text="👤 Jogador: [Nome]"
+                       FontSize="24"
+                       Foreground="#E2E8F0"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center" />
+            
+            <!-- Games Summary -->
+            <Border Background="#2D3748"
+                    CornerRadius="15"
+                    Padding="30"
+                    MinWidth="600">
+                <StackPanel Spacing="20">
+                    <TextBlock Text="📊 Resumo da Sessão"
+                               FontSize="28"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               HorizontalAlignment="Center" />
+                    
+                    <ScrollViewer x:Name="GamesSummaryScrollViewer"
+                                  MaxHeight="200"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel x:Name="GamesSummaryPanel" Spacing="15" />
+                    </ScrollViewer>
+                </StackPanel>
+            </Border>
+            
+            <!-- Return Message -->
+            <TextBlock Text="🔄 Retornando ao login em alguns segundos..."
+                       FontSize="20"
+                       Foreground="#A0AEC0"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center"
+                       Margin="0,20,0,0" />
+            
+            <!-- Return Button -->
+            <Button x:Name="ReturnToLoginButton"
+                    Content="🔙 Voltar ao Login Agora"
+                    FontSize="24"
+                    FontWeight="Bold"
+                    Padding="40,20"
+                    Background="#4299E1"
+                    Foreground="White"
+                    CornerRadius="12"
+                    HorizontalAlignment="Center"
+                    Click="ReturnToLoginButton_Click" />
+            
+        </StackPanel>
+    </Grid>
+</Window>
