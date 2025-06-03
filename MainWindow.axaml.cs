@@ -545,21 +545,33 @@ public partial class MainWindow : Window
                     ConnectionStatus.Fill = Brushes.LimeGreen;
                     ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(56, 161, 105));
                     StartGameButton.IsEnabled = true;
+                    
+                    // Lock game selection for clients after connection
+                    if (_isClientMode)
+                    {
+                        GameModeComboBox.IsEnabled = false;
+                    }
+                    
                     AddDebugMessage($"Arduino conectado na porta {selectedPort}");
 
                     // Send initialization command
                     await Task.Delay(2000); // Wait for Arduino to initialize
                     _serialPort.WriteLine("INIT");
-                AddDebugMessage($"Arduino conectado na porta {selectedPort}");
-                    }
-                    catch (Exception ex)
+                }
+                catch (Exception ex)
+                {
+                    ConnectButton.Content = "🔌 Conectar";
+                    ConnectionText.Text = "Desconectado";
+                    ConnectionStatus.Fill = Brushes.Red;
+                    ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(220, 38, 127));
+                    StartGameButton.IsEnabled = false;
+                    
+                    AddDebugMessage($"Erro ao conectar: {ex.Message}");
+                    if (!_isClientMode) // Only show error dialogs to admins
                     {
-                        AddDebugMessage($"Erro ao conectar: {ex.Message}");
-                        if (!_isClientMode) // Only show error dialogs to admins
-                        {
-                            await ShowMessage("Erro de Conexão", $"Não foi possível conectar ao Arduino:\n{ex.Message}");
-                        }
+                        await ShowMessage("Erro de Conexão", $"Não foi possível conectar ao Arduino:\n{ex.Message}");
                     }
+                }
                 }
             }
         }
@@ -670,18 +682,7 @@ public partial class MainWindow : Window
                 AddDebugMessage($"Fim de jogo - Pontuação final: {_score}");
                 TriggerVisualEffect("GAME_OVER");
 
-                // Record round for client and check if all rounds are completed
-                if (_isClientMode && _currentUser != null)
-                {
-                    var currentGameMode = (GameMode)_currentGameMode;
-                    _sessionService.RecordGameRound(_currentUser.Id, currentGameMode);
-                    
-                    // Check if client has completed all games
-                    if (_sessionService.HasClientCompletedAllGames(_currentUser.Id))
-                    {
-                        Task.Run(async () => await ShowRoundsCompletedDialog());
-                    }
-                }
+
                 break;
 
             case "STATUS":
@@ -703,6 +704,7 @@ public partial class MainWindow : Window
 
             case "MISS":
                 StatusText.Text = "❌ Muito lento! O LED apagou sozinho.";
+                RecordClientRoundLoss();
                 break;
 
             case "LED_ON":
@@ -726,6 +728,7 @@ public partial class MainWindow : Window
                 {
                     StatusText.Text = $"❌ Tecla errada! Pressionou {wrongKey}, mas deveria ser outro LED.";
                     AddDebugMessage($"Tecla incorreta pressionada: {wrongKey}");
+                    RecordClientRoundLoss();
                 }
                 break;
 
@@ -772,6 +775,7 @@ public partial class MainWindow : Window
                     StatusText.Text = "💥 IMPACTO! Um meteoro te atingiu! Game Over!";
                     HighlightLed(meteorPos);
                     AddDebugMessage($"Meteoro atingiu posição: {meteorPos}");
+                    RecordClientRoundLoss();
                 }
                 break;
 
@@ -797,6 +801,7 @@ public partial class MainWindow : Window
 
             case "NOTE_MISS":
                 StatusText.Text = "🎵 Nota perdida! Muito cedo ou muito tarde. Siga o ritmo!";
+                RecordClientRoundLoss();
                 break;
 
             case "SEQUENCE_START":
@@ -848,6 +853,7 @@ public partial class MainWindow : Window
                 StatusText.Text = "💥 EXPLODIU! Era o LED com bomba. Perdeu toda a pontuação!";
                 ClearLedMatrix();
                 TriggerVisualEffect("EXPLOSION");
+                RecordClientRoundLoss();
                 break;
 
             case "ROLETA_MAX_WIN":
@@ -874,6 +880,7 @@ public partial class MainWindow : Window
 
             case "LIGHTNING_WRONG":
                 StatusText.Text = "❌ Errou! O padrão correto está sendo mostrado agora. Game Over!";
+                RecordClientRoundLoss();
                 break;
 
             // Sniper Mode Events
@@ -891,10 +898,12 @@ public partial class MainWindow : Window
 
             case "SNIPER_MISS":
                 StatusText.Text = "❌ Tiro errado! Mirou no lugar errado ou muito devagar.";
+                RecordClientRoundLoss();
                 break;
 
             case "SNIPER_TIMEOUT":
                 StatusText.Text = "⏰ MUITO LENTO! O alvo desapareceu antes de você atirar.";
+                RecordClientRoundLoss();
                 break;
 
             case "SNIPER_VICTORY":
@@ -929,6 +938,7 @@ public partial class MainWindow : Window
             // Additional missing events
             case "TARGET_MISSED":
                 StatusText.Text = "❌ Alvo perdido! Muito devagar.";
+                RecordClientRoundLoss();
                 break;
 
             case "SPEED_BONUS":
@@ -1389,10 +1399,18 @@ public partial class MainWindow : Window
 
                 AddDebugMessage($"Jogo selecionado: {CurrentGameText.Text} (ID: {gameMode})");
 
-                // Enable start button if connected
+                // Enable start button if connected (only for admin or if client can play this game)
                 if (_serialPort?.IsOpen == true)
                 {
-                    StartGameButton.IsEnabled = true;
+                    if (_isClientMode && _currentUser != null)
+                    {
+                        var canPlay = _sessionService.CanClientPlayGame(_currentUser.Id, (GameMode)gameMode);
+                        StartGameButton.IsEnabled = canPlay;
+                    }
+                    else
+                    {
+                        StartGameButton.IsEnabled = true;
+                    }
                 }
 
                 // Update remaining rounds display for clients
@@ -1445,9 +1463,9 @@ public partial class MainWindow : Window
             if (!_sessionService.CanClientPlayGame(_currentUser.Id, gameMode))
             {
                 var remaining = _sessionService.GetRemainingRounds(_currentUser.Id, gameMode);
-                await ShowMessage("Rodadas Esgotadas", 
-                    $"Você já jogou todas as rodadas disponíveis para {gameMode.GetDisplayName()}!\n" +
-                    $"Rodadas restantes: {remaining}");
+                await ShowMessage("Limite de Erros Atingido", 
+                    $"Você já cometeu o máximo de erros permitidos em {gameMode.GetDisplayName()}!\n" +
+                    $"Erros restantes: {remaining}");
                 return;
             }
         }
@@ -1883,16 +1901,34 @@ O Arduino possui animações épicas para:
             
             if (remaining > 0)
             {
-                StatusText.Text = $"{gameIcon} {gameName} - Rodadas: {played}/{maxRounds} (Restam: {remaining})";
+                StatusText.Text = $"{gameIcon} {gameName} - Erros: {played}/{maxRounds} (Restam: {remaining})";
             }
             else
             {
-                StatusText.Text = $"{gameIcon} {gameName} - Rodadas esgotadas ({played}/{maxRounds})";
+                StatusText.Text = $"{gameIcon} {gameName} - Limite de erros atingido ({played}/{maxRounds})";
             }
         }
         catch (Exception ex)
         {
             AddDebugMessage($"Erro ao atualizar display de rodadas: {ex.Message}");
+        }
+    }
+
+    private void RecordClientRoundLoss()
+    {
+        if (_isClientMode && _currentUser != null)
+        {
+            var currentGameMode = (GameMode)_currentGameMode;
+            _sessionService.RecordGameError(_currentUser.Id, currentGameMode);
+            
+            // Update display
+            UpdateRemainingRoundsDisplay();
+            
+            // Check if client has reached error limit
+            if (_sessionService.HasClientReachedErrorLimit(_currentUser.Id))
+            {
+                Task.Run(async () => await ShowRoundsCompletedDialog());
+            }
         }
     }
 
