@@ -122,6 +122,7 @@ namespace miniJogo.Models
         public int Level { get; set; }
         public TimeSpan Duration { get; set; }
         public DateTime PlayedAt { get; set; }
+        public DateTime Timestamp { get => PlayedAt; set => PlayedAt = value; }
 
         public string FormattedDate => PlayedAt.ToString("dd/MM/yyyy HH:mm");
         public string FormattedDuration => $"{Duration:mm\\:ss}";

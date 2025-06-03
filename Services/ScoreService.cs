@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Threading;
 using miniJogo.Models;
 
 namespace miniJogo.Services
@@ -14,6 +15,8 @@ namespace miniJogo.Services
         private readonly string _gameScoresFilePath;
         private List<PlayerScore> _scores;
         private List<GameScore> _gameScores;
+        private readonly SemaphoreSlim _semaphore = new(1, 1);
+        private readonly object _lockObject = new();
 
         public ScoreService()
         {
@@ -35,19 +38,71 @@ namespace miniJogo.Services
 
         public async Task SaveScoreAsync(PlayerScore score)
         {
-            _scores.Add(score);
-            await SaveScoresAsync();
+            await _semaphore.WaitAsync();
+            try
+            {
+                lock (_lockObject)
+                {
+                    _scores.Add(score);
+                }
+                await SaveScoresAsync();
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        public async Task SaveScoreAsync(GameScore score)
+        {
+            await _semaphore.WaitAsync();
+            try
+            {
+                lock (_lockObject)
+                {
+                    _gameScores.Add(score);
+                }
+                await SaveGameScoresAsync();
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
         }
 
         public void SaveScore(GameScore score)
         {
-            _gameScores.Add(score);
+            lock (_lockObject)
+            {
+                _gameScores.Add(score);
+            }
             SaveGameScores();
+        }
+
+        public async Task<List<GameScore>> GetGameScoresAsync(string? gameMode = null, string? playerName = null)
+        {
+            return await Task.Run(() =>
+            {
+                lock (_lockObject)
+                {
+                    var query = _gameScores.AsQueryable();
+                    
+                    if (!string.IsNullOrEmpty(gameMode))
+                        query = query.Where(s => s.GameMode == gameMode);
+                    
+                    if (!string.IsNullOrEmpty(playerName))
+                        query = query.Where(s => s.PlayerName.Contains(playerName, StringComparison.OrdinalIgnoreCase));
+                    
+                    return query.OrderByDescending(s => s.Score).ToList();
+                }
+            });
         }
 
         public List<GameScore> GetGameScores(string? gameMode = null, string? playerName = null)
         {
-            var query = _gameScores.AsQueryable();
+            lock (_lockObject)
+            {
+                var query = _gameScores.AsQueryable();
             
             if (!string.IsNullOrEmpty(gameMode))
             {
@@ -60,6 +115,7 @@ namespace miniJogo.Services
             }
             
             return query.OrderByDescending(s => s.Score).ThenByDescending(s => s.PlayedAt).ToList();
+            }
         }
 
         public List<GameScore> GetTopScores(int count = 10)
@@ -83,18 +139,72 @@ namespace miniJogo.Services
                 .ToList();
         }
 
+        public async Task<List<GameScore>> GetTopScoresAsync(int count = 10)
+        {
+            return await Task.Run(() =>
+            {
+                lock (_lockObject)
+                {
+                    return _gameScores
+                        .OrderByDescending(s => s.Score)
+                        .ThenByDescending(s => s.Level)
+                        .ThenBy(s => s.Duration)
+                        .Take(count)
+                        .ToList();
+                }
+            });
+        }
+
+        public async Task<List<PlayerScore>> GetHighScoresAsync(Models.GameMode gameMode, int count = 10)
+        {
+            return await Task.Run(() =>
+            {
+                lock (_lockObject)
+                {
+                    return _scores
+                        .Where(s => s.Game.Equals(gameMode))
+                        .OrderByDescending(s => s.Score)
+                        .ThenByDescending(s => s.Level)
+                        .ThenBy(s => s.Duration)
+                        .Take(count)
+                        .ToList();
+                }
+            });
+        }
+
+        public async Task<List<PlayerScore>> GetPlayerScoresAsync(string playerName, Models.GameMode? gameMode = null)
+        {
+            return await Task.Run(() =>
+            {
+                lock (_lockObject)
+                {
+                    var query = _scores.Where(s => s.PlayerName.Equals(playerName, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (gameMode.HasValue)
+                    {
+                        query = query.Where(s => s.Game.Equals(gameMode.Value));
+                    }
+                    
+                    return query.OrderByDescending(s => s.Score).ToList();
+                }
+            });
+        }
+
         public List<PlayerScore> GetPlayerScores(string playerName, Models.GameMode? gameMode = null)
         {
-            var query = _scores.Where(s => s.PlayerName.Equals(playerName, StringComparison.OrdinalIgnoreCase));
-            
-            if (gameMode.HasValue)
+            lock (_lockObject)
             {
-                query = query.Where(s => s.Game.Equals(gameMode.Value));
-            }
-            
-            return query
+                var query = _scores.Where(s => s.PlayerName.Equals(playerName, StringComparison.OrdinalIgnoreCase));
+                
+                if (gameMode.HasValue)
+                {
+                    query = query.Where(s => s.Game.Equals(gameMode.Value));
+                }
+                
+                return query
                 .OrderByDescending(s => s.Date)
                 .ToList();
+            }
         }
 
         public List<PlayerScore> GetAllScores()
@@ -181,6 +291,35 @@ namespace miniJogo.Services
             await SaveScoresAsync();
         }
 
+        private async Task LoadScoresAsync()
+        {
+            await _semaphore.WaitAsync();
+            try
+            {
+                if (File.Exists(_scoresFilePath))
+                {
+                    var json = await File.ReadAllTextAsync(_scoresFilePath);
+                    var scores = JsonSerializer.Deserialize<List<PlayerScore>>(json) ?? new List<PlayerScore>();
+                    lock (_lockObject)
+                    {
+                        _scores = scores;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading scores: {ex.Message}");
+                lock (_lockObject)
+                {
+                    _scores = new List<PlayerScore>();
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
         private void LoadScores()
         {
             try
@@ -188,13 +327,48 @@ namespace miniJogo.Services
                 if (File.Exists(_scoresFilePath))
                 {
                     var json = File.ReadAllText(_scoresFilePath);
-                    var scores = JsonSerializer.Deserialize<List<PlayerScore>>(json);
-                    _scores = scores ?? new List<PlayerScore>();
+                    lock (_lockObject)
+                    {
+                        _scores = JsonSerializer.Deserialize<List<PlayerScore>>(json) ?? new List<PlayerScore>();
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                _scores = new List<PlayerScore>();
+                System.Diagnostics.Debug.WriteLine($"Error loading scores: {ex.Message}");
+                lock (_lockObject)
+                {
+                    _scores = new List<PlayerScore>();
+                }
+            }
+        }
+
+        private async Task LoadGameScoresAsync()
+        {
+            await _semaphore.WaitAsync();
+            try
+            {
+                if (File.Exists(_gameScoresFilePath))
+                {
+                    var json = await File.ReadAllTextAsync(_gameScoresFilePath);
+                    var scores = JsonSerializer.Deserialize<List<GameScore>>(json) ?? new List<GameScore>();
+                    lock (_lockObject)
+                    {
+                        _gameScores = scores;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading game scores: {ex.Message}");
+                lock (_lockObject)
+                {
+                    _gameScores = new List<GameScore>();
+                }
+            }
+            finally
+            {
+                _semaphore.Release();
             }
         }
 
@@ -205,18 +379,25 @@ namespace miniJogo.Services
                 if (File.Exists(_gameScoresFilePath))
                 {
                     var json = File.ReadAllText(_gameScoresFilePath);
-                    var scores = JsonSerializer.Deserialize<List<GameScore>>(json);
-                    _gameScores = scores ?? new List<GameScore>();
+                    lock (_lockObject)
+                    {
+                        _gameScores = JsonSerializer.Deserialize<List<GameScore>>(json) ?? new List<GameScore>();
+                    }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                _gameScores = new List<GameScore>();
+                System.Diagnostics.Debug.WriteLine($"Error loading game scores: {ex.Message}");
+                lock (_lockObject)
+                {
+                    _gameScores = new List<GameScore>();
+                }
             }
         }
 
         private async Task SaveScoresAsync()
         {
+            await _semaphore.WaitAsync();
             try
             {
                 var options = new JsonSerializerOptions
@@ -224,12 +405,51 @@ namespace miniJogo.Services
                     WriteIndented = true
                 };
                 
-                var json = JsonSerializer.Serialize(_scores, options);
+                List<PlayerScore> scoresToSave;
+                lock (_lockObject)
+                {
+                    scoresToSave = new List<PlayerScore>(_scores);
+                }
+                
+                var json = JsonSerializer.Serialize(scoresToSave, options);
                 await File.WriteAllTextAsync(_scoresFilePath, json);
             }
-            catch
+            catch (Exception ex)
             {
-                // Silently fail - scores won't persist but app continues working
+                System.Diagnostics.Debug.WriteLine($"Error saving scores: {ex.Message}");
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+        }
+
+        private async Task SaveGameScoresAsync()
+        {
+            await _semaphore.WaitAsync();
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                };
+                
+                List<GameScore> scoresToSave;
+                lock (_lockObject)
+                {
+                    scoresToSave = new List<GameScore>(_gameScores);
+                }
+                
+                var json = JsonSerializer.Serialize(scoresToSave, options);
+                await File.WriteAllTextAsync(_gameScoresFilePath, json);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error saving game scores: {ex.Message}");
+            }
+            finally
+            {
+                _semaphore.Release();
             }
         }
 
@@ -242,13 +462,24 @@ namespace miniJogo.Services
                     WriteIndented = true
                 };
                 
-                var json = JsonSerializer.Serialize(_gameScores, options);
+                List<GameScore> scoresToSave;
+                lock (_lockObject)
+                {
+                    scoresToSave = new List<GameScore>(_gameScores);
+                }
+                
+                var json = JsonSerializer.Serialize(scoresToSave, options);
                 File.WriteAllText(_gameScoresFilePath, json);
             }
-            catch
+            catch (Exception ex)
             {
-                // Silently fail - scores won't persist but app continues working
+                System.Diagnostics.Debug.WriteLine($"Error saving game scores: {ex.Message}");
             }
+        }
+
+        public void Dispose()
+        {
+            _semaphore?.Dispose();
         }
     }
 

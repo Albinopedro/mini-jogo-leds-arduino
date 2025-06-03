@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 using miniJogo.Models;
 using miniJogo.Services;
 
@@ -15,29 +18,97 @@ namespace miniJogo.Views
     public partial class ScoresWindow : Window
     {
         private readonly ScoreService _scoreService;
-        private List<GameScore> _allScores;
-        private List<string> _allPlayers;
+        private readonly AsyncDataService _asyncDataService;
+        private readonly VirtualizedDataService _virtualizedDataService;
+        private ObservableCollection<ScoreItemViewModel> _scoresCollection = new();
+        private List<GameScore> _allScores = new();
+        private List<string> _allPlayers = new();
+        private bool _isLoading = false;
+        private CancellationTokenSource _cancellationTokenSource = new();
+        private int _currentPageIndex = 0;
+        private const int PAGE_SIZE = 50;
+
+        public ScoresWindow() : this(new ScoreService())
+        {
+        }
 
         public ScoresWindow(ScoreService scoreService)
         {
             InitializeComponent();
+            
             _scoreService = scoreService;
+            _asyncDataService = new AsyncDataService();
+            _virtualizedDataService = new VirtualizedDataService(PAGE_SIZE);
             _allScores = new List<GameScore>();
             _allPlayers = new List<string>();
             
-            GameFilterComboBox.SelectedIndex = 0;
-            LoadData();
+            // Configurar ListBox para virtualização
+            PerformanceConfig.ConfigureOptimizedListBox(ScoresListBox, 1000);
+            ScoresListBox.ItemsSource = _scoresCollection;
+            
+            // Aplicar configurações de performance
+            PerformanceConfig.ConfigureDataControls(this);
+            
+            // Carregar dados assincronamente
+            _ = LoadDataAsync();
         }
 
-        private void LoadData()
+        private async Task LoadDataAsync()
+        {
+            if (_isLoading) return;
+            
+            _isLoading = true;
+            
+            try
+            {
+                // Mostrar indicador de carregamento
+                await ShowLoadingIndicator(true);
+                
+                // Carregar dados de forma assíncrona usando o serviço virtualizado
+                await LoadVirtualizedDataAsync();
+                
+                // Atualizar UI na thread principal
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    PopulatePlayerComboBox();
+                    LoadStatistics();
+                    UpdateTotalScoresText();
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao carregar dados: {ex.Message}");
+                // Fallback para carregamento síncrono
+                LoadDataSync();
+            }
+            finally
+            {
+                _isLoading = false;
+                await ShowLoadingIndicator(false);
+            }
+        }
+
+        private void LoadDataSync()
         {
             _allScores = _scoreService.GetGameScores();
             _allPlayers = _allScores.Select(s => s.PlayerName).Distinct().OrderBy(p => p).ToList();
             
             PopulatePlayerComboBox();
-            LoadScores();
+            _ = LoadVirtualizedDataAsync();
             LoadStatistics();
             UpdateTotalScoresText();
+        }
+
+        private async Task ShowLoadingIndicator(bool show)
+        {
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                // Implementar indicador de carregamento se existir
+                if (show)
+                {
+                    TotalScoresText.Text = "🔄 Carregando dados...";
+                }
+            });
         }
 
         private void PopulatePlayerComboBox()
@@ -53,51 +124,56 @@ namespace miniJogo.Views
             PlayerFilterComboBox.SelectedIndex = 0;
         }
 
-        private void LoadScores()
+        private async Task LoadVirtualizedDataAsync()
         {
-            ScoresPanel.Children.Clear();
-            
-            var filteredScores = _allScores.AsEnumerable();
-            
-            // Apply game filter
-            if (GameFilterComboBox.SelectedItem is ComboBoxItem gameItem && !string.IsNullOrEmpty(gameItem.Tag?.ToString()))
+            try
             {
-                var gameFilter = gameItem.Tag.ToString();
-                filteredScores = filteredScores.Where(s => s.GameMode.Equals(gameFilter, StringComparison.OrdinalIgnoreCase));
-            }
-            
-            // Apply player filter
-            if (PlayerFilterComboBox.SelectedItem is ComboBoxItem playerItem && !string.IsNullOrEmpty(playerItem.Tag?.ToString()))
-            {
-                var playerFilter = playerItem.Tag.ToString();
-                filteredScores = filteredScores.Where(s => s.PlayerName.Equals(playerFilter, StringComparison.OrdinalIgnoreCase));
-            }
-            
-            var sortedScores = filteredScores
-                .OrderByDescending(s => s.Score)
-                .ThenByDescending(s => s.Level)
-                .ThenBy(s => s.Duration)
-                .ToList();
-            
-            for (int i = 0; i < sortedScores.Count; i++)
-            {
-                var score = sortedScores[i];
-                var scoreRow = CreateScoreRow(i + 1, score);
-                ScoresPanel.Children.Add(scoreRow);
-            }
-            
-            if (!sortedScores.Any())
-            {
-                var noDataPanel = new StackPanel
-                {
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
-                    Spacing = 10,
-                    Margin = new Avalonia.Thickness(0, 50)
-                };
+                var gameFilter = GetSelectedGameFilter();
+                var playerFilter = GetSelectedPlayerFilter();
                 
-                noDataPanel.Children.Add(new TextBlock
+                var result = await _virtualizedDataService.GetPagedDataAsync(
+                    _currentPageIndex, 
+                    gameFilter, 
+                    playerFilter,
+                    _cancellationTokenSource.Token);
+                
+                await Dispatcher.UIThread.InvokeAsync(() =>
                 {
+                    _scoresCollection.Clear();
+                    
+                    foreach (var item in result.Items)
+                    {
+                        _scoresCollection.Add(item);
+                    }
+                    
+                    if (!result.Items.Any())
+                    {
+                        ShowNoDataMessage();
+                    }
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // Operação cancelada, não fazer nada
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao carregar dados virtualizados: {ex.Message}");
+            }
+        }
+
+        private void ShowNoDataMessage()
+        {
+            var noDataPanel = new StackPanel
+            {
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Spacing = 10,
+                Margin = new Avalonia.Thickness(0, 50)
+            };
+            
+            noDataPanel.Children.Add(new TextBlock
+            {
                     Text = "🎮",
                     FontSize = 48,
                     HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
@@ -106,22 +182,42 @@ namespace miniJogo.Views
                 
                 noDataPanel.Children.Add(new TextBlock
                 {
-                    Text = "Nenhuma pontuação encontrada",
-                    FontSize = 16,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                    Foreground = Brushes.Gray
-                });
-                
-                noDataPanel.Children.Add(new TextBlock
-                {
-                    Text = "Jogue alguns jogos para ver suas pontuações aqui!",
-                    FontSize = 12,
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                    Foreground = Brushes.Gray
-                });
-                
-                ScoresPanel.Children.Add(noDataPanel);
-            }
+                Text = "📊 Nenhuma pontuação encontrada",
+                FontSize = 18,
+                FontWeight = FontWeight.Medium,
+                Foreground = new SolidColorBrush(Color.FromRgb(160, 174, 192)),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+            });
+            
+            noDataPanel.Children.Add(new TextBlock
+            {
+                Text = "Jogue alguns jogos para ver as pontuações aqui!",
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(113, 128, 150)),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+            });
+            
+            _scoresCollection.Clear();
+            var container = new ContentControl
+            {
+                Content = noDataPanel
+            };
+            _scoresCollection.Add(new ScoreItemViewModel { PlayerName = "NoData", Score = -1 });
+            ScoresListBox.ItemsSource = _scoresCollection;
+        }
+
+        private void AddMoreItemsMessage(int hiddenCount)
+        {
+            // Create a viewmodel for the "more items" message
+            var moreItemsVM = new ScoreItemViewModel
+            {
+                PlayerName = $"⚠️ Mostrando apenas os primeiros resultados. Há mais {hiddenCount} registros não exibidos.",
+                Score = -2, // Special marker for UI handling
+                GameMode = "SYSTEM_MESSAGE"
+            };
+            
+            // Add to collection
+            _scoresCollection.Add(moreItemsVM);
         }
 
         private Border CreateScoreRow(int position, GameScore score)
@@ -383,17 +479,17 @@ namespace miniJogo.Views
 
         private void GameFilterComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            LoadScores();
+            _ = RefreshVirtualizedDataAsync();
         }
 
         private void PlayerFilterComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
-            LoadScores();
+            _ = RefreshVirtualizedDataAsync();
         }
 
         private void RefreshButton_Click(object? sender, RoutedEventArgs e)
         {
-            LoadData();
+            _ = RefreshAllDataAsync();
         }
 
         private async void ExportButton_Click(object? sender, RoutedEventArgs e)
@@ -466,14 +562,128 @@ namespace miniJogo.Views
             {
                 // Clear all scores logic would go here
                 // For now, just refresh the display
-                LoadData();
+                await RefreshAllDataAsync();
                 await ShowMessage("Concluído", "Todas as pontuações foram removidas.");
             }
         }
 
         private void CloseButton_Click(object? sender, RoutedEventArgs e)
         {
+            // Cancelar operações pendentes
+            _cancellationTokenSource?.Cancel();
+            _virtualizedDataService?.Dispose();
             Close();
+        }
+        
+        private string GetSelectedGameFilter()
+        {
+            if (GameFilterComboBox.SelectedItem is ComboBoxItem gameItem && 
+                !string.IsNullOrEmpty(gameItem.Tag?.ToString()))
+            {
+                return gameItem.Tag.ToString()!;
+            }
+            return string.Empty;
+        }
+        
+        private string GetSelectedPlayerFilter()
+        {
+            if (PlayerFilterComboBox.SelectedItem is ComboBoxItem playerItem && 
+                !string.IsNullOrEmpty(playerItem.Tag?.ToString()))
+            {
+                return playerItem.Tag.ToString()!;
+            }
+            return string.Empty;
+        }
+        
+        private async Task RefreshVirtualizedDataAsync()
+        {
+            if (_isLoading) return;
+            
+            _isLoading = true;
+            _currentPageIndex = 0; // Reset to first page
+            
+            try
+            {
+                await LoadVirtualizedDataAsync();
+            }
+            finally
+            {
+                _isLoading = false;
+            }
+        }
+        
+        private async Task RefreshAllDataAsync()
+        {
+            if (_isLoading) return;
+            
+            _isLoading = true;
+            
+            try
+            {
+                // Cancelar operações anteriores
+                _cancellationTokenSource?.Cancel();
+                _cancellationTokenSource = new CancellationTokenSource();
+                
+                await ShowLoadingIndicator(true);
+                
+                // Forçar atualização dos dados
+                await _virtualizedDataService.RefreshDataAsync(_cancellationTokenSource.Token);
+                
+                // Recarregar dados da primeira página
+                _currentPageIndex = 0;
+                await LoadVirtualizedDataAsync();
+                
+                // Atualizar players para o combo
+                await UpdatePlayersListAsync();
+                
+                await Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    PopulatePlayerComboBox();
+                    LoadStatistics();
+                    UpdateTotalScoresText();
+                });
+            }
+            catch (OperationCanceledException)
+            {
+                // Operação cancelada
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao atualizar dados: {ex.Message}");
+            }
+            finally
+            {
+                _isLoading = false;
+                await ShowLoadingIndicator(false);
+            }
+        }
+        
+        private async Task UpdatePlayersListAsync()
+        {
+            try
+            {
+                _allPlayers = await Task.Run(async () =>
+                {
+                    var stats = await _virtualizedDataService.GetStatisticsAsync(_cancellationTokenSource.Token);
+                    // Carregar lista completa de players de forma otimizada
+                    var allData = await _virtualizedDataService.GetBatchDataAsync(0, int.MaxValue, "", "", _cancellationTokenSource.Token);
+                    return allData.Select(s => s.PlayerName).Distinct().OrderBy(p => p).ToList();
+                }, _cancellationTokenSource.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                // Operação cancelada
+            }
+        }
+        
+        protected override void OnClosed(EventArgs e)
+        {
+            // Limpeza de recursos
+            _cancellationTokenSource?.Cancel();
+            _virtualizedDataService?.Dispose();
+            _cancellationTokenSource?.Dispose();
+            
+            base.OnClosed(e);
         }
 
         private async Task<bool> ShowConfirmDialog(string title, string message)

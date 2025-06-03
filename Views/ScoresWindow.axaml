@@ -7,6 +7,7 @@
     d:DesignWidth="800"
     d:DesignHeight="600"
     x:Class="miniJogo.Views.ScoresWindow"
+    x:CompileBindings="False"
     Title="🏆 Rankings e Pontuações - Mini Jogo LEDs"
     Width="800"
     Height="600"
@@ -241,9 +242,105 @@
           </Border>
 
           <!-- Scores List -->
-          <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-            <StackPanel x:Name="ScoresPanel" Spacing="2" />
-          </ScrollViewer>
+          <ListBox 
+            x:Name="ScoresListBox" 
+            Grid.Row="2"
+            Background="Transparent"
+            BorderThickness="0"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <ListBox.ItemsPanel>
+              <ItemsPanelTemplate>
+                <VirtualizingStackPanel />
+              </ItemsPanelTemplate>
+            </ListBox.ItemsPanel>
+            <ListBox.ItemTemplate>
+              <DataTemplate>
+                <Border 
+                  Background="#4A5568" 
+                  CornerRadius="8" 
+                  Padding="15,8" 
+                  Margin="0,1">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="50" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="120" />
+                      <ColumnDefinition Width="80" />
+                      <ColumnDefinition Width="60" />
+                      <ColumnDefinition Width="80" />
+                      <ColumnDefinition Width="120" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Position -->
+                    <TextBlock
+                      Grid.Column="0"
+                      Text="{Binding PositionIcon}"
+                      Foreground="{Binding PositionColor}"
+                      FontWeight="Bold"
+                      FontSize="12"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Center" />
+
+                    <!-- Player Name -->
+                    <TextBlock
+                      Grid.Column="1"
+                      Text="{Binding PlayerName}"
+                      Foreground="White"
+                      FontSize="12"
+                      VerticalAlignment="Center"
+                      TextTrimming="CharacterEllipsis" />
+
+                    <!-- Game Mode -->
+                    <TextBlock
+                      Grid.Column="2"
+                      Text="{Binding GameMode}"
+                      Foreground="#CBD5E0"
+                      FontSize="11"
+                      VerticalAlignment="Center"
+                      TextTrimming="CharacterEllipsis" />
+
+                    <!-- Score -->
+                    <TextBlock
+                      Grid.Column="3"
+                      Text="{Binding Score}"
+                      Foreground="#48BB78"
+                      FontWeight="Bold"
+                      FontSize="12"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Right" />
+
+                    <!-- Level -->
+                    <TextBlock
+                      Grid.Column="4"
+                      Text="{Binding Level}"
+                      Foreground="#ED8936"
+                      FontSize="11"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Center" />
+
+                    <!-- Duration -->
+                    <TextBlock
+                      Grid.Column="5"
+                      Text="{Binding FormattedDuration}"
+                      Foreground="#9F7AEA"
+                      FontSize="11"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Center" />
+
+                    <!-- Date -->
+                    <TextBlock
+                      Grid.Column="6"
+                      Text="{Binding FormattedDate}"
+                      Foreground="#A0AEC0"
+                      FontSize="10"
+                      VerticalAlignment="Center"
+                      HorizontalAlignment="Right" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ListBox.ItemTemplate>
+          </ListBox>
         </Grid>
       </Border>
 

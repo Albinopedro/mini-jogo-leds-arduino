@@ -7,6 +7,7 @@
     d:DesignWidth="1200"
     d:DesignHeight="800"
     x:Class="miniJogo.MainWindow"
+    x:CompileBindings="True"
     Title="Mini Jogo LEDs - Arduino"
     Width="1200"
     Height="800"
@@ -48,10 +49,8 @@
                             Text="👤 Jogador: Não definido"
                             Foreground="White"
                             FontWeight="Medium"
-                            FontSize="18"
-                            HorizontalAlignment="Center"
+                            FontSize="14"
                             VerticalAlignment="Center"
-                            TextAlignment="Center"
                         />
           </Border>
         </StackPanel>
@@ -565,17 +564,16 @@
                             IsVisible="False"
                         />
             <Button
-                            x:Name="LogoutButton"
-                            Content="🚪 Logout"
-                            Click="LogoutButton_Click"
-                            Padding="15,8"
-                            CornerRadius="8"
-                            FontWeight="Medium"
-                            Background="#E53E3E"
-                            Foreground="White"
-                            IsVisible="False"
-                        />
-
+                        x:Name="LogoutButton"
+                        Content="🚪 Logout"
+                        Click="LogoutButton_Click"
+                        Padding="15,8"
+                        CornerRadius="8"
+                        Background="#C53030"
+                        Foreground="White"
+                        FontWeight="Medium"
+                        IsVisible="False"
+                    />
           </StackPanel>
         </Border>
 

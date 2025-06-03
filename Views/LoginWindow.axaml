@@ -7,6 +7,7 @@
     d:DesignWidth="1400"
     d:DesignHeight="900"
     x:Class="miniJogo.Views.LoginWindow"
+    x:CompileBindings="True"
     Title="Mini Jogo LEDs - Login"
     Width="1400"
     Height="900"
@@ -298,13 +299,13 @@
                             HorizontalAlignment="Center"
                         />
                         <TextBlock
-                            Text="1. Digite seu nome&#x0a;2. Digite o código do bilhete&#x0a;3. Escolha o jogo desejado&#x0a;4. Clique em 'Entrar no Jogo'"
                             FontSize="13"
                             Foreground="#718096"
                             HorizontalAlignment="Center"
                             TextAlignment="Center"
-                            TextWrapping="Wrap"
-                        />
+                            TextWrapping="Wrap">
+                            <TextBlock.Text>1. Digite seu nome&#x0a;2. Digite o código do bilhete&#x0a;3. Escolha o jogo desejado&#x0a;4. Clique em 'Entrar no Jogo'</TextBlock.Text>
+                        </TextBlock>
                     </StackPanel>
 
                     <!-- Admin Tools (Hidden by default) -->
