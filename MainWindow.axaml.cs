@@ -29,9 +29,10 @@ public partial class MainWindow : Window
     private int _level = 1;
     private DateTime _gameStartTime;
     private ScoreService _scoreService;
+    private ClientSessionService _sessionService;
     private DebugWindow? _debugWindow;
     private bool _isFullScreen = true;
-    private User _currentUser;
+    private User? _currentUser;
     private bool _isClientMode = false;
 
     // LED Matrix (4x4)
@@ -78,10 +79,17 @@ public partial class MainWindow : Window
         InitializeLedMatrix();
         InitializeTimer();
         _scoreService = new ScoreService();
+        _sessionService = new ClientSessionService();
 
         // Set user and configure interface
         _currentUser = user ?? new User { Name = "Designer", Type = UserType.Admin };
-        _isClientMode = _currentUser.Type == UserType.Client;
+        _isClientMode = _currentUser?.Type == UserType.Client;
+
+        // Create client session if needed
+        if (_isClientMode && _currentUser != null)
+        {
+            _sessionService.CreateSession(_currentUser);
+        }
 
         ConfigureInterfaceForUser(selectedGameMode);
 
@@ -249,7 +257,7 @@ public partial class MainWindow : Window
     private void ConfigureInterfaceForUser(int selectedGameMode)
     {
         // Set player name
-        PlayerDisplayText.Text = $"👤 {(_isClientMode ? "Jogador" : "Admin")}: {_currentUser.Name}";
+        PlayerDisplayText.Text = $"👤 {(_isClientMode ? "Jogador" : "Admin")}: {_currentUser?.Name ?? "Desconhecido"}";
 
         // Set initial game mode
         PopulateGameModeComboBox();
@@ -268,10 +276,10 @@ public partial class MainWindow : Window
             RefreshPortsButton.IsVisible = false;
 
             // Set player name directly
-            _playerName = _currentUser.Name;
+            _playerName = _currentUser?.Name ?? "Cliente";
 
             // Update status
-            StatusText.Text = $"🎮 Bem-vindo, {_currentUser.Name}! Conectando ao Arduino...";
+            StatusText.Text = $"🎮 Bem-vindo, {_currentUser?.Name ?? "Cliente"}! Conectando ao Arduino...";
         }
         else
         {
@@ -284,6 +292,12 @@ public partial class MainWindow : Window
         // Set game description
         GameDescriptionText.Text = GetGameDescription(selectedGameMode);
         CurrentGameText.Text = GetGameName(selectedGameMode);
+
+        // Show remaining rounds for clients
+        if (_isClientMode)
+        {
+            UpdateRemainingRoundsDisplay();
+        }
     }
 
     private async void LogoutButton_Click(object? sender, RoutedEventArgs e)
@@ -655,6 +669,19 @@ public partial class MainWindow : Window
                 SaveGameScore();
                 AddDebugMessage($"Fim de jogo - Pontuação final: {_score}");
                 TriggerVisualEffect("GAME_OVER");
+
+                // Record round for client and check if all rounds are completed
+                if (_isClientMode && _currentUser != null)
+                {
+                    var currentGameMode = (GameMode)_currentGameMode;
+                    _sessionService.RecordGameRound(_currentUser.Id, currentGameMode);
+                    
+                    // Check if client has completed all games
+                    if (_sessionService.HasClientCompletedAllGames(_currentUser.Id))
+                    {
+                        Task.Run(async () => await ShowRoundsCompletedDialog());
+                    }
+                }
                 break;
 
             case "STATUS":
@@ -1367,6 +1394,12 @@ public partial class MainWindow : Window
                 {
                     StartGameButton.IsEnabled = true;
                 }
+
+                // Update remaining rounds display for clients
+                if (_isClientMode)
+                {
+                    UpdateRemainingRoundsDisplay();
+                }
             }
         }
     }
@@ -1403,6 +1436,20 @@ public partial class MainWindow : Window
         {
             await ShowMessage("Erro", "Selecione um jogo primeiro!");
             return;
+        }
+
+        // Check if client can play this game
+        if (_isClientMode && _currentUser != null)
+        {
+            var gameMode = (GameMode)_currentGameMode;
+            if (!_sessionService.CanClientPlayGame(_currentUser.Id, gameMode))
+            {
+                var remaining = _sessionService.GetRemainingRounds(_currentUser.Id, gameMode);
+                await ShowMessage("Rodadas Esgotadas", 
+                    $"Você já jogou todas as rodadas disponíveis para {gameMode.GetDisplayName()}!\n" +
+                    $"Rodadas restantes: {remaining}");
+                return;
+            }
         }
 
         _gameActive = true;
@@ -1814,6 +1861,75 @@ O Arduino possui animações épicas para:
         return _gameDescriptions.TryGetValue(gameMode, out var description)
             ? description
             : "Selecione um jogo para ver a descrição...";
+    }
+
+    private void UpdateRemainingRoundsDisplay()
+    {
+        if (!_isClientMode || _currentUser == null) return;
+
+        try
+        {
+            var session = _sessionService.GetSession(_currentUser.Id);
+            if (session == null) return;
+
+            var currentGame = (GameMode)_currentGameMode;
+            var remaining = session.GetRemainingRounds(currentGame);
+            var maxRounds = session.MaxRounds.ContainsKey(currentGame) ? session.MaxRounds[currentGame] : 0;
+            var played = maxRounds - remaining;
+
+            // Update status with rounds info
+            var gameIcon = currentGame.GetIcon();
+            var gameName = currentGame.GetDisplayName();
+            
+            if (remaining > 0)
+            {
+                StatusText.Text = $"{gameIcon} {gameName} - Rodadas: {played}/{maxRounds} (Restam: {remaining})";
+            }
+            else
+            {
+                StatusText.Text = $"{gameIcon} {gameName} - Rodadas esgotadas ({played}/{maxRounds})";
+            }
+        }
+        catch (Exception ex)
+        {
+            AddDebugMessage($"Erro ao atualizar display de rodadas: {ex.Message}");
+        }
+    }
+
+    private async Task ShowRoundsCompletedDialog()
+    {
+        try
+        {
+            if (_currentUser == null) return;
+            
+            var session = _sessionService.GetSession(_currentUser.Id);
+            if (session == null) return;
+
+            var roundsCompletedWindow = new RoundsCompletedWindow();
+            roundsCompletedWindow.SetGameSummary(session.RoundsPlayed, _currentUser.Name);
+            
+            // Handle return to login event
+            roundsCompletedWindow.OnReturnToLogin += (sender, e) =>
+            {
+                Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    // End the session
+                    if (_currentUser != null)
+                        _sessionService.EndSession(_currentUser.Id);
+                    
+                    // Return to login
+                    var loginWindow = new LoginWindow();
+                    loginWindow.Show();
+                    Close();
+                });
+            };
+
+            await roundsCompletedWindow.ShowDialog(this);
+        }
+        catch (Exception ex)
+        {
+            AddDebugMessage($"Erro ao mostrar diálogo de rodadas concluídas: {ex.Message}");
+        }
     }
 
     private async Task ShowMessage(string title, string message)
