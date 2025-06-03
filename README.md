@@ -28,21 +28,21 @@ Sistema de jogos interativos com matriz 4x4 de LEDs conectada ao Arduino, contro
 - **Curtos**: Fáceis de digitar e imprimir
 - **Validação**: Sistema anti-fraude integrado
 
-#### 🏷️ **Geração para Bilhetes**
+#### 🏷️ **Geração de Códigos**
 1. Admin faz login com `ADMIN2024`
 2. Clica em "📄 Gerar Códigos de Cliente"
 3. Define quantidade (1-10.000 códigos)
-4. Sistema gera arquivo `.txt` formatado para impressão
-5. Códigos prontos para corte em bilhetes
+4. Sistema gera arquivo `.txt` com os códigos
+5. Códigos prontos para distribuição
 
-#### 💳 **Exemplo de Bilhete**
+#### 💳 **Exemplo de Código**
 ```
 ╔══════════════════════╗
 ║  🎮 MINI JOGO LEDS   ║
 ║                      ║
 ║    Código: AB1234    ║
 ║                      ║
-║  Valid: ___/___/___  ║
+║     Use apenas 1x    ║
 ╚══════════════════════╝
 ```
 
@@ -50,7 +50,7 @@ Sistema de jogos interativos com matriz 4x4 de LEDs conectada ao Arduino, contro
 
 ### 🎯 **Para Clientes**
 1. Digite seu **nome**
-2. Digite o **código do bilhete**
+2. Digite o **código de acesso**
 3. Escolha o **jogo desejado** (com instruções)
 4. Clique **"🚀 Entrar no Jogo"**
 5. **Arduino conecta automaticamente**
@@ -200,15 +200,15 @@ miniJogo/
 ### 📊 **Arquivos do Sistema**
 - `client_codes.json`: Lista de todos os códigos válidos
 - `used_codes.json`: Códigos já utilizados (não podem ser reutilizados)
-- `bilhetes_jogo_YYYYMMDD_HHMMSS.txt`: Arquivo de impressão gerado
+- `codes_YYYYMMDD_HHMMSS.txt`: Arquivo com códigos gerados
 
 ### 🔄 **Fluxo de Geração**
 1. **Admin acessa** ferramenta de geração
 2. **Define quantidade** de códigos necessários
 3. **Sistema gera** códigos únicos e seguros
 4. **Salva automaticamente** nos arquivos JSON
-5. **Cria arquivo** formatado para impressão
-6. **Pronto para** corte em bilhetes
+5. **Cria arquivo** com códigos gerados
+6. **Pronto para** distribuição
 
 ### 📈 **Estatísticas em Tempo Real**
 - Total de códigos gerados
@@ -294,19 +294,19 @@ miniJogo/
 - **F9 - 🎆 Fogos**: Múltiplas explosões sequenciais
 - **F10 - ✨ Demo Completa**: Apresentação de 10 segundos
 
-## 💰 Modelo de Negócio
+## 💰 Sistema de Códigos
 
-### 🎫 **Sistema de Bilhetes**
+### 🎫 **Gerenciamento de Códigos**
 - **Geração em Lote**: 10, 50, 100, 500, 1000+ códigos
-- **Impressão Otimizada**: Formato pronto para corte
+- **Formato Otimizado**: Códigos fáceis de usar
 - **Controle Total**: Rastreamento de uso em tempo real
 - **Segurança Anti-Fraude**: Códigos únicos e imprevisíveis
 
-### 📈 **Monetização**
-- **Pay-per-Play**: Cada código = 1 sessão de jogo
-- **Diferentes Valores**: Jogos premium (Roleta, Lightning, Sniper)
-- **Controle de Estoque**: Saber quantos bilhetes restam
-- **Relatórios**: Estatísticas de vendas e uso
+### 📈 **Controle de Acesso**
+- **Uso Único**: Cada código = 1 sessão de jogo
+- **Diferentes Jogos**: Todos os jogos disponíveis
+- **Controle de Estoque**: Saber quantos códigos restam
+- **Relatórios**: Estatísticas de uso
 
 ## 🏆 Recursos Premium
 

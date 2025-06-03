@@ -664,9 +664,7 @@ public partial class MainWindow : Window
                     UpdateUI();
                     AddDebugMessage($"Nível aumentado: {newLevel}");
                 }
-                break;
-
-            case "GAME_OVER":
+                break;            case "GAME_OVER":
                 _gameActive = false;
                 StartGameButton.IsEnabled = true;
                 StopGameButton.IsEnabled = false;
@@ -682,6 +680,21 @@ public partial class MainWindow : Window
                 AddDebugMessage($"Fim de jogo - Pontuação final: {_score}");
                 TriggerVisualEffect("GAME_OVER");
 
+                // For clients, check if they have reached the error limit after game over
+                if (_isClientMode && _currentUser != null)
+                {
+                    Task.Run(async () =>
+                    {
+                        await Task.Delay(2000); // Give time for game over animation
+                        await Dispatcher.UIThread.InvokeAsync(() =>
+                        {
+                            if (_sessionService.HasClientReachedErrorLimit(_currentUser.Id))
+                            {
+                                Task.Run(async () => await ShowRoundsCompletedDialog());
+                            }
+                        });
+                    });
+                }
 
                 break;
 
@@ -1912,14 +1925,14 @@ O Arduino possui animações épicas para:
         {
             AddDebugMessage($"Erro ao atualizar display de rodadas: {ex.Message}");
         }
-    }
-
-    private void RecordClientRoundLoss()
+    }    private void RecordClientRoundLoss()
     {
         if (_isClientMode && _currentUser != null)
         {
             var currentGameMode = (GameMode)_currentGameMode;
             _sessionService.RecordGameError(_currentUser.Id, currentGameMode);
+            
+            AddDebugMessage($"Cliente {_currentUser.Name} cometeu erro em {currentGameMode.GetDisplayName()}");
             
             // Update display
             UpdateRemainingRoundsDisplay();
@@ -1927,44 +1940,167 @@ O Arduino possui animações épicas para:
             // Check if client has reached error limit
             if (_sessionService.HasClientReachedErrorLimit(_currentUser.Id))
             {
+                AddDebugMessage($"Cliente {_currentUser.Name} atingiu limite de erros - iniciando retorno ao login");
+                
+                // Stop the current game immediately
+                StopGameImmediately();
+                
+                // Show popup and auto-return to login
                 Task.Run(async () => await ShowRoundsCompletedDialog());
+            }
+            else
+            {
+                var remaining = _sessionService.GetRemainingRounds(_currentUser.Id, currentGameMode);
+                AddDebugMessage($"Cliente {_currentUser.Name} ainda tem {remaining} rodadas restantes em {currentGameMode.GetDisplayName()}");
             }
         }
     }
 
-    private async Task ShowRoundsCompletedDialog()
+    private void StopGameImmediately()
     {
         try
         {
-            if (_currentUser == null) return;
-            
-            var session = _sessionService.GetSession(_currentUser.Id);
-            if (session == null) return;
+            _gameActive = false;
+            StartGameButton.IsEnabled = false;
+            StopGameButton.IsEnabled = false;
 
-            var roundsCompletedWindow = new RoundsCompletedWindow();
-            roundsCompletedWindow.SetGameSummary(session.RoundsPlayed, _currentUser.Name);
-            
-            // Handle return to login event
-            roundsCompletedWindow.OnReturnToLogin += (sender, e) =>
+            // Send stop command to Arduino
+            if (_serialPort?.IsOpen == true)
             {
-                Dispatcher.UIThread.InvokeAsync(() =>
-                {
-                    // End the session
-                    if (_currentUser != null)
-                        _sessionService.EndSession(_currentUser.Id);
-                    
-                    // Return to login
-                    var loginWindow = new LoginWindow();
-                    loginWindow.Show();
-                    Close();
-                });
-            };
+                _serialPort.WriteLine("STOP_GAME");
+            }
 
-            await roundsCompletedWindow.ShowDialog(this);
+            StatusText.Text = "🛑 Jogo interrompido - Limite de erros atingido!";
+            AddDebugMessage("Jogo parado automaticamente - limite de erros atingido");
         }
         catch (Exception ex)
         {
-            AddDebugMessage($"Erro ao mostrar diálogo de rodadas concluídas: {ex.Message}");
+            AddDebugMessage($"Erro ao parar jogo: {ex.Message}");
+        }
+    }    private async Task ShowRoundsCompletedDialog()
+    {
+        try
+        {
+            if (_currentUser == null) 
+            {
+                AddDebugMessage("ShowRoundsCompletedDialog: _currentUser é null, forçando retorno ao login");
+                await ForceReturnToLogin();
+                return;
+            }
+            
+            var session = _sessionService.GetSession(_currentUser.Id);
+            if (session == null) 
+            {
+                AddDebugMessage("ShowRoundsCompletedDialog: sessão não encontrada, forçando retorno ao login");
+                await ForceReturnToLogin();
+                return;
+            }
+
+            AddDebugMessage($"Mostrando diálogo de sessão completa para {_currentUser.Name}");
+
+            // Ensure we're on UI thread
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                try
+                {
+                    var roundsCompletedWindow = new RoundsCompletedWindow();
+                    roundsCompletedWindow.SetGameSummary(session.RoundsPlayed, _currentUser.Name);
+                    
+                    // Handle return to login event - this MUST happen
+                    roundsCompletedWindow.OnReturnToLogin += async (sender, e) =>
+                    {
+                        try
+                        {
+                            AddDebugMessage("Evento OnReturnToLogin disparado - processando retorno ao login");
+                            
+                            // End the session
+                            if (_currentUser != null)
+                                _sessionService.EndSession(_currentUser.Id);
+                            
+                            // Force close this window first
+                            Close();
+                            
+                            // Small delay to ensure window closes
+                            await Task.Delay(100);
+                            
+                            // Create and show login window
+                            var loginWindow = new LoginWindow();
+                            loginWindow.Show();
+                            
+                            AddDebugMessage("Retorno ao login concluído com sucesso");
+                        }
+                        catch (Exception ex)
+                        {
+                            AddDebugMessage($"Erro no evento OnReturnToLogin: {ex.Message}");
+                            // If anything fails, still try to close and show login
+                            await ForceReturnToLogin();
+                        }
+                    };
+
+                    // Show as modal dialog to block all interaction
+                    try
+                    {
+                        await roundsCompletedWindow.ShowDialog(this);
+                    }
+                    catch (Exception ex)
+                    {                        AddDebugMessage($"Erro ao mostrar diálogo modal: {ex.Message}");
+                        // If ShowDialog fails, show normally and force modal behavior
+                        roundsCompletedWindow.Show();
+                        
+                        // Auto-trigger return to login after a delay as fallback
+                        _ = Task.Run(async () =>
+                        {
+                            await Task.Delay(8000); // 8 seconds fallback
+                            await Dispatcher.UIThread.InvokeAsync(async () => await ForceReturnToLogin());
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AddDebugMessage($"Erro ao criar RoundsCompletedWindow: {ex.Message}");
+                    await ForceReturnToLogin();
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            AddDebugMessage($"Erro crítico em ShowRoundsCompletedDialog: {ex.Message}");
+            await ForceReturnToLogin();
+        }
+    }
+
+    private async Task ForceReturnToLogin()
+    {
+        try
+        {
+            AddDebugMessage("ForceReturnToLogin: iniciando retorno forçado ao login");
+            
+            // End session if user exists
+            if (_currentUser != null)
+                _sessionService.EndSession(_currentUser.Id);
+            
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                try
+                {
+                    Close();
+                    var loginWindow = new LoginWindow();
+                    loginWindow.Show();
+                    AddDebugMessage("ForceReturnToLogin: login window criada com sucesso");
+                }
+                catch (Exception ex)
+                {
+                    AddDebugMessage($"ForceReturnToLogin: erro ao criar login window: {ex.Message}");
+                    // Last resort - exit application
+                    Environment.Exit(0);
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            AddDebugMessage($"ForceReturnToLogin: erro crítico: {ex.Message}");
+            // Absolute last resort - exit application
+            Environment.Exit(0);
         }
     }
 
