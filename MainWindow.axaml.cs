@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -34,11 +36,15 @@ public partial class MainWindow : Window
     private bool _isFullScreen = true;
     private User? _currentUser;
     private bool _isClientMode = false;
+    // Adicione esta linha junto às outras variáveis de instância no início da classe
+    private volatile bool _isSessionEnding = false;
+    private readonly object _gameStateLock = new object();
+    private bool _disposed = false;
 
     // LED Matrix (4x4)
     private readonly Ellipse[,] _ledMatrix = new Ellipse[4, 4];
 
-    // LED auto-restore timer
+    // LED Timers for effects
     private readonly Dictionary<int, System.Threading.Timer> _ledTimers = new();
     private readonly object _ledTimersLock = new();
 
@@ -88,7 +94,7 @@ public partial class MainWindow : Window
         // Create client session if needed
         if (_isClientMode && _currentUser != null)
         {
-            _sessionService.CreateSession(_currentUser);
+            _sessionService.CreateSession(_currentUser, (GameMode)selectedGameMode);
         }
 
         ConfigureInterfaceForUser(selectedGameMode);
@@ -259,9 +265,14 @@ public partial class MainWindow : Window
         // Set player name
         PlayerDisplayText.Text = $"👤 {(_isClientMode ? "Jogador" : "Admin")}: {_currentUser?.Name ?? "Desconhecido"}";
 
-        // Set initial game mode
+        // Set current game mode FIRST
+        _currentGameMode = selectedGameMode;
+        
+        // Then populate ComboBox and set selection
         PopulateGameModeComboBox();
         GameModeComboBox.SelectedIndex = selectedGameMode - 1;
+        
+        AddDebugMessage($"Jogo selecionado configurado: {GetGameName(selectedGameMode)} (ID: {selectedGameMode})");
 
         // Configure UI based on user type
         if (_isClientMode)
@@ -280,6 +291,16 @@ public partial class MainWindow : Window
 
             // Update status
             StatusText.Text = $"🎮 Bem-vindo, {_currentUser?.Name ?? "Cliente"}! Conectando ao Arduino...";
+
+            // Lock game mode selection for clients - they play ONLY the selected game
+            GameModeComboBox.IsEnabled = false;
+
+            // Display session status for the selected game only
+            UpdateRemainingRoundsDisplay();
+            
+            // Show clear message about single game session
+            var selectedGameName = GetGameName(_currentGameMode);
+            AddDebugMessage($"Cliente {_currentUser?.Name} iniciará sessão de jogo único: {selectedGameName}");
         }
         else
         {
@@ -470,8 +491,15 @@ public partial class MainWindow : Window
                             ConnectionStatus.Fill = Brushes.LimeGreen;
                             ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(56, 161, 105));
                             StartGameButton.IsEnabled = true;
-                            StatusText.Text = $"✅ Arduino conectado automaticamente na porta {port}";
+                            StatusText.Text = $"✅ Arduino conectado automaticamente na porta {port}. Jogo selecionado: {GetGameName(_currentGameMode)}";
                             AddDebugMessage($"Arduino conectado automaticamente na porta {port}");
+
+                            // Confirm game mode is locked for clients after successful connection
+                            if (_isClientMode)
+                            {
+                                GameModeComboBox.IsEnabled = false;
+                                AddDebugMessage($"Modo de jogo bloqueado para cliente: {GetGameName(_currentGameMode)}");
+                            }
 
                             break; // Successfully connected
                         }
@@ -485,17 +513,37 @@ public partial class MainWindow : Window
                     if (_serialPort?.IsOpen != true)
                     {
                         StatusText.Text = "⚠️ Arduino não encontrado. Conecte o dispositivo e tente novamente.";
+                        
+                        // For clients, if Arduino can't connect, they can't play
+                        if (_isClientMode)
+                        {
+                            StatusText.Text = "⚠️ Arduino não encontrado. Aguarde a reconexão...";
+                            AddDebugMessage("Cliente não pode jogar sem Arduino - aguardando conexão");
+                        }
                     }
                 }
                 else
                 {
                     StatusText.Text = "⚠️ Nenhuma porta serial encontrada. Verifique a conexão do Arduino.";
+                    
+                    // For clients, disable game functions if no Arduino
+                    if (_isClientMode)
+                    {
+                        StartGameButton.IsEnabled = false;
+                        StatusText.Text = "⚠️ Arduino necessário para jogar. Aguarde a conexão...";
+                    }
                 }
             }
             catch (Exception ex)
             {
                 StatusText.Text = $"❌ Erro na conexão automática: {ex.Message}";
                 AddDebugMessage($"Erro na conexão automática: {ex.Message}");
+                
+                // For clients, ensure they can't start without Arduino
+                if (_isClientMode)
+                {
+                    StartGameButton.IsEnabled = false;
+                }
             }
         });
     }
@@ -545,13 +593,13 @@ public partial class MainWindow : Window
                     ConnectionStatus.Fill = Brushes.LimeGreen;
                     ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(56, 161, 105));
                     StartGameButton.IsEnabled = true;
-                    
+
                     // Lock game selection for clients after connection
                     if (_isClientMode)
                     {
                         GameModeComboBox.IsEnabled = false;
                     }
-                    
+
                     AddDebugMessage($"Arduino conectado na porta {selectedPort}");
 
                     // Send initialization command
@@ -565,16 +613,16 @@ public partial class MainWindow : Window
                     ConnectionStatus.Fill = Brushes.Red;
                     ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(220, 38, 127));
                     StartGameButton.IsEnabled = false;
-                    
+
                     AddDebugMessage($"Erro ao conectar: {ex.Message}");
                     if (!_isClientMode) // Only show error dialogs to admins
                     {
                         await ShowMessage("Erro de Conexão", $"Não foi possível conectar ao Arduino:\n{ex.Message}");
                     }
                 }
-                }
             }
         }
+    }
 
     private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
     {
@@ -664,12 +712,29 @@ public partial class MainWindow : Window
                     UpdateUI();
                     AddDebugMessage($"Nível aumentado: {newLevel}");
                 }
-                break;            case "GAME_OVER":
+                break;
+            case "GAME_OVER":
+                // Thread-safe check and set to prevent multiple GAME_OVER processing
+                bool shouldProcessGameOver = false;
+                lock (_gameStateLock)
+                {
+                    if (!_isSessionEnding)
+                    {
+                        shouldProcessGameOver = true;
+                    }
+                    else
+                    {
+                        AddDebugMessage("Evento 'GAME_OVER' recebido, mas a sessão já está a terminar. A ignorar.");
+                    }
+                }
+
+                if (!shouldProcessGameOver) break;
+
+                // Execute game over logic
                 _gameActive = false;
                 StartGameButton.IsEnabled = true;
                 StopGameButton.IsEnabled = false;
 
-                // Sync final score from Arduino if provided
                 if (int.TryParse(eventValue, out var finalScore))
                 {
                     _score = finalScore;
@@ -680,22 +745,29 @@ public partial class MainWindow : Window
                 AddDebugMessage($"Fim de jogo - Pontuação final: {_score}");
                 TriggerVisualEffect("GAME_OVER");
 
-                // For clients, check if they have reached the error limit after game over
+                // For clients, check if session should end after game over
                 if (_isClientMode && _currentUser != null)
                 {
-                    Task.Run(async () =>
+                    var remainingRounds = _sessionService.GetRemainingRounds(_currentUser.Id);
+                    AddDebugMessage($"Após GAME_OVER - Rodadas restantes no jogo selecionado: {remainingRounds}");
+                    
+                    if (remainingRounds <= 0)
                     {
-                        await Task.Delay(2000); // Give time for game over animation
-                        await Dispatcher.UIThread.InvokeAsync(() =>
+                        lock (_gameStateLock)
                         {
-                            if (_sessionService.HasClientReachedErrorLimit(_currentUser.Id))
-                            {
-                                Task.Run(async () => await ShowRoundsCompletedDialog());
-                            }
-                        });
-                    });
+                            _isSessionEnding = true;
+                        }
+                        AddDebugMessage($"Cliente {_currentUser.Name} esgotou todas as chances do jogo selecionado - iniciando fim de sessão");
+                        Task.Run(async () => await ShowRoundsCompletedDialog());
+                    }
+                    else
+                    {
+                        // Still has chances in the selected game
+                        var selectedGameName = _sessionService.GetClientSelectedGame(_currentUser.Id).GetDisplayName();
+                        StatusText.Text = $"🎮 GAME OVER! Ainda tem {remainingRounds} chance(s) em {selectedGameName}";
+                        AddDebugMessage($"Game over - cliente ainda tem {remainingRounds} chances no jogo selecionado");
+                    }
                 }
-
                 break;
 
             case "STATUS":
@@ -1120,7 +1192,7 @@ public partial class MainWindow : Window
 
     private void HighlightLed(int ledIndex)
     {
-        if (ledIndex < 0 || ledIndex >= 16) return;
+        if (_disposed || ledIndex < 0 || ledIndex >= 16) return;
 
         var row = ledIndex / 4;
         var col = ledIndex % 4;
@@ -1136,18 +1208,31 @@ public partial class MainWindow : Window
                 if (_ledTimers.TryGetValue(ledIndex, out var existingTimer))
                 {
                     existingTimer.Dispose();
+                    _ledTimers.Remove(ledIndex);
                 }
 
                 // Create new timer to restore LED color
-                _ledTimers[ledIndex] = new System.Threading.Timer(
+                var timer = new System.Threading.Timer(
                     _ =>
                     {
-                        Dispatcher.UIThread.InvokeAsync(() => RestoreLedColor(ledIndex));
+                        if (!_disposed)
+                        {
+                            try
+                            {
+                                Dispatcher.UIThread.InvokeAsync(() => RestoreLedColor(ledIndex));
+                            }
+                            catch (Exception ex)
+                            {
+                                AddDebugMessage($"Erro ao restaurar LED {ledIndex}: {ex.Message}");
+                            }
+                        }
+
+                        // Clean up timer
                         lock (_ledTimersLock)
                         {
-                            if (_ledTimers.TryGetValue(ledIndex, out var timer))
+                            if (_ledTimers.TryGetValue(ledIndex, out var timerToDispose))
                             {
-                                timer.Dispose();
+                                timerToDispose.Dispose();
                                 _ledTimers.Remove(ledIndex);
                             }
                         }
@@ -1156,6 +1241,8 @@ public partial class MainWindow : Window
                     TimeSpan.FromMilliseconds(200),
                     Timeout.InfiniteTimeSpan
                 );
+
+                _ledTimers[ledIndex] = timer;
             }
         }
     }
@@ -1186,6 +1273,18 @@ public partial class MainWindow : Window
 
     private void ClearLedMatrix()
     {
+        if (_disposed) return;
+
+        // Clear all active timers first
+        lock (_ledTimersLock)
+        {
+            foreach (var timer in _ledTimers.Values)
+            {
+                timer?.Dispose();
+            }
+            _ledTimers.Clear();
+        }
+
         for (int row = 0; row < 4; row++)
         {
             for (int col = 0; col < 4; col++)
@@ -1359,7 +1458,7 @@ public partial class MainWindow : Window
 
     private void RestoreLedColor(int ledIndex)
     {
-        if (ledIndex < 0 || ledIndex >= 16) return;
+        if (_disposed || ledIndex < 0 || ledIndex >= 16) return;
 
         var row = ledIndex / 4;
         var col = ledIndex % 4;
@@ -1395,6 +1494,15 @@ public partial class MainWindow : Window
 
     private void GameModeComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
+        // Prevent ALL game mode changes for clients - they can only play the selected game
+        if (_isClientMode)
+        {
+            AddDebugMessage("Tentativa de mudar jogo bloqueada - cliente pode jogar apenas o jogo selecionado na sessão");
+            // Reset combo box to current game mode
+            GameModeComboBox.SelectedIndex = _currentGameMode - 1;
+            return;
+        }
+
         if (GameModeComboBox.SelectedItem is ComboBoxItem selectedItem)
         {
             if (int.TryParse(selectedItem.Tag?.ToString(), out var gameMode))
@@ -1417,7 +1525,7 @@ public partial class MainWindow : Window
                 {
                     if (_isClientMode && _currentUser != null)
                     {
-                        var canPlay = _sessionService.CanClientPlayGame(_currentUser.Id, (GameMode)gameMode);
+                        var canPlay = _sessionService.CanClientPlayGame(_currentUser.Id);
                         StartGameButton.IsEnabled = canPlay;
                     }
                     else
@@ -1473,10 +1581,10 @@ public partial class MainWindow : Window
         if (_isClientMode && _currentUser != null)
         {
             var gameMode = (GameMode)_currentGameMode;
-            if (!_sessionService.CanClientPlayGame(_currentUser.Id, gameMode))
+            if (!_sessionService.CanClientPlayGame(_currentUser.Id))
             {
-                var remaining = _sessionService.GetRemainingRounds(_currentUser.Id, gameMode);
-                await ShowMessage("Limite de Erros Atingido", 
+                var remaining = _sessionService.GetRemainingRounds(_currentUser.Id);
+                await ShowMessage("Limite de Erros Atingido",
                     $"Você já cometeu o máximo de erros permitidos em {gameMode.GetDisplayName()}!\n" +
                     $"Erros restantes: {remaining}");
                 return;
@@ -1832,32 +1940,76 @@ O Arduino possui animações épicas para:
 
     protected override void OnClosed(EventArgs e)
     {
-        _statusTimer?.Dispose();
+        if (_disposed) return;
 
-        // Clean up LED timers
-        lock (_ledTimersLock)
+        try
         {
-            foreach (var timer in _ledTimers.Values)
+            _disposed = true;
+
+            // Stop the status timer
+            _statusTimer?.Dispose();
+
+            // Clean up LED timers
+            lock (_ledTimersLock)
             {
-                timer.Dispose();
+                foreach (var timer in _ledTimers.Values)
+                {
+                    timer?.Dispose();
+                }
+                _ledTimers.Clear();
             }
-            _ledTimers.Clear();
-        }
 
-        if (_serialPort?.IsOpen == true)
-        {
+            // Disconnect Arduino safely
+            if (_serialPort?.IsOpen == true)
+            {
+                try
+                {
+                    _serialPort.WriteLine("DISCONNECT");
+                    System.Threading.Thread.Sleep(200); // Reduced wait time
+                    _serialPort.Close();
+                    _serialPort.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    AddDebugMessage($"Erro ao desconectar Arduino: {ex.Message}");
+                }
+                finally
+                {
+                    _serialPort = null;
+                }
+            }
+
+            // End user session if exists
+            if (_currentUser != null)
+            {
+                try
+                {
+                    _sessionService.EndSession(_currentUser.Id);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Erro ao finalizar sessão: {ex.Message}");
+                }
+            }
+
+            // Close debug window
             try
             {
-                StatusText.Text = "👋 Desconectando... Até logo!";
-                _serialPort.WriteLine("DISCONNECT");
-                System.Threading.Thread.Sleep(500); // Give time for disconnect animation
-                _serialPort.Close();
+                _debugWindow?.Close();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Erro ao fechar debug window: {ex.Message}");
+            }
         }
-
-        _debugWindow?.Close();
-        base.OnClosed(e);
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Erro durante cleanup: {ex.Message}");
+        }
+        finally
+        {
+            base.OnClosed(e);
+        }
     }
 
     private void ToggleFullScreen()
@@ -1900,58 +2052,44 @@ O Arduino possui animações épicas para:
 
         try
         {
-            var session = _sessionService.GetSession(_currentUser.Id);
-            if (session == null) return;
+            var sessionStatus = _sessionService.GetClientSessionStatus(_currentUser.Id);
+            StatusText.Text = sessionStatus;
 
-            var currentGame = (GameMode)_currentGameMode;
-            var remaining = session.GetRemainingRounds(currentGame);
-            var maxRounds = session.MaxRounds.ContainsKey(currentGame) ? session.MaxRounds[currentGame] : 0;
-            var played = maxRounds - remaining;
-
-            // Update status with rounds info
-            var gameIcon = currentGame.GetIcon();
-            var gameName = currentGame.GetDisplayName();
-            
-            if (remaining > 0)
-            {
-                StatusText.Text = $"{gameIcon} {gameName} - Erros: {played}/{maxRounds} (Restam: {remaining})";
-            }
-            else
-            {
-                StatusText.Text = $"{gameIcon} {gameName} - Limite de erros atingido ({played}/{maxRounds})";
-            }
+            var remaining = _sessionService.GetRemainingRounds(_currentUser.Id);
+            AddDebugMessage($"Status atualizado - Rodadas restantes: {remaining}");
         }
         catch (Exception ex)
         {
             AddDebugMessage($"Erro ao atualizar display de rodadas: {ex.Message}");
         }
-    }    private void RecordClientRoundLoss()
+    }
+
+    private void RecordClientRoundLoss()
     {
         if (_isClientMode && _currentUser != null)
         {
-            var currentGameMode = (GameMode)_currentGameMode;
-            _sessionService.RecordGameError(_currentUser.Id, currentGameMode);
-            
-            AddDebugMessage($"Cliente {_currentUser.Name} cometeu erro em {currentGameMode.GetDisplayName()}");
-            
-            // Update display
+            var selectedGame = _sessionService.GetClientSelectedGame(_currentUser.Id);
+            _sessionService.RecordGameError(_currentUser.Id);
+
+            AddDebugMessage($"Cliente {_currentUser.Name} cometeu erro em {selectedGame.GetDisplayName()}");
+
             UpdateRemainingRoundsDisplay();
-            
-            // Check if client has reached error limit
-            if (_sessionService.HasClientReachedErrorLimit(_currentUser.Id))
+
+            // Check if session should end (all chances in the selected game exhausted)
+            if (_sessionService.ShouldEndClientSession(_currentUser.Id) && !_isSessionEnding)
             {
-                AddDebugMessage($"Cliente {_currentUser.Name} atingiu limite de erros - iniciando retorno ao login");
-                
-                // Stop the current game immediately
+                lock (_gameStateLock)
+                {
+                    if (_isSessionEnding) return; // Double-check to prevent race condition
+                    _isSessionEnding = true; // Define a flag para bloquear outras ações
+                }
+
+                AddDebugMessage($"Cliente {_currentUser.Name} esgotou todas as chances em {selectedGame.GetDisplayName()} - iniciando fim de sessão automático");
+
                 StopGameImmediately();
-                
-                // Show popup and auto-return to login
+
+                // Show session completed dialog and return to login
                 Task.Run(async () => await ShowRoundsCompletedDialog());
-            }
-            else
-            {
-                var remaining = _sessionService.GetRemainingRounds(_currentUser.Id, currentGameMode);
-                AddDebugMessage($"Cliente {_currentUser.Name} ainda tem {remaining} rodadas restantes em {currentGameMode.GetDisplayName()}");
             }
         }
     }
@@ -1961,35 +2099,70 @@ O Arduino possui animações épicas para:
         try
         {
             _gameActive = false;
-            StartGameButton.IsEnabled = false;
-            StopGameButton.IsEnabled = false;
+
+            // Clear any LED effects
+            ClearLedMatrix();
 
             // Send stop command to Arduino
             if (_serialPort?.IsOpen == true)
             {
-                _serialPort.WriteLine("STOP_GAME");
+                try
+                {
+                    _serialPort.WriteLine("STOP_GAME");
+                }
+                catch (Exception arduinoEx)
+                {
+                    AddDebugMessage($"Erro ao enviar comando STOP_GAME: {arduinoEx.Message}");
+                }
             }
 
-            StatusText.Text = "🛑 Jogo interrompido - Limite de erros atingido!";
+            // Update UI state
+            Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                try
+                {
+                    StartGameButton.IsEnabled = false;
+                    StopGameButton.IsEnabled = false;
+                    StatusText.Text = "🛑 Jogo interrompido - Limite de erros atingido!";
+                }
+                catch (Exception uiEx)
+                {
+                    AddDebugMessage($"Erro ao atualizar UI: {uiEx.Message}");
+                }
+            });
+
             AddDebugMessage("Jogo parado automaticamente - limite de erros atingido");
         }
         catch (Exception ex)
         {
-            AddDebugMessage($"Erro ao parar jogo: {ex.Message}");
+            AddDebugMessage($"Erro crítico ao parar jogo: {ex.Message}");
         }
-    }    private async Task ShowRoundsCompletedDialog()
+    }
+
+    private async Task ShowRoundsCompletedDialog()
     {
         try
         {
-            if (_currentUser == null) 
+            // Ensure this method is only called once
+            lock (_gameStateLock)
+            {
+                if (_isSessionEnding)
+                {
+                    AddDebugMessage("ShowRoundsCompletedDialog já está em execução, ignorando chamada duplicada");
+                    return;
+                }
+                _isSessionEnding = true;
+            }
+
+            if (_currentUser == null)
             {
                 AddDebugMessage("ShowRoundsCompletedDialog: _currentUser é null, forçando retorno ao login");
                 await ForceReturnToLogin();
                 return;
             }
-            
+
             var session = _sessionService.GetSession(_currentUser.Id);
-            if (session == null) 
+            if (session == null)
             {
                 AddDebugMessage("ShowRoundsCompletedDialog: sessão não encontrada, forçando retorno ao login");
                 await ForceReturnToLogin();
@@ -2004,29 +2177,31 @@ O Arduino possui animações épicas para:
                 try
                 {
                     var roundsCompletedWindow = new RoundsCompletedWindow();
-                    roundsCompletedWindow.SetGameSummary(session.RoundsPlayed, _currentUser.Name);
-                    
+                    var gameSummary = new Dictionary<GameMode, int>();
+                    gameSummary[session.SelectedGame] = session.ErrorsCommitted;
+                    roundsCompletedWindow.SetGameSummary(gameSummary, _currentUser.Name);
+
                     // Handle return to login event - this MUST happen
                     roundsCompletedWindow.OnReturnToLogin += async (sender, e) =>
                     {
                         try
                         {
                             AddDebugMessage("Evento OnReturnToLogin disparado - processando retorno ao login");
-                            
+
                             // End the session
                             if (_currentUser != null)
                                 _sessionService.EndSession(_currentUser.Id);
-                            
+
                             // Force close this window first
                             Close();
-                            
+
                             // Small delay to ensure window closes
                             await Task.Delay(100);
-                            
+
                             // Create and show login window
                             var loginWindow = new LoginWindow();
                             loginWindow.Show();
-                            
+
                             AddDebugMessage("Retorno ao login concluído com sucesso");
                         }
                         catch (Exception ex)
@@ -2043,10 +2218,11 @@ O Arduino possui animações épicas para:
                         await roundsCompletedWindow.ShowDialog(this);
                     }
                     catch (Exception ex)
-                    {                        AddDebugMessage($"Erro ao mostrar diálogo modal: {ex.Message}");
+                    {
+                        AddDebugMessage($"Erro ao mostrar diálogo modal: {ex.Message}");
                         // If ShowDialog fails, show normally and force modal behavior
                         roundsCompletedWindow.Show();
-                        
+
                         // Auto-trigger return to login after a delay as fallback
                         _ = Task.Run(async () =>
                         {
@@ -2074,11 +2250,11 @@ O Arduino possui animações épicas para:
         try
         {
             AddDebugMessage("ForceReturnToLogin: iniciando retorno forçado ao login");
-            
+
             // End session if user exists
             if (_currentUser != null)
                 _sessionService.EndSession(_currentUser.Id);
-            
+
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
                 try
@@ -2091,16 +2267,36 @@ O Arduino possui animações épicas para:
                 catch (Exception ex)
                 {
                     AddDebugMessage($"ForceReturnToLogin: erro ao criar login window: {ex.Message}");
-                    // Last resort - exit application
-                    Environment.Exit(0);
+                    // Graceful shutdown instead of forced exit
+                    try
+                    {
+                        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
+                        {
+                            lifetime.Shutdown(1);
+                        }
+                    }
+                    catch
+                    {
+                        Environment.Exit(1);
+                    }
                 }
             });
         }
         catch (Exception ex)
         {
             AddDebugMessage($"ForceReturnToLogin: erro crítico: {ex.Message}");
-            // Absolute last resort - exit application
-            Environment.Exit(0);
+            // Graceful shutdown instead of forced exit
+            try
+            {
+                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
+                {
+                    lifetime.Shutdown(1);
+                }
+            }
+            catch
+            {
+                Environment.Exit(1);
+            }
         }
     }
 

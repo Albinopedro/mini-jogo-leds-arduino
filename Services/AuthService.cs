@@ -100,41 +100,48 @@ namespace miniJogo.Services
 
         public List<string> GenerateClientCodes(int count)
         {
-            var codes = new List<string>();
-            var random = new Random();
+            var codes = new HashSet<string>(); // Use HashSet to prevent duplicates
+            var maxAttempts = count * 10; // Prevent infinite loops
+            var attempts = 0;
             
-            for (int i = 0; i < count; i++)
+            while (codes.Count < count && attempts < maxAttempts)
             {
-                string code;
-                do
+                var code = GenerateRandomCode();
+                if (!_validCodes.Contains(code) && !codes.Contains(code))
                 {
-                    code = GenerateRandomCode();
-                } while (_validCodes.Contains(code) || codes.Contains(code));
-                
-                codes.Add(code);
+                    codes.Add(code);
+                }
+                attempts++;
             }
 
+            var codesList = codes.ToList();
+            
             // Add to valid codes and save
-            _validCodes.AddRange(codes);
+            _validCodes.AddRange(codesList);
             SaveValidCodes();
 
-            return codes;
+            return codesList;
         }
 
         private string GenerateRandomCode()
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            var random = new Random();
             var code = new StringBuilder();
 
-            // Generate 6-character code with specific pattern: 2 letters + 4 numbers
-            for (int i = 0; i < 2; i++)
+            using (var rng = RandomNumberGenerator.Create())
             {
-                code.Append(chars[random.Next(0, 26)]); // Letters only
-            }
-            for (int i = 0; i < 4; i++)
-            {
-                code.Append(chars[random.Next(26, 36)]); // Numbers only
+                var bytes = new byte[6];
+                rng.GetBytes(bytes);
+
+                // Generate 6-character code with specific pattern: 2 letters + 4 numbers
+                for (int i = 0; i < 2; i++)
+                {
+                    code.Append(chars[bytes[i] % 26]); // Letters only
+                }
+                for (int i = 2; i < 6; i++)
+                {
+                    code.Append(chars[26 + (bytes[i] % 10)]); // Numbers only
+                }
             }
 
             return code.ToString();
@@ -142,27 +149,8 @@ namespace miniJogo.Services
 
         public string GenerateSecureCode()
         {
-            using (var rng = RandomNumberGenerator.Create())
-            {
-                var bytes = new byte[4];
-                rng.GetBytes(bytes);
-                
-                var code = new StringBuilder();
-                
-                // Convert to alphanumeric code
-                const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                foreach (var b in bytes)
-                {
-                    code.Append(chars[b % chars.Length]);
-                }
-                
-                // Add 2 more characters for 6-digit code
-                rng.GetBytes(bytes);
-                code.Append(chars[bytes[0] % chars.Length]);
-                code.Append(chars[bytes[1] % chars.Length]);
-                
-                return code.ToString();
-            }
+            // Use the same secure method as GenerateRandomCode for consistency
+            return GenerateRandomCode();
         }
 
         private List<string> LoadValidCodes()

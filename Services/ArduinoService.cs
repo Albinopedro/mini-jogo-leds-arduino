@@ -74,17 +74,21 @@ namespace miniJogo.Services
             {
                 try
                 {
+                    _isConnected = false;
                     if (_serialPort?.IsOpen == true)
                     {
+                        _serialPort.DataReceived -= SerialPort_DataReceived;
                         _serialPort.Close();
                     }
                     _serialPort?.Dispose();
                     _serialPort = null;
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error disconnecting Arduino: {ex.Message}");
+                }
                 finally
                 {
-                    _isConnected = false;
                     ConnectionChanged?.Invoke(this, false);
                 }
             }
@@ -92,21 +96,25 @@ namespace miniJogo.Services
 
         public async Task<bool> SendCommandAsync(string command)
         {
-            if (!IsConnected) return false;
-
             try
             {
                 await Task.Run(() =>
                 {
                     lock (_lockObject)
                     {
-                        _serialPort?.WriteLine(command);
+                        // Check connection status inside the lock to prevent race conditions
+                        if (!_isConnected || _serialPort?.IsOpen != true)
+                        {
+                            throw new InvalidOperationException("Arduino not connected");
+                        }
+                        _serialPort.WriteLine(command);
                     }
                 });
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Error sending command '{command}': {ex.Message}");
                 return false;
             }
         }
@@ -138,18 +146,25 @@ namespace miniJogo.Services
 
         private void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
-            if (_serialPort?.IsOpen != true) return;
-
             try
             {
-                string data = _serialPort.ReadLine().Trim();
+                string data;
+                lock (_lockObject)
+                {
+                    if (!_isConnected || _serialPort?.IsOpen != true) return;
+                    data = _serialPort.ReadLine().Trim();
+                }
+
                 if (!string.IsNullOrEmpty(data))
                 {
                     var message = ParseArduinoMessage(data);
                     MessageReceived?.Invoke(this, new ArduinoMessageEventArgs(message));
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error reading from Arduino: {ex.Message}");
+            }
         }
 
         private ArduinoMessage ParseArduinoMessage(string rawMessage)
