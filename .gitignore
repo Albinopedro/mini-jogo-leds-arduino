@@ -367,6 +367,7 @@ FodyWeavers.xsd
 scores.json
 **/scores.json
 client_codes.json
+client_sessions.json
 used_codes.json
 
 # Generated ticket files
