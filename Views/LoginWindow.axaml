@@ -140,22 +140,23 @@
                     VerticalAlignment="Center"
                 >
 
-                    <!-- Game Logo/Icon -->
-                    <Ellipse
-                        Width="100"
-                        Height="100"
-                        Fill="#38A169"
+                    <!-- TechPlay Logo -->
+                    <Image
+                        Source="/techPlay.png"
+                        Width="180"
+                        Height="180"
                         HorizontalAlignment="Center"
+                        RenderOptions.BitmapInterpolationMode="HighQuality"
                     >
-                        <Ellipse.Effect>
+                        <Image.Effect>
                             <DropShadowEffect
                                 Color="Black"
                                 BlurRadius="15"
                                 OffsetX="3"
                                 OffsetY="3"
                             />
-                        </Ellipse.Effect>
-                    </Ellipse>
+                        </Image.Effect>
+                    </Image>
 
                     <!-- Login Instructions -->
                     <TextBlock

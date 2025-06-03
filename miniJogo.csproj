@@ -7,7 +7,6 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.3.0" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.0" />
@@ -20,5 +19,9 @@
     </PackageReference>
     <PackageReference Include="System.IO.Ports" Version="8.0.0" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="techPlay.png" />
   </ItemGroup>
 </Project>
