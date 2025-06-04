@@ -2,90 +2,142 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="miniJogo.Views.RoundsCompletedWindow"
         Title="🎮 GAME OVER - Sessão Finalizada"
-        Width="800"
-        Height="600"
+        Width="1920"
+        Height="1080"
+        MinWidth="1024"
+        MinHeight="768"
         WindowState="FullScreen"
         WindowStartupLocation="CenterScreen"
         CanResize="False"
         Background="#1A202C"
-        Topmost="True">
+        Topmost="True"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1">
 
     <Grid>
         <!-- Background overlay -->
-        <Rectangle Fill="#000000" Opacity="0.8" />
+        <Rectangle Fill="#000000" Opacity="0.9" />
         
-        <!-- Main content -->
-        <StackPanel HorizontalAlignment="Center" 
-                    VerticalAlignment="Center" 
-                    Spacing="40">
-            
-            <!-- Game Over Title -->
-            <TextBlock x:Name="GameOverTitle"
-                       Text="🎮 GAME OVER"
-                       FontSize="72"
-                       FontWeight="Bold"
-                       Foreground="#FF6B6B"
-                       HorizontalAlignment="Center"
-                       TextAlignment="Center" />
-            
-            <!-- Session Complete Message -->
-            <TextBlock x:Name="SessionMessage"
-                       Text="Sua sessão foi finalizada!"
-                       FontSize="36"
-                       FontWeight="Medium"
-                       Foreground="White"
-                       HorizontalAlignment="Center"
-                       TextAlignment="Center" />
-            
-            <!-- Player Name -->
-            <TextBlock x:Name="PlayerNameText"
-                       Text="👤 Jogador: [Nome]"
-                       FontSize="24"
-                       Foreground="#E2E8F0"
-                       HorizontalAlignment="Center"
-                       TextAlignment="Center" />
-            
-            <!-- Games Summary -->
-            <Border Background="#2D3748"
-                    CornerRadius="15"
-                    Padding="30"
-                    MinWidth="600">
-                <StackPanel Spacing="20">
-                    <TextBlock Text="📊 Resumo da Sessão"
-                               FontSize="28"
+        <!-- Main content container -->
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <Grid Margin="50">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                
+                <!-- Game Over Title -->
+                <Viewbox Grid.Row="0" 
+                         Stretch="Uniform" 
+                         MaxHeight="150"
+                         Margin="0,20,0,40">
+                    <TextBlock x:Name="GameOverTitle"
+                               Text="🎮 GAME OVER"
+                               FontSize="120"
                                FontWeight="Bold"
+                               Foreground="#FF6B6B"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center" />
+                </Viewbox>
+                
+                <!-- Session Complete Message -->
+                <Viewbox Grid.Row="1"
+                         Stretch="Uniform"
+                         MaxHeight="80"
+                         Margin="0,0,0,30">
+                    <TextBlock x:Name="SessionMessage"
+                               Text="Sua sessão foi finalizada!"
+                               FontSize="60"
+                               FontWeight="Medium"
                                Foreground="White"
-                               HorizontalAlignment="Center" />
-                    
-                    <ScrollViewer x:Name="GamesSummaryScrollViewer"
-                                  MaxHeight="200"
-                                  HorizontalScrollBarVisibility="Disabled"
-                                  VerticalScrollBarVisibility="Auto">
-                        <StackPanel x:Name="GamesSummaryPanel" Spacing="15" />
-                    </ScrollViewer>
-                </StackPanel>
-            </Border>
-            
-            <!-- Return Message -->
-            <TextBlock Text="🔄 Retornando ao login em alguns segundos..."
-                       FontSize="20"
-                       Foreground="#A0AEC0"
-                       HorizontalAlignment="Center"
-                       TextAlignment="Center"
-                       Margin="0,20,0,0" />
-            
-            <!-- Return Button -->
-            <Button x:Name="ReturnToLoginButton"
-                    Content="🔙 Voltar ao Login Agora"
-                    FontSize="24"
-                    FontWeight="Bold"
-                    Padding="40,20"
-                    Background="#4299E1"
-                    Foreground="White"
-                    CornerRadius="12"
-                    HorizontalAlignment="Center"
-                    Click="ReturnToLoginButton_Click" />
-            
-        </StackPanel>
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center" />
+                </Viewbox>
+                
+                <!-- Player Name -->
+                <TextBlock Grid.Row="2"
+                           x:Name="PlayerNameText"
+                           Text="👤 Jogador: [Nome]"
+                           FontSize="36"
+                           FontWeight="Medium"
+                           Foreground="#E2E8F0"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           Margin="0,0,0,40" />
+                
+                <!-- Games Summary -->
+                <Border Grid.Row="3"
+                        Background="#2D3748"
+                        CornerRadius="20"
+                        Padding="50"
+                        MaxWidth="1200"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        BorderBrush="#4A5568"
+                        BorderThickness="2"
+                        Margin="0,20">
+                    <StackPanel Spacing="30">
+                        <TextBlock Text="📊 Resumo da Sessão"
+                                   FontSize="42"
+                                   FontWeight="Bold"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center" />
+                        
+                        <ScrollViewer x:Name="GamesSummaryScrollViewer"
+                                      MaxHeight="400"
+                                      HorizontalScrollBarVisibility="Disabled"
+                                      VerticalScrollBarVisibility="Auto"
+                                      Background="Transparent">
+                            <StackPanel x:Name="GamesSummaryPanel" 
+                                        Spacing="25" 
+                                        HorizontalAlignment="Center" />
+                        </ScrollViewer>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Return Message -->
+                <TextBlock Grid.Row="4"
+                           Text="🔄 Retornando ao login em alguns segundos..."
+                           FontSize="28"
+                           FontWeight="Medium"
+                           Foreground="#A0AEC0"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           Margin="0,40,0,20" />
+                
+                <!-- Return Button -->
+                <Button Grid.Row="5"
+                        x:Name="ReturnToLoginButton"
+                        Content="🔙 Voltar ao Login Agora"
+                        FontSize="32"
+                        FontWeight="Bold"
+                        Padding="60,25"
+                        MinWidth="400"
+                        MinHeight="80"
+                        Background="#4299E1"
+                        Foreground="White"
+                        CornerRadius="15"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Margin="0,20,0,40"
+                        Click="ReturnToLoginButton_Click">
+                    <Button.Styles>
+                        <Style Selector="Button:pointerover">
+                            <Setter Property="Background" Value="#3182CE" />
+                            <Setter Property="Cursor" Value="Hand" />
+                        </Style>
+                        <Style Selector="Button:pressed">
+                            <Setter Property="Background" Value="#2C5282" />
+                        </Style>
+                    </Button.Styles>
+                </Button>
+            </Grid>
+        </ScrollViewer>
     </Grid>
 </Window>

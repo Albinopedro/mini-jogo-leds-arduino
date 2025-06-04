@@ -2440,19 +2440,23 @@ O Arduino possui animações épicas para:
                     var dialog = new Window()
                     {
                         Title = "⏰ Tempo Esgotado - Sessão Finalizada",
-                        Width = 600,
-                        Height = 400,
+                        Width = 1200,
+                        Height = 800,
+                        MinWidth = 800,
+                        MinHeight = 600,
                         WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                        Background = Avalonia.Media.Brushes.DarkSlateGray,
-                        WindowState = WindowState.Normal,
+                        Background = new SolidColorBrush(Color.FromRgb(26, 32, 44)),
+                        WindowState = WindowState.FullScreen,
                         Topmost = true,
-                        CanResize = false
+                        CanResize = false,
+                        ExtendClientAreaToDecorationsHint = true,
+                        ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome
                     };
 
                     var mainPanel = new StackPanel
                     {
-                        Margin = new Avalonia.Thickness(30),
-                        Spacing = 20,
+                        Margin = new Avalonia.Thickness(100),
+                        Spacing = 50,
                         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
                         VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
                     };
@@ -2461,50 +2465,58 @@ O Arduino possui animações épicas para:
                     mainPanel.Children.Add(new TextBlock
                     {
                         Text = "⏰ TEMPO ESGOTADO!",
-                        FontSize = 36,
+                        FontSize = 72,
                         FontWeight = Avalonia.Media.FontWeight.Bold,
                         Foreground = Avalonia.Media.Brushes.Orange,
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        TextAlignment = Avalonia.Media.TextAlignment.Center
                     });
 
                     // Player info
                     mainPanel.Children.Add(new TextBlock
                     {
                         Text = $"👤 Jogador: {_currentUser.Name}",
-                        FontSize = 20,
+                        FontSize = 36,
+                        FontWeight = Avalonia.Media.FontWeight.Medium,
                         Foreground = Avalonia.Media.Brushes.White,
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        TextAlignment = Avalonia.Media.TextAlignment.Center
                     });
 
                     // Game result
                     mainPanel.Children.Add(new TextBlock
                     {
                         Text = $"🐱 Ratos capturados: {captures}",
-                        FontSize = 18,
+                        FontSize = 32,
+                        FontWeight = Avalonia.Media.FontWeight.Medium,
                         Foreground = Avalonia.Media.Brushes.LightGreen,
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        TextAlignment = Avalonia.Media.TextAlignment.Center
                     });
 
                     // Time info
                     mainPanel.Children.Add(new TextBlock
                     {
                         Text = "⏱️ Tempo de jogo: 2 minutos",
-                        FontSize = 16,
+                        FontSize = 28,
+                        FontWeight = Avalonia.Media.FontWeight.Medium,
                         Foreground = Avalonia.Media.Brushes.LightGray,
-                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        TextAlignment = Avalonia.Media.TextAlignment.Center
                     });
 
                     // Business rule explanation
                     var ruleText = new TextBlock
                     {
                         Text = "🔒 REGRA DE NEGÓCIO:\nSua sessão foi finalizada permanentemente.\nPara jogar novamente, faça um novo login.",
-                        FontSize = 14,
-                        FontWeight = Avalonia.Media.FontWeight.Medium,
+                        FontSize = 26,
+                        FontWeight = Avalonia.Media.FontWeight.Bold,
                         Foreground = Avalonia.Media.Brushes.Yellow,
                         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
                         TextAlignment = Avalonia.Media.TextAlignment.Center,
                         TextWrapping = Avalonia.Media.TextWrapping.Wrap,
-                        Margin = new Avalonia.Thickness(0, 20, 0, 0)
+                        Margin = new Avalonia.Thickness(0, 40, 0, 0),
+                        MaxWidth = 800
                     };
                     mainPanel.Children.Add(ruleText);
 
@@ -2512,13 +2524,16 @@ O Arduino possui animações épicas para:
                     var returnButton = new Button
                     {
                         Content = "🔙 Retornar ao Login",
-                        FontSize = 18,
+                        FontSize = 32,
                         FontWeight = Avalonia.Media.FontWeight.Bold,
-                        Padding = new Avalonia.Thickness(30, 15),
+                        Padding = new Avalonia.Thickness(60, 25),
+                        MinWidth = 400,
+                        MinHeight = 80,
                         Background = Avalonia.Media.Brushes.DarkRed,
                         Foreground = Avalonia.Media.Brushes.White,
+                        CornerRadius = new Avalonia.CornerRadius(15),
                         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                        Margin = new Avalonia.Thickness(0, 30, 0, 0)
+                        Margin = new Avalonia.Thickness(0, 50, 0, 0)
                     };
 
                     returnButton.Click += async (s, e) =>

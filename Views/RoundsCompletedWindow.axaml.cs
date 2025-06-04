@@ -25,16 +25,20 @@ namespace miniJogo.Views
             System.Diagnostics.Debug.WriteLine(msg);
             Console.WriteLine(msg);
             
-            // Set initial window properties
+            // Set initial window properties for proper fullscreen display
             WindowState = WindowState.FullScreen;
             Topmost = true;
             CanResize = false;
             
-            // Start auto-return timer (8 seconds - increased for better UX)
+            // Ensure window covers entire screen
+            Width = 1920;
+            Height = 1080;
+            
+            // Start auto-return timer (10 seconds - increased for better UX)
             _autoReturnTimer = new System.Threading.Timer(
                 callback: _ => Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => TriggerReturnToLogin()),
                 state: null,
-                dueTime: TimeSpan.FromSeconds(8),
+                dueTime: TimeSpan.FromSeconds(10),
                 period: System.Threading.Timeout.InfiniteTimeSpan
             );
         }
@@ -63,11 +67,11 @@ namespace miniJogo.Views
                     var completionText = new TextBlock
                     {
                         Text = "🏁 Sessão de jogo único completa!",
-                        FontSize = 20,
+                        FontSize = 32,
                         FontWeight = FontWeight.Bold,
                         Foreground = new SolidColorBrush(Color.FromRgb(56, 161, 105)),
                         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                        Margin = new Avalonia.Thickness(0, 20, 0, 0)
+                        Margin = new Avalonia.Thickness(0, 30, 0, 0)
                     };
                     GamesSummaryPanel.Children.Add(completionText);
                     
@@ -80,7 +84,7 @@ namespace miniJogo.Views
                     var noGamesText = new TextBlock
                     {
                         Text = "Nenhum jogo foi jogado nesta sessão.",
-                        FontSize = 18,
+                        FontSize = 28,
                         Foreground = new SolidColorBrush(Color.FromRgb(160, 174, 192)),
                         HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
                     };
@@ -100,35 +104,39 @@ namespace miniJogo.Views
             var border = new Border
             {
                 Background = new SolidColorBrush(Color.FromRgb(74, 85, 104)),
-                CornerRadius = new Avalonia.CornerRadius(12),
-                Padding = new Avalonia.Thickness(30, 20),
-                Margin = new Avalonia.Thickness(0, 10)
+                CornerRadius = new Avalonia.CornerRadius(20),
+                Padding = new Avalonia.Thickness(50, 35),
+                Margin = new Avalonia.Thickness(20, 15),
+                MinWidth = 800,
+                BorderBrush = new SolidColorBrush(Color.FromRgb(113, 128, 150)),
+                BorderThickness = new Avalonia.Thickness(2)
             };
 
             var mainStack = new StackPanel
             {
-                Spacing = 15
+                Spacing = 25,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
             };
 
             // Game header
             var gameHeader = new StackPanel
             {
                 Orientation = Avalonia.Layout.Orientation.Horizontal,
-                Spacing = 15,
+                Spacing = 25,
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
             };
 
             var icon = new TextBlock
             {
                 Text = gameMode.GetIcon(),
-                FontSize = 32,
+                FontSize = 48,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
             };
 
             var name = new TextBlock
             {
                 Text = gameMode.GetDisplayName(),
-                FontSize = 24,
+                FontSize = 36,
                 FontWeight = FontWeight.Bold,
                 Foreground = Brushes.White,
                 VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
@@ -141,10 +149,12 @@ namespace miniJogo.Views
             var description = new TextBlock
             {
                 Text = gameMode.GetDescription(),
-                FontSize = 14,
+                FontSize = 20,
                 Foreground = new SolidColorBrush(Color.FromRgb(160, 174, 192)),
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                TextWrapping = Avalonia.Media.TextWrapping.Wrap
+                TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                MaxWidth = 700,
+                TextAlignment = Avalonia.Media.TextAlignment.Center
             };
 
             // Errors info with max errors
@@ -152,20 +162,20 @@ namespace miniJogo.Views
             var errorsText = new TextBlock
             {
                 Text = $"❌ Erros cometidos: {errorsCommitted}/{maxErrors}",
-                FontSize = 18,
+                FontSize = 28,
                 Foreground = errorsCommitted >= maxErrors ? new SolidColorBrush(Color.FromRgb(229, 62, 62)) : new SolidColorBrush(Color.FromRgb(56, 161, 105)),
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                FontWeight = FontWeight.Medium
+                FontWeight = FontWeight.Bold
             };
 
             // Session result
             var resultText = new TextBlock
             {
                 Text = errorsCommitted >= maxErrors ? "🔴 Sessão finalizada - Limite atingido" : "🟢 Sessão completa",
-                FontSize = 16,
+                FontSize = 24,
                 Foreground = errorsCommitted >= maxErrors ? new SolidColorBrush(Color.FromRgb(229, 62, 62)) : new SolidColorBrush(Color.FromRgb(56, 161, 105)),
                 HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                FontWeight = FontWeight.Medium
+                FontWeight = FontWeight.Bold
             };
 
             mainStack.Children.Add(gameHeader);
@@ -322,6 +332,10 @@ namespace miniJogo.Views
             {
                 WindowState = WindowState.FullScreen;
                 Topmost = true;
+                
+                // Ensure proper sizing
+                Width = 1920;
+                Height = 1080;
                 
                 // Focus this window to ensure it's in front
                 Focus();
