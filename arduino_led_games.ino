@@ -103,7 +103,7 @@ enum SniperState { SN_WAITING_SHOT, SN_TARGET_COOLDOWN };
 SniperState sniperState;
 int sniperTarget = -1;
 unsigned long sniperTargetTime = 0;
-unsigned long sniperFlashDuration = 100;
+unsigned long sniperFlashDuration = 300;
 int sniperHitsRequired = 10;
 int sniperCurrentHits = 0;
 unsigned long nextTargetDelay = 0;
@@ -181,15 +181,15 @@ void setup() {
 
   randomSeed(analogRead(A4));
   clearAllLEDs();
-  
+
   // Initialize animation system
   animState.currentAnimation = ANIM_NONE;
   animState.animationActive = false;
   animState.animationLoop = false;
-  
+
   // Epic startup sequence
   playAnimation(ANIM_STARTUP_SEQUENCE, false);
-  
+
   Serial.println("READY");
 }
 
@@ -222,10 +222,10 @@ void stopAnimation() {
 
 void updateAnimations() {
   if (!animState.animationActive) return;
-  
+
   unsigned long currentTime = millis();
   unsigned long elapsed = currentTime - animState.animationStartTime;
-  
+
   switch (animState.currentAnimation) {
     case ANIM_STARTUP_SEQUENCE:
       updateStartupSequence(elapsed);
@@ -292,7 +292,7 @@ void updateAnimations() {
 void updateStartupSequence(unsigned long elapsed) {
   // Sequência épica de inicialização (4 segundos)
   clearAllLEDs();
-  
+
   if (elapsed < 500) {
     // Fase 1: Pulse center (LED 5,6,9,10)
     bool on = (elapsed / 100) % 2;
@@ -338,14 +338,14 @@ void updateWaitingConnection(unsigned long elapsed) {
   // Breathing effect - pulso suave
   clearAllLEDs();
   int brightness = (sin((elapsed / 1000.0) * 2 * PI) + 1) * 2; // 0-4
-  
+
   // Acende LEDs dos cantos com intensidade variável
   bool on = brightness > 2;
   setLED(0, on);  // Canto superior esquerdo
-  setLED(3, on);  // Canto superior direito  
+  setLED(3, on);  // Canto superior direito
   setLED(12, on); // Canto inferior esquerdo
   setLED(15, on); // Canto inferior direito
-  
+
   // Reset a cada 4 segundos
   if (elapsed > 4000) {
     animState.animationStartTime = millis();
@@ -355,14 +355,14 @@ void updateWaitingConnection(unsigned long elapsed) {
 void updateConnectionSuccess(unsigned long elapsed) {
   // Explosão de alegria (2 segundos)
   clearAllLEDs();
-  
+
   if (elapsed < 500) {
     // Explosão do centro
     int radius = elapsed / 50;
     int center[] = {5, 6, 9, 10}; // Centro
     int ring1[] = {1, 2, 4, 7, 8, 11, 13, 14}; // Anel 1
     int ring2[] = {0, 3, 12, 15}; // Cantos
-    
+
     for (int i = 0; i < 4; i++) setLED(center[i], true);
     if (radius > 2) for (int i = 0; i < 8; i++) setLED(ring1[i], true);
     if (radius > 5) for (int i = 0; i < 4; i++) setLED(ring2[i], true);
@@ -387,14 +387,14 @@ void updateConnectionSuccess(unsigned long elapsed) {
 void updateGameStart(unsigned long elapsed) {
   // Countdown épico (3 segundos)
   clearAllLEDs();
-  
+
   if (elapsed < 1000) {
     // "3" - Forma número 3
     int three[] = {0, 1, 2, 6, 9, 10, 11, 14, 15};
     for (int i = 0; i < 9; i++) setLED(three[i], true);
   }
   else if (elapsed < 2000) {
-    // "2" - Forma número 2  
+    // "2" - Forma número 2
     int two[] = {0, 1, 2, 6, 8, 9, 10, 12, 13, 14, 15};
     for (int i = 0; i < 11; i++) setLED(two[i], true);
   }
@@ -407,7 +407,7 @@ void updateGameStart(unsigned long elapsed) {
     // GO! - Flash final
     bool flash = ((elapsed - 3000) / 50) % 2;
     for (int i = 0; i < NUM_LEDS; i++) setLED(i, flash);
-    
+
     if (elapsed > 3500) stopAnimation();
   }
 }
@@ -415,7 +415,7 @@ void updateGameStart(unsigned long elapsed) {
 void updateGameOver(unsigned long elapsed) {
   // Efeito de morte/explosão (3 segundos)
   clearAllLEDs();
-  
+
   if (elapsed < 1000) {
     // Implosão - LEDs apagam do exterior para centro
     int step = elapsed / 100;
@@ -444,7 +444,7 @@ void updateGameOver(unsigned long elapsed) {
 void updateLevelUp(unsigned long elapsed) {
   // Celebração de nível (2 segundos)
   clearAllLEDs();
-  
+
   if (elapsed < 1000) {
     // Ondas de energia subindo
     int wave = (elapsed / 100) % 8;
@@ -470,26 +470,26 @@ void updateLevelUp(unsigned long elapsed) {
 void updatePerfectHit(unsigned long elapsed) {
   // Efeito de acerto perfeito (1 segundo)
   clearAllLEDs();
-  
+
   // Explosão rápida do centro
   int radius = elapsed / 50;
   if (radius < 8) {
     int center[] = {5, 6, 9, 10};
     int ring1[] = {1, 2, 4, 7, 8, 11, 13, 14};
     int ring2[] = {0, 3, 12, 15};
-    
+
     for (int i = 0; i < 4; i++) setLED(center[i], true);
     if (radius > 2) for (int i = 0; i < 8; i++) setLED(ring1[i], true);
     if (radius > 4) for (int i = 0; i < 4; i++) setLED(ring2[i], true);
   }
-  
+
   if (elapsed > 1000) stopAnimation();
 }
 
 void updateCombo(unsigned long elapsed) {
   // Efeito de combo (1.5 segundos)
   clearAllLEDs();
-  
+
   // Ondas laterais convergindo
   int step = (elapsed / 100) % 8;
   for (int i = 0; i < 4; i++) {
@@ -498,14 +498,14 @@ void updateCombo(unsigned long elapsed) {
     if (step >= i) setLED(8 + i, true);      // Esquerda para direita (linha 2)
     if (step >= i) setLED(12 + i, true);     // Esquerda para direita (linha 3)
   }
-  
+
   if (elapsed > 1500) stopAnimation();
 }
 
 void updateExplosion(unsigned long elapsed) {
   // Explosão massiva (2 segundos)
   clearAllLEDs();
-  
+
   if (elapsed < 200) {
     // Flash inicial
     for (int i = 0; i < NUM_LEDS; i++) setLED(i, true);
@@ -521,14 +521,14 @@ void updateExplosion(unsigned long elapsed) {
     bool fade = ((elapsed - 1500) / 250) % 2;
     setLED(0, fade); setLED(3, fade); setLED(12, fade); setLED(15, fade);
   }
-  
+
   if (elapsed > 2000) stopAnimation();
 }
 
 void updateVictory(unsigned long elapsed) {
   // Celebração épica de vitória (4 segundos)
   clearAllLEDs();
-  
+
   if (elapsed < 1000) {
     // Fogos de artifício
     int firework = (elapsed / 100) % 4;
@@ -548,14 +548,14 @@ void updateVictory(unsigned long elapsed) {
     bool bigFlash = ((elapsed - 3000) / 100) % 2;
     for (int i = 0; i < NUM_LEDS; i++) setLED(i, bigFlash);
   }
-  
+
   if (elapsed > 4000) stopAnimation();
 }
 
 void updateDisconnect(unsigned long elapsed) {
   // Sequência de desconexão (2 segundos)
   clearAllLEDs();
-  
+
   if (elapsed < 1500) {
     // LEDs apagam em espiral
     int step = elapsed / 100;
@@ -569,7 +569,7 @@ void updateDisconnect(unsigned long elapsed) {
     bool flash = ((elapsed - 1500) / 250) % 2;
     setLED(5, flash); setLED(6, flash); setLED(9, flash); setLED(10, flash);
   }
-  
+
   if (elapsed > 2000) {
     stopAnimation();
     clearAllLEDs();
@@ -579,18 +579,18 @@ void updateDisconnect(unsigned long elapsed) {
 void updateError(unsigned long elapsed) {
   // Efeito de erro (1 segundo)
   clearAllLEDs();
-  
+
   // Flash vermelho rápido
   bool flash = (elapsed / 100) % 2;
   for (int i = 0; i < 4; i++) setLED(i, flash); // Apenas linha vermelha
-  
+
   if (elapsed > 1000) stopAnimation();
 }
 
 void updateRainbowWave(unsigned long elapsed) {
   // Onda arco-íris (contínua se loop ativo)
   clearAllLEDs();
-  
+
   int wave = (elapsed / 200) % 8;
   for (int i = 0; i < 4; i++) {
     int row = (wave + i) % 4;
@@ -598,7 +598,7 @@ void updateRainbowWave(unsigned long elapsed) {
       setLED(row * 4 + col, true);
     }
   }
-  
+
   if (!animState.animationLoop && elapsed > 2000) stopAnimation();
 }
 
@@ -606,53 +606,53 @@ void updatePulseAll(unsigned long elapsed) {
   // Pulso geral (contínuo se loop ativo)
   bool pulse = (elapsed / 500) % 2;
   for (int i = 0; i < NUM_LEDS; i++) setLED(i, pulse);
-  
+
   if (!animState.animationLoop && elapsed > 2000) stopAnimation();
 }
 
 void updateSpiralIn(unsigned long elapsed) {
   // Espiral para dentro
   clearAllLEDs();
-  
+
   int step = (elapsed / 150) % 16;
   int spiral[] = {0, 1, 2, 3, 7, 11, 15, 14, 13, 12, 8, 4, 5, 6, 10, 9};
   for (int i = 0; i < step; i++) {
     setLED(spiral[i], true);
   }
-  
+
   if (elapsed > 2400) stopAnimation();
 }
 
 void updateSpiralOut(unsigned long elapsed) {
   // Espiral para fora
   clearAllLEDs();
-  
+
   int step = (elapsed / 150) % 16;
   int spiral[] = {5, 6, 10, 9, 4, 8, 12, 13, 14, 15, 11, 7, 3, 2, 1, 0};
   for (int i = 0; i < step; i++) {
     setLED(spiral[i], true);
   }
-  
+
   if (elapsed > 2400) stopAnimation();
 }
 
 void updateMatrixRain(unsigned long elapsed) {
   // Efeito Matrix - chuva digital
   clearAllLEDs();
-  
+
   for (int col = 0; col < 4; col++) {
     int dropPos = ((elapsed / 200) + col * 2) % 8;
     if (dropPos < 4) setLED(dropPos * 4 + col, true);
     if (dropPos > 0 && dropPos <= 4) setLED((dropPos - 1) * 4 + col, false);
   }
-  
+
   if (!animState.animationLoop && elapsed > 3000) stopAnimation();
 }
 
 void updateFireworks(unsigned long elapsed) {
   // Fogos de artifício múltiplos
   clearAllLEDs();
-  
+
   int phase = (elapsed / 300) % 6;
   switch (phase) {
     case 0: setLED(5, true); break;
@@ -662,7 +662,7 @@ void updateFireworks(unsigned long elapsed) {
     case 4: setLED(6, true); setLED(9, true); setLED(11, true); setLED(14, true); break;
     case 5: setLED(7, true); setLED(13, true); setLED(15, true); break;
   }
-  
+
   if (elapsed > 1800) stopAnimation();
 }
 
@@ -750,7 +750,7 @@ void handlePegaLuzKey(int key) {
   if (pegaLuzState != PL_PLAYING) return;
   if (key == pegaLuzTarget) {
     setLED(pegaLuzTarget, false);
-    
+
     // Efeito visual para acerto
     unsigned long reactionTime = millis() - pegaLuzStartTime;
     if (reactionTime < 200) {
@@ -759,7 +759,7 @@ void handlePegaLuzKey(int key) {
     } else {
       playAnimation(ANIM_COMBO, false); // Acerto normal
     }
-    
+
     game.score += 10;
     sendGameEvent("HIT", key, game.score);
 
@@ -829,18 +829,18 @@ void handleSequenciaMalucaKey(int key) {
   if (key == sequenciaPattern[sequenciaPlayerIndex]) {
     setLED(key, true);
     sequenciaPlayerIndex++;
-    
+
     if (sequenciaPlayerIndex >= sequenciaLength) {
       // Sequência completa!
       playAnimation(ANIM_PERFECT_HIT, false);
       game.score += 10;
       game.level++;
       sequenciaLength = min(sequenciaLength + 1, 12);
-      
+
       if (game.level % 3 == 0) {
         playAnimation(ANIM_LEVEL_UP, false);
       }
-      
+
       sendGameEvent("LEVEL_UP", game.level, game.score);
       sequenciaState = SEQ_PAUSE_BEFORE_NEXT;
       stateChangeTime = millis();
@@ -880,7 +880,7 @@ void updateGatoRatoDisplay() {
 
 void updateGatoRato() {
     unsigned long currentTime = millis();
-    
+
     // Check timeout (2 minutes) - end game when time is up
     if (currentTime - game.gameStartTime >= gatoRatoTimeLimit) {
         sendGameEvent("GATO_RATO_TIMEOUT", gatoRatoCaptureCount);
@@ -888,7 +888,7 @@ void updateGatoRato() {
         stopGame();
         return;
     }
-    
+
     if (gatoRatoState == GR_PLAYING) {
         if (currentTime - ratoLastMove >= ratoMoveInterval) {
             int newPos;
@@ -906,7 +906,7 @@ void updateGatoRato() {
             // FIX: Speed increases only on capture
             if (ratoMoveInterval > 300) ratoMoveInterval -= 50;
             sendGameEvent("SCORE", 20, game.score);
-            
+
             // Check win condition
             if (gatoRatoCaptureCount >= gatoRatoCapturesRequired) {
                 sendGameEvent("GATO_RATO_WIN", game.score);
@@ -914,7 +914,7 @@ void updateGatoRato() {
                 stopGame();
                 return;
             }
-            
+
             gatoRatoState = GR_CAPTURE_ANIMATION;
             stateChangeTime = millis();
             captureBlinkCount = 0;
@@ -1223,7 +1223,7 @@ void handleLightningStrikeKey(int key) {
 void initSniperMode() {
     sniperCurrentHits = 0;
     sniperHitsRequired = 10;
-    sniperFlashDuration = 100;
+    sniperFlashDuration = 300;
     sniperState = SN_TARGET_COOLDOWN; // Start with a cooldown before first target
     nextTargetDelay = random(500, 1500);
     stateChangeTime = millis();
@@ -1316,13 +1316,13 @@ void startGame(GameMode mode) {
   // Para animações e inicia countdown épico
   stopAnimation();
   playAnimation(ANIM_GAME_START, false);
-  
+
   // Aguarda fim da animação de início
   while (animState.animationActive) {
     updateAnimations();
     delay(50);
   }
-  
+
   game.currentMode = mode;
   game.gameActive = true;
   game.score = 0;
@@ -1340,18 +1340,18 @@ void startGame(GameMode mode) {
     case ROLETA_RUSSA: initRoletaRussa(); break;
     case LIGHTNING_STRIKE: initLightningStrike(); break;
     case SNIPER_MODE: initSniperMode(); break;
-    default: 
-      game.gameActive = false; 
+    default:
+      game.gameActive = false;
       playAnimation(ANIM_ERROR, false);
       return;
   }
-  
+
   sendGameEvent("GAME_STARTED", (int)mode);
 }
 
 void stopGame() {
   game.gameActive = false;
-  
+
   // Efeito visual baseado na pontuação
   if (game.score == 0) {
     playAnimation(ANIM_GAME_OVER, false); // Morte épica
@@ -1360,17 +1360,17 @@ void stopGame() {
   } else {
     playAnimation(ANIM_EXPLOSION, false); // Explosão normal
   }
-  
+
   sendGameEvent("GAME_OVER", game.score);
-  
+
   // Aguarda fim da animação
   while (animState.animationActive) {
     updateAnimations();
     delay(50);
   }
-  
+
   clearAllLEDs();
-  
+
   // Volta para animação de espera
   playAnimation(ANIM_WAITING_CONNECTION, true);
 }
@@ -1378,7 +1378,7 @@ void stopGame() {
 // ===== LOOP PRINCIPAL =====
 void loop() {
   processSerialCommands();
-  
+
   // Sempre atualiza animações (não bloqueia jogos)
   updateAnimations();
 
