@@ -60,6 +60,9 @@ unsigned long ratoMoveInterval = 1000;
 bool ratoVisible = true;
 unsigned long ratoLastBlink = 0;
 int captureBlinkCount = 0;
+unsigned long gatoRatoTimeLimit = 120000; // 2 minutes timeout
+int gatoRatoCapturesRequired = 5; // Need 5 captures to win
+int gatoRatoCaptureCount = 0;
 
 // Esquiva Meteoros
 int playerPosition = 12;
@@ -846,7 +849,8 @@ void handleSequenciaMalucaKey(int key) {
       playAnimation(ANIM_COMBO, false);
     }
   } else {
-    // Erro - game over com explosão
+    // Erro - enviar evento de erro primeiro, depois game over
+    sendGameEvent("WRONG_KEY", key);
     playAnimation(ANIM_EXPLOSION, false);
     sendGameEvent("GAME_OVER", game.score);
     stopGame();
@@ -862,6 +866,7 @@ void initGatoRato() {
   ratoVisible = true;
   ratoLastBlink = millis();
   gatoRatoState = GR_PLAYING;
+  gatoRatoCaptureCount = 0;
   clearAllLEDs();
 }
 
@@ -875,6 +880,15 @@ void updateGatoRatoDisplay() {
 
 void updateGatoRato() {
     unsigned long currentTime = millis();
+    
+    // Check timeout (2 minutes) - end game when time is up
+    if (currentTime - game.gameStartTime >= gatoRatoTimeLimit) {
+        sendGameEvent("GATO_RATO_TIMEOUT", gatoRatoCaptureCount);
+        sendGameEvent("GAME_OVER", game.score);
+        stopGame();
+        return;
+    }
+    
     if (gatoRatoState == GR_PLAYING) {
         if (currentTime - ratoLastMove >= ratoMoveInterval) {
             int newPos;
@@ -888,9 +902,19 @@ void updateGatoRato() {
         }
         if (gatoPosition == ratoPosition) {
             game.score += 20;
+            gatoRatoCaptureCount++;
             // FIX: Speed increases only on capture
             if (ratoMoveInterval > 300) ratoMoveInterval -= 50;
             sendGameEvent("SCORE", 20, game.score);
+            
+            // Check win condition
+            if (gatoRatoCaptureCount >= gatoRatoCapturesRequired) {
+                sendGameEvent("GATO_RATO_WIN", game.score);
+                playAnimation(ANIM_VICTORY, false);
+                stopGame();
+                return;
+            }
+            
             gatoRatoState = GR_CAPTURE_ANIMATION;
             stateChangeTime = millis();
             captureBlinkCount = 0;

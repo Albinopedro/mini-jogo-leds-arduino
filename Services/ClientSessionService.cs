@@ -137,6 +137,37 @@ namespace miniJogo.Services
             SaveSessions();
         }
 
+        public void EndSessionByTimeout(string clientId, string reason = "Timeout no jogo")
+        {
+            _sessionsLock.EnterWriteLock();
+            try
+            {
+                if (_activeSessions.ContainsKey(clientId))
+                {
+                    var session = _activeSessions[clientId];
+                    session.IsActive = false;
+                    // Mark session as ended by timeout for business logic
+                    session.ErrorsCommitted = session.MaxErrors; // Force max errors to prevent restart
+                    Console.WriteLine($"Sessão do cliente {session.ClientName} finalizada por: {reason}");
+                }
+            }
+            finally
+            {
+                _sessionsLock.ExitWriteLock();
+            }
+            
+            SaveSessions();
+        }
+
+        public bool IsSessionBlockedByTimeout(string clientId)
+        {
+            var session = GetSession(clientId);
+            if (session == null) return false;
+            
+            // If session is inactive and has max errors, it was likely ended by timeout
+            return !session.IsActive && session.ErrorsCommitted >= session.MaxErrors;
+        }
+
         public Dictionary<GameMode, int> GetClientGameSummary(string clientId)
         {
             _sessionsLock.EnterReadLock();

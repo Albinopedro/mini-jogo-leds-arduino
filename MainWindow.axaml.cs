@@ -277,17 +277,18 @@ public partial class MainWindow : Window
         // Configure UI based on user type
         if (_isClientMode)
         {
-            // Hide admin features for clients
-            OpenDebugButton.IsVisible = false;
+            // Hide admin features for clients (but keep debug and logout button visible)
             SettingsButton.IsVisible = false;
             GenerateCodesButton.IsVisible = false;
-            LogoutButton.IsVisible = false;
 
             // Hide manual connection controls
             RefreshPortsButton.IsVisible = false;
 
             // Set player name directly
             _playerName = _currentUser?.Name ?? "Cliente";
+
+            // Update logout button text for clients
+            LogoutButton.Content = "🚪 Encerrar Sessão";
 
             // Update status
             StatusText.Text = $"🎮 Bem-vindo, {_currentUser?.Name ?? "Cliente"}! Conectando ao Arduino...";
@@ -329,22 +330,41 @@ public partial class MainWindow : Window
             StopGameButton_Click(null, new RoutedEventArgs());
         }
 
-        // Disconnect Arduino
-        if (_serialPort?.IsOpen == true)
-        {
-            _serialPort.Close();
-            _serialPort = null;
-        }
+        // Show confirmation dialog with different messages for clients vs admins
+        string title = _isClientMode ? "Encerrar Sessão" : "Logout";
+        string message = _isClientMode 
+            ? $"Tem certeza que deseja encerrar sua sessão, {_currentUser?.Name}?\nSua sessão será finalizada e você retornará à tela de login."
+            : "Tem certeza que deseja fazer logout?\nO jogo será fechado e você retornará à tela de login.";
 
-        // Show confirmation dialog
-        var result = await ShowConfirmDialog("Logout", "Tem certeza que deseja fazer logout?\nO jogo será fechado e você retornará à tela de login.");
+        var result = await ShowConfirmDialog(title, message);
 
         if (result)
         {
+            AddDebugMessage($"[LOGOUT] {(_isClientMode ? "Cliente" : "Administrador")} {_currentUser?.Name ?? "Usuário"} fazendo logout");
+
+            // End client session if in client mode
+            if (_isClientMode && _currentUser != null)
+            {
+                AddDebugMessage($"[LOGOUT] Encerrando sessão do cliente {_currentUser.Name}");
+                _sessionService.EndSession(_currentUser.Id);
+            }
+
+            // Disconnect Arduino
+            if (_serialPort?.IsOpen == true)
+            {
+                _serialPort.Close();
+                _serialPort = null;
+                AddDebugMessage("[LOGOUT] Arduino desconectado");
+            }
+
             // Close current window and show login again
             var loginWindow = new Views.LoginWindow();
             loginWindow.Show();
             this.Close();
+        }
+        else
+        {
+            AddDebugMessage($"[LOGOUT] Logout cancelado pelo {(_isClientMode ? "cliente" : "administrador")}");
         }
     }
 
@@ -718,13 +738,13 @@ public partial class MainWindow : Window
                 bool shouldProcessGameOver = false;
                 lock (_gameStateLock)
                 {
-                    if (!_isSessionEnding)
+                    if (_gameActive && !_isSessionEnding)
                     {
                         shouldProcessGameOver = true;
                     }
                     else
                     {
-                        AddDebugMessage("Evento 'GAME_OVER' recebido, mas a sessão já está a terminar. A ignorar.");
+                        AddDebugMessage("[EVENTO] GAME_OVER recebido, mas o jogo já não está ativo ou a sessão está a terminar. A ignorar.");
                     }
                 }
 
@@ -742,7 +762,7 @@ public partial class MainWindow : Window
 
                 StatusText.Text = $"🎮 GAME OVER! Pontuação Final: {_score}";
                 SaveGameScore();
-                AddDebugMessage($"Fim de jogo - Pontuação final: {_score}");
+                AddDebugMessage($"[EVENTO] GAME_OVER - Fim de jogo - Pontuação final: {_score}");
                 TriggerVisualEffect("GAME_OVER");
 
                 // For clients, check if session should end after game over
@@ -789,6 +809,7 @@ public partial class MainWindow : Window
 
             case "MISS":
                 StatusText.Text = "❌ Muito lento! O LED apagou sozinho.";
+                AddDebugMessage("[EVENTO] MISS - LED apagou antes do jogador pressionar");
                 RecordClientRoundLoss();
                 break;
 
@@ -812,7 +833,7 @@ public partial class MainWindow : Window
                 if (int.TryParse(eventValue, out var wrongKey))
                 {
                     StatusText.Text = $"❌ Tecla errada! Pressionou {wrongKey}, mas deveria ser outro LED.";
-                    AddDebugMessage($"Tecla incorreta pressionada: {wrongKey}");
+                    AddDebugMessage($"[EVENTO] WRONG_KEY - Tecla incorreta pressionada: {wrongKey}");
                     RecordClientRoundLoss();
                 }
                 break;
@@ -828,7 +849,7 @@ public partial class MainWindow : Window
                     }
                     StatusText.Text = $"🆙 NÍVEL {level}! Dificuldade aumentada! Pontuação: {_score}";
                     UpdateUI();
-                    AddDebugMessage($"Level up: {level}, Score: {_score}");
+                    AddDebugMessage($"[EVENTO] LEVEL_UP - Nível: {level}, Pontuação: {_score}");
                     TriggerVisualEffect("LEVEL_UP");
                 }
                 break;
@@ -841,7 +862,7 @@ public partial class MainWindow : Window
                     StartGameButton.IsEnabled = false;
                     StopGameButton.IsEnabled = true;
                     StatusText.Text = "🎮 Jogo iniciado! Prepare-se para a ação!";
-                    AddDebugMessage($"Jogo iniciado: modo {gameMode}");
+                    AddDebugMessage($"[EVENTO] GAME_STARTED - Jogo iniciado: modo {gameMode} ({GetGameName(gameMode)})");
                     UpdateUI();
                     TriggerVisualEffect("GAME_START");
                 }
@@ -993,6 +1014,41 @@ public partial class MainWindow : Window
 
             case "SNIPER_VICTORY":
                 StatusText.Text = "🏆 LEGENDÁRIO! 10/10 acertos! Você é um sniper de elite!";
+                TriggerVisualEffect("VICTORY");
+                break;
+
+            case "GATO_RATO_TIMEOUT":
+                if (int.TryParse(eventValue, out var captures))
+                {
+                    StatusText.Text = $"⏰ TEMPO ESGOTADO! Você capturou {captures} ratos em 2 minutos. Sessão finalizada!";
+                    AddDebugMessage($"[NEGÓCIO] Gato e Rato timeout - {captures} capturas - Sessão sendo finalizada por regra de negócio");
+                    
+                    // Business rule: timeout ends the session permanently for this client
+                    if (_isClientMode && _currentUser != null)
+                    {
+                        AddDebugMessage($"[NEGÓCIO] Cliente {_currentUser.Name} atingiu timeout no Gato e Rato - finalizando sessão permanentemente");
+                        
+                        // Mark session as completed due to timeout with business rule
+                        _sessionService.EndSessionByTimeout(_currentUser.Id, "Timeout de 2 minutos no jogo Gato e Rato");
+                        
+                        // Set flag to prevent further gameplay
+                        lock (_gameStateLock)
+                        {
+                            _isSessionEnding = true;
+                        }
+                        
+                        // Show timeout completion dialog after a brief delay
+                        Task.Run(async () => 
+                        {
+                            await Task.Delay(2000); // Give time to read the timeout message
+                            await ShowTimeoutCompletedDialog(captures);
+                        });
+                    }
+                }
+                break;
+
+            case "GATO_RATO_WIN":
+                StatusText.Text = "🏆 VITÓRIA! Você capturou todos os ratos necessários!";
                 TriggerVisualEffect("VICTORY");
                 break;
 
@@ -1545,16 +1601,73 @@ public partial class MainWindow : Window
 
     private void OpenDebugButton_Click(object? sender, RoutedEventArgs e)
     {
-        // Only admins can access debug
-        if (_isClientMode) return;
-
+        // Both admins and clients can access debug for troubleshooting
         if (_debugWindow == null)
         {
             _debugWindow = new DebugWindow();
             _debugWindow.Closed += (s, args) => _debugWindow = null;
+            
+            // Configure debug window based on user type
+            if (_isClientMode && _currentUser != null)
+            {
+                _debugWindow.Title = $"🔧 Debug Console - Cliente: {_currentUser.Name}";
+                _debugWindow.OnRefreshClientInfo = ShowClientDebugInfo;
+                _debugWindow.SetRefreshButtonVisibility(true);
+                ShowClientDebugInfo();
+            }
+            else
+            {
+                _debugWindow.Title = "🔧 Debug Console - Administrador";
+                _debugWindow.SetRefreshButtonVisibility(false);
+                _debugWindow.AddMessage("[INFO] Modo Administrador - Acesso completo", true);
+            }
         }
         _debugWindow.Show();
         _debugWindow.Activate();
+    }
+
+    private void ShowClientDebugInfo()
+    {
+        if (_debugWindow == null || _currentUser == null) return;
+
+        try
+        {
+            _debugWindow.AddMessage("═══════════════════════════════════════", true);
+            _debugWindow.AddMessage($"[INFO] 👤 Cliente: {_currentUser.Name}", true);
+            _debugWindow.AddMessage($"[INFO] 🆔 ID: {_currentUser.Id}", true);
+            
+            var sessionStatus = _sessionService.GetClientSessionStatus(_currentUser.Id);
+            _debugWindow.AddMessage($"[INFO] 📊 Status da Sessão: {sessionStatus}", true);
+            
+            var selectedGame = _sessionService.GetClientSelectedGame(_currentUser.Id);
+            _debugWindow.AddMessage($"[INFO] 🎮 Jogo Selecionado: {selectedGame.GetDisplayName()}", true);
+            
+            var remainingRounds = _sessionService.GetRemainingRounds(_currentUser.Id);
+            _debugWindow.AddMessage($"[INFO] 🔄 Rodadas Restantes: {remainingRounds}", true);
+            
+            var session = _sessionService.GetSession(_currentUser.Id);
+            if (session != null)
+            {
+                _debugWindow.AddMessage($"[INFO] ❌ Erros Cometidos: {session.ErrorsCommitted}/{session.MaxErrors}", true);
+                _debugWindow.AddMessage($"[INFO] ⏰ Sessão Iniciada: {session.SessionStart:HH:mm:ss}", true);
+                _debugWindow.AddMessage($"[INFO] ✅ Sessão Ativa: {(session.IsActive ? "Sim" : "Não")}", true);
+            }
+            
+            _debugWindow.AddMessage($"[INFO] 🔗 Arduino Conectado: {(_serialPort?.IsOpen == true ? "Sim" : "Não")}", true);
+            _debugWindow.AddMessage($"[INFO] 🎯 Jogo Ativo: {(_gameActive ? "Sim" : "Não")}", true);
+            _debugWindow.AddMessage($"[INFO] 🏆 Pontuação Atual: {_score}", true);
+            _debugWindow.AddMessage($"[INFO] 📈 Nível Atual: {_level}", true);
+            
+            _debugWindow.AddMessage("═══════════════════════════════════════", true);
+            _debugWindow.AddMessage("[INFO] 💡 Dica: Esta janela mostra informações técnicas que podem ajudar", true);
+            _debugWindow.AddMessage("[INFO] 💡 a resolver problemas durante o jogo. Mantenha-a aberta se", true);
+            _debugWindow.AddMessage("[INFO] 💡 estiver enfrentando dificuldades.", true);
+            _debugWindow.AddMessage("═══════════════════════════════════════", true);
+        }
+        catch (Exception ex)
+        {
+            _debugWindow.AddMessage($"[ERROR] Erro ao obter informações de debug: {ex.Message}", false);
+        }
     }
 
     private async void StartGameButton_Click(object? sender, RoutedEventArgs e)
@@ -1581,14 +1694,35 @@ public partial class MainWindow : Window
         if (_isClientMode && _currentUser != null)
         {
             var gameMode = (GameMode)_currentGameMode;
+            AddDebugMessage($"[INÍCIO] 🎮 Cliente {_currentUser.Name} tentando iniciar jogo {gameMode.GetDisplayName()}");
+            
+            // Check if session is blocked due to timeout (business rule)
+            bool isSessionEnding;
+            lock (_gameStateLock)
+            {
+                isSessionEnding = _isSessionEnding;
+            }
+            
+            if (isSessionEnding)
+            {
+                AddDebugMessage($"[INÍCIO] 🚫 Cliente bloqueado - Sessão finalizada por timeout ou regra de negócio");
+                await ShowMessage("Sessão Finalizada", 
+                    "Sua sessão foi finalizada permanentemente devido ao timeout no jogo Gato e Rato.\n" +
+                    "Para jogar novamente, faça logout e entre com uma nova sessão.");
+                return;
+            }
+            
             if (!_sessionService.CanClientPlayGame(_currentUser.Id))
             {
                 var remaining = _sessionService.GetRemainingRounds(_currentUser.Id);
+                AddDebugMessage($"[INÍCIO] ❌ Cliente bloqueado - Erros restantes: {remaining}");
                 await ShowMessage("Limite de Erros Atingido",
                     $"Você já cometeu o máximo de erros permitidos em {gameMode.GetDisplayName()}!\n" +
                     $"Erros restantes: {remaining}");
                 return;
             }
+            
+            AddDebugMessage($"[INÍCIO] ✅ Cliente autorizado a jogar - Rodadas restantes: {_sessionService.GetRemainingRounds(_currentUser.Id)}");
         }
 
         _gameActive = true;
@@ -1603,7 +1737,16 @@ public partial class MainWindow : Window
         _serialPort.WriteLine(command);
 
         StatusText.Text = "🚀 Jogo iniciado! Boa sorte!";
-        AddDebugMessage($"Jogo iniciado: Modo {_currentGameMode}");
+        
+        if (_isClientMode && _currentUser != null)
+        {
+            AddDebugMessage($"[INÍCIO] 🚀 Cliente {_currentUser.Name} iniciou jogo {GetGameName(_currentGameMode)} - Comando: {command}");
+        }
+        else
+        {
+            AddDebugMessage($"[INÍCIO] 🚀 Administrador iniciou jogo {GetGameName(_currentGameMode)} - Comando: {command}");
+        }
+        
         UpdateUI();
     }
 
@@ -2069,9 +2212,16 @@ O Arduino possui animações épicas para:
         if (_isClientMode && _currentUser != null)
         {
             var selectedGame = _sessionService.GetClientSelectedGame(_currentUser.Id);
+            var remainingBefore = _sessionService.GetRemainingRounds(_currentUser.Id);
+            
+            AddDebugMessage($"[DEBUG] 🔄 RecordClientRoundLoss - Antes: {remainingBefore} chances restantes para {_currentUser.Name} em {selectedGame.GetDisplayName()}");
+            
             _sessionService.RecordGameError(_currentUser.Id);
+            
+            var remainingAfter = _sessionService.GetRemainingRounds(_currentUser.Id);
+            AddDebugMessage($"[DEBUG] 🔄 RecordClientRoundLoss - Depois: {remainingAfter} chances restantes para {_currentUser.Name} em {selectedGame.GetDisplayName()}");
 
-            AddDebugMessage($"Cliente {_currentUser.Name} cometeu erro em {selectedGame.GetDisplayName()}");
+            AddDebugMessage($"[SESSÃO] ❌ Cliente {_currentUser.Name} cometeu erro em {selectedGame.GetDisplayName()} - Restam {remainingAfter} chances");
 
             UpdateRemainingRoundsDisplay();
 
@@ -2084,13 +2234,21 @@ O Arduino possui animações épicas para:
                     _isSessionEnding = true; // Define a flag para bloquear outras ações
                 }
 
-                AddDebugMessage($"Cliente {_currentUser.Name} esgotou todas as chances em {selectedGame.GetDisplayName()} - iniciando fim de sessão automático");
+                AddDebugMessage($"[SESSÃO] 🚫 Cliente {_currentUser.Name} esgotou todas as chances em {selectedGame.GetDisplayName()} - iniciando fim de sessão automático");
 
                 StopGameImmediately();
 
                 // Show session completed dialog and return to login
                 Task.Run(async () => await ShowRoundsCompletedDialog());
             }
+            else
+            {
+                AddDebugMessage($"[SESSÃO] ✅ Sessão continua - Ainda restam {remainingAfter} chances para {_currentUser.Name}");
+            }
+        }
+        else
+        {
+            AddDebugMessage("[DEBUG] ⚠️ RecordClientRoundLoss chamado mas não está em modo cliente ou usuário é null");
         }
     }
 
@@ -2136,6 +2294,166 @@ O Arduino possui animações épicas para:
         catch (Exception ex)
         {
             AddDebugMessage($"Erro crítico ao parar jogo: {ex.Message}");
+        }
+    }
+
+    private async Task ShowTimeoutCompletedDialog(int captures)
+    {
+        try
+        {
+            if (_currentUser == null)
+            {
+                AddDebugMessage("ShowTimeoutCompletedDialog: _currentUser é null, forçando retorno ao login");
+                await ForceReturnToLogin();
+                return;
+            }
+
+            AddDebugMessage($"Mostrando diálogo de timeout completo para {_currentUser.Name} - {captures} capturas");
+
+            // Ensure we're on UI thread
+            await Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                try
+                {
+                    // Show custom timeout dialog
+                    var dialog = new Window()
+                    {
+                        Title = "⏰ Tempo Esgotado - Sessão Finalizada",
+                        Width = 600,
+                        Height = 400,
+                        WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                        Background = Avalonia.Media.Brushes.DarkSlateGray,
+                        WindowState = WindowState.Normal,
+                        Topmost = true,
+                        CanResize = false
+                    };
+
+                    var mainPanel = new StackPanel
+                    {
+                        Margin = new Avalonia.Thickness(30),
+                        Spacing = 20,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                    };
+
+                    // Title
+                    mainPanel.Children.Add(new TextBlock
+                    {
+                        Text = "⏰ TEMPO ESGOTADO!",
+                        FontSize = 36,
+                        FontWeight = Avalonia.Media.FontWeight.Bold,
+                        Foreground = Avalonia.Media.Brushes.Orange,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                    });
+
+                    // Player info
+                    mainPanel.Children.Add(new TextBlock
+                    {
+                        Text = $"👤 Jogador: {_currentUser.Name}",
+                        FontSize = 20,
+                        Foreground = Avalonia.Media.Brushes.White,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                    });
+
+                    // Game result
+                    mainPanel.Children.Add(new TextBlock
+                    {
+                        Text = $"🐱 Ratos capturados: {captures}",
+                        FontSize = 18,
+                        Foreground = Avalonia.Media.Brushes.LightGreen,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                    });
+
+                    // Time info
+                    mainPanel.Children.Add(new TextBlock
+                    {
+                        Text = "⏱️ Tempo de jogo: 2 minutos",
+                        FontSize = 16,
+                        Foreground = Avalonia.Media.Brushes.LightGray,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center
+                    });
+
+                    // Business rule explanation
+                    var ruleText = new TextBlock
+                    {
+                        Text = "🔒 REGRA DE NEGÓCIO:\nSua sessão foi finalizada permanentemente.\nPara jogar novamente, faça um novo login.",
+                        FontSize = 14,
+                        FontWeight = Avalonia.Media.FontWeight.Medium,
+                        Foreground = Avalonia.Media.Brushes.Yellow,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        TextAlignment = Avalonia.Media.TextAlignment.Center,
+                        TextWrapping = Avalonia.Media.TextWrapping.Wrap,
+                        Margin = new Avalonia.Thickness(0, 20, 0, 0)
+                    };
+                    mainPanel.Children.Add(ruleText);
+
+                    // Return button
+                    var returnButton = new Button
+                    {
+                        Content = "🔙 Retornar ao Login",
+                        FontSize = 18,
+                        FontWeight = Avalonia.Media.FontWeight.Bold,
+                        Padding = new Avalonia.Thickness(30, 15),
+                        Background = Avalonia.Media.Brushes.DarkRed,
+                        Foreground = Avalonia.Media.Brushes.White,
+                        HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
+                        Margin = new Avalonia.Thickness(0, 30, 0, 0)
+                    };
+
+                    returnButton.Click += async (s, e) =>
+                    {
+                        try
+                        {
+                            AddDebugMessage("[TIMEOUT] Botão de retorno clicado - forçando logout");
+                            dialog.Close();
+                            await ForceReturnToLogin();
+                        }
+                        catch (Exception ex)
+                        {
+                            AddDebugMessage($"Erro ao retornar do timeout: {ex.Message}");
+                            await ForceReturnToLogin();
+                        }
+                    };
+
+                    mainPanel.Children.Add(returnButton);
+                    dialog.Content = mainPanel;
+
+                    // Auto-return after 15 seconds
+                    var autoReturnTimer = new System.Threading.Timer(
+                        callback: _ => Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+                        {
+                            try
+                            {
+                                AddDebugMessage("[TIMEOUT] Timer automático ativado - forçando logout");
+                                dialog.Close();
+                                await ForceReturnToLogin();
+                            }
+                            catch (Exception ex)
+                            {
+                                AddDebugMessage($"Erro no timer automático: {ex.Message}");
+                                await ForceReturnToLogin();
+                            }
+                        }),
+                        state: null,
+                        dueTime: TimeSpan.FromSeconds(15),
+                        period: System.Threading.Timeout.InfiniteTimeSpan
+                    );
+
+                    dialog.Closed += (s, e) => autoReturnTimer?.Dispose();
+
+                    await dialog.ShowDialog(this);
+                }
+                catch (Exception ex)
+                {
+                    AddDebugMessage($"Erro ao criar diálogo de timeout: {ex.Message}");
+                    await ForceReturnToLogin();
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            AddDebugMessage($"Erro crítico em ShowTimeoutCompletedDialog: {ex.Message}");
+            await ForceReturnToLogin();
         }
     }
 
@@ -2211,6 +2529,7 @@ O Arduino possui animações épicas para:
                             await ForceReturnToLogin();
                         }
                     };
+
 
                     // Show as modal dialog to block all interaction
                     try

@@ -367,8 +367,8 @@ FodyWeavers.xsd
 scores.json
 **/scores.json
 client_codes.json
-client_sessions.json
 used_codes.json
+client_sessions.json
 
 # Generated ticket files
 bilhetes_*.txt
@@ -384,6 +384,7 @@ bilhetes_jogo_*.txt
 serial_*.log
 arduino_*.log
 debug_*.log
+performance_*.log
 
 # User configuration files
 config.json
@@ -399,6 +400,21 @@ game_exports/
 temp/
 tmp/
 .temp/
+
+# Test files
+test_*.cs
+*_test.cs
+teste_*.sh
+
+# Documentation temporária
+*_temp.md
+*_draft.md
+TEMP_*.md
+
+# Backups
+*.bak
+*.backup
+*_backup.*
 
 # Windows system files
 Thumbs.db
@@ -435,3 +451,12 @@ Desktop.ini
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# JetBrains Rider cache
+.idea/
+*.sln.iml
+
+# Visual Studio Code
+.vscode/launch.json
+.vscode/tasks.json
+.vscode/settings.json

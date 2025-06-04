@@ -11,10 +11,18 @@ namespace miniJogo
     {
         private List<string> _debugMessages = new();
         private readonly object _messagesLock = new object();
+        
+        // Delegate for refreshing client info
+        public Action? OnRefreshClientInfo { get; set; }
 
         public DebugWindow()
         {
             InitializeComponent();
+        }
+
+        public void SetRefreshButtonVisibility(bool visible)
+        {
+            RefreshInfoButton.IsVisible = visible;
         }
 
         public void AddDebugMessage(string message, bool isDebug = false)
@@ -156,6 +164,19 @@ namespace miniJogo
             {
                 // Em caso de erro, mostrar no próprio console de debug
                 AddDebugMessage($"Erro ao salvar log: {ex.Message}", true);
+            }
+        }
+
+        private void RefreshInfoButton_Click(object? sender, RoutedEventArgs e)
+        {
+            try
+            {
+                AddMessage("🔄 Atualizando informações...", false);
+                OnRefreshClientInfo?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                AddMessage($"❌ Erro ao atualizar informações: {ex.Message}", false);
             }
         }
 
