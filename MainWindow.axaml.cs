@@ -1540,7 +1540,7 @@ public partial class MainWindow : Window
         // Handle function keys
         switch (e.Key)
         {
-            case Key.F1:
+            case Key.Space:
                 if (StartGameButton.IsEnabled) StartGameButton_Click(null, new RoutedEventArgs());
                 e.Handled = true;
                 return;
@@ -2235,14 +2235,14 @@ public partial class MainWindow : Window
 👤 CONFIGURAÇÃO:
 1. Digite seu nome
 2. Escolha um jogo
-3. Clique em 'Iniciar' ou use F1
+3. Clique em 'Iniciar' ou use Espaço
 
 ⌨️ CONTROLES:
 • W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L: Pressionar LEDs específicos
 • Setas: Mover cursor/personagem
 • Enter: Confirmar ação
 • Esc: Cancelar/Voltar
-• F1: Iniciar jogo
+• Espaço: Iniciar jogo
 • F2: Parar jogo
 • F3: Reset pontuação
 • F4: Ver rankings

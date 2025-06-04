@@ -393,9 +393,9 @@
                   </LinearGradientBrush>
                 </Border.Background>
                 <TextBlock
-                  Text="⌨️ F1=Iniciar | F2=Parar | F3=Reset | F4=Ranks | F5=Atualizar Portas"
+                  Text="⌨️ Espaço=Iniciar | F2=Parar | F3=Reset | F4=Ranks | F5=Atualizar | F6=Parar Efeitos | F7=Matrix | F8=Pulso | F9=Fogos | F10=Demo"
                   Foreground="#E2E8F0"
-                  FontSize="11"
+                  FontSize="10"
                   HorizontalAlignment="Center"
                   FontWeight="Medium"
                 />
