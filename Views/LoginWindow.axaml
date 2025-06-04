@@ -14,7 +14,7 @@
     WindowStartupLocation="CenterScreen"
     WindowState="FullScreen"
     CanResize="True"
-    Background="#1A202C"
+    Background="#0F0F23"
     KeyDown="Window_KeyDown">
 
     <Grid>
@@ -24,7 +24,13 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="#E53E3E" Padding="25">
+        <Border Grid.Row="0" Padding="25">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
+                    <GradientStop Color="#667EEA" Offset="0"/>
+                    <GradientStop Color="#764BA2" Offset="1"/>
+                </LinearGradientBrush>
+            </Border.Background>
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -38,12 +44,16 @@
                         FontWeight="Bold"
                         Foreground="White"
                         HorizontalAlignment="Center"
-                    />
+                    >
+                        <TextBlock.Effect>
+                            <DropShadowEffect BlurRadius="8" OffsetX="0" OffsetY="2" Color="#30000000"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
                     <TextBlock
                         Text="Sistema de Autenticação e Seleção de Jogos"
                         FontSize="18"
-                        Foreground="White"
-                        Opacity="0.9"
+                        Foreground="#E2E8F0"
+                        Opacity="0.95"
                         HorizontalAlignment="Center"
                         Margin="0,8,0,0"
                     />
@@ -62,11 +72,19 @@
             <!-- Left Panel - Rankings -->
             <Border
                 Grid.Column="0"
-                Background="#2D3748"
-                CornerRadius="15"
+                CornerRadius="20"
                 Padding="25"
                 Margin="0,0,15,0"
             >
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Color="#1E1E3F" Offset="0"/>
+                        <GradientStop Color="#2A2A5A" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+                </Border.Effect>
                 <StackPanel Spacing="20">
                     <TextBlock
                         Text="🏆 Top Rankings"
@@ -83,10 +101,15 @@
                         <StackPanel x:Name="RankingsPanel" Spacing="12">
                             <!-- Rankings will be populated dynamically -->
                             <Border
-                                Background="#4A5568"
-                                CornerRadius="8"
+                                CornerRadius="12"
                                 Padding="15"
                             >
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                        <GradientStop Color="#3A3A6B" Offset="0"/>
+                                        <GradientStop Color="#4A4A7B" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
@@ -128,11 +151,19 @@
             <!-- Center Panel - Login Form -->
             <Border
                 Grid.Column="1"
-                Background="#2D3748"
-                CornerRadius="15"
+                CornerRadius="20"
                 Padding="40"
                 Margin="15,0"
             >
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Color="#1E1E3F" Offset="0"/>
+                        <GradientStop Color="#2A2A5A" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="25" OffsetX="0" OffsetY="15" Color="#20000000"/>
+                </Border.Effect>
                 <StackPanel
                     Spacing="30"
                     MaxWidth="450"
@@ -174,20 +205,26 @@
                             Text="👤 Seu Nome:"
                             FontSize="16"
                             FontWeight="Medium"
-                            Foreground="#CBD5E0"
+                            Foreground="#E2E8F0"
                         />
                         <TextBox
                             x:Name="NameTextBox"
                             Watermark="Digite seu nome aqui..."
                             Padding="18,15"
                             FontSize="18"
-                            CornerRadius="10"
-                            Background="#4A5568"
+                            CornerRadius="12"
                             Foreground="White"
-                            BorderBrush="#68D391"
+                            BorderBrush="#4FACFE"
                             BorderThickness="2"
                             KeyDown="NameTextBox_KeyDown"
-                        />
+                        >
+                            <TextBox.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="#3A3A6B" Offset="0"/>
+                                    <GradientStop Color="#4A4A7B" Offset="1"/>
+                                </LinearGradientBrush>
+                            </TextBox.Background>
+                        </TextBox>
                     </StackPanel>
 
                     <!-- Code Input -->
@@ -196,7 +233,7 @@
                             Text="🔑 Código de Acesso:"
                             FontSize="16"
                             FontWeight="Medium"
-                            Foreground="#CBD5E0"
+                            Foreground="#E2E8F0"
                         />
                         <TextBox
                             x:Name="CodeTextBox"
@@ -204,15 +241,21 @@
                             Padding="18,15"
                             FontSize="20"
                             FontWeight="Bold"
-                            CornerRadius="10"
-                            Background="#4A5568"
+                            CornerRadius="12"
                             Foreground="White"
-                            BorderBrush="#68D391"
+                            BorderBrush="#4FACFE"
                             BorderThickness="2"
                             HorizontalContentAlignment="Center"
                             TextChanged="CodeTextBox_TextChanged"
                             KeyDown="CodeTextBox_KeyDown"
-                        />
+                        >
+                            <TextBox.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="#3A3A6B" Offset="0"/>
+                                    <GradientStop Color="#4A4A7B" Offset="1"/>
+                                </LinearGradientBrush>
+                            </TextBox.Background>
+                        </TextBox>
                     </StackPanel>
 
                     <!-- Game Mode Selection (for clients) -->
@@ -221,7 +264,7 @@
                             Text="🎮 Escolha seu Jogo:"
                             FontSize="16"
                             FontWeight="Medium"
-                            Foreground="#CBD5E0"
+                            Foreground="#E2E8F0"
                         />
 
                         <ComboBox
@@ -229,12 +272,17 @@
                             SelectionChanged="GameModeComboBox_SelectionChanged"
                             Padding="18,15"
                             FontSize="16"
-                            CornerRadius="10"
-                            Background="#4A5568"
+                            CornerRadius="12"
                             Foreground="White"
-                            BorderBrush="#68D391"
+                            BorderBrush="#4FACFE"
                             BorderThickness="2"
                         >
+                            <ComboBox.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="#3A3A6B" Offset="0"/>
+                                    <GradientStop Color="#4A4A7B" Offset="1"/>
+                                </LinearGradientBrush>
+                            </ComboBox.Background>
                             <ComboBoxItem Content="🎯 Pega-Luz" Tag="1" />
                             <ComboBoxItem
                                 Content="🧠 Sequência Maluca"
@@ -264,6 +312,7 @@
                         HorizontalAlignment="Center"
                         TextAlignment="Center"
                         TextWrapping="Wrap"
+                        Foreground="#4FACFE"
                     />
 
                     <!-- Login Button -->
@@ -274,19 +323,19 @@
                         Padding="25,18"
                         FontSize="18"
                         FontWeight="Bold"
-                        CornerRadius="12"
-                        Background="#38A169"
+                        CornerRadius="15"
                         Foreground="White"
                         HorizontalAlignment="Stretch"
                         IsEnabled="False"
                     >
+                        <Button.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                <GradientStop Color="#4FACFE" Offset="0"/>
+                                <GradientStop Color="#00F2FE" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Button.Background>
                         <Button.Effect>
-                            <DropShadowEffect
-                                Color="Black"
-                                BlurRadius="8"
-                                OffsetX="2"
-                                OffsetY="3"
-                            />
+                            <DropShadowEffect BlurRadius="15" OffsetX="0" OffsetY="4" Color="#60000000"/>
                         </Button.Effect>
                     </Button>
 
@@ -296,12 +345,12 @@
                             Text="💡 Como funciona:"
                             FontSize="14"
                             FontWeight="Bold"
-                            Foreground="#A0AEC0"
+                            Foreground="#B794F6"
                             HorizontalAlignment="Center"
                         />
                         <TextBlock
                             FontSize="13"
-                            Foreground="#718096"
+                            Foreground="#A0AEC0"
                             HorizontalAlignment="Center"
                             TextAlignment="Center"
                             TextWrapping="Wrap">
@@ -312,11 +361,16 @@
                     <!-- Admin Tools (Hidden by default) -->
                     <Border
                         x:Name="AdminPanel"
-                        Background="#4A5568"
-                        CornerRadius="12"
+                        CornerRadius="15"
                         Padding="20"
                         IsVisible="False"
                     >
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                <GradientStop Color="#3A3A6B" Offset="0"/>
+                                <GradientStop Color="#4A4A7B" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
                         <StackPanel Spacing="15">
                             <TextBlock
                                 Text="🔧 Ferramentas de Administrador"
@@ -331,11 +385,17 @@
                                 Click="GenerateCodesButton_Click"
                                 Padding="15,12"
                                 FontSize="14"
-                                CornerRadius="8"
-                                Background="#3182CE"
+                                CornerRadius="10"
                                 Foreground="White"
                                 HorizontalAlignment="Stretch"
-                            />
+                            >
+                                <Button.Background>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                        <GradientStop Color="#4FACFE" Offset="0"/>
+                                        <GradientStop Color="#00F2FE" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Button.Background>
+                            </Button>
                         </StackPanel>
                     </Border>
 
@@ -345,11 +405,19 @@
             <!-- Right Panel - Game Instructions -->
             <Border
                 Grid.Column="2"
-                Background="#2D3748"
-                CornerRadius="15"
+                CornerRadius="20"
                 Padding="25"
                 Margin="15,0,0,0"
             >
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Color="#1E1E3F" Offset="0"/>
+                        <GradientStop Color="#2A2A5A" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+                </Border.Effect>
                 <StackPanel Spacing="20">
                     <TextBlock
                         Text="📖 Instruções do Jogo"
@@ -360,12 +428,17 @@
                     />
 
                     <Border
-                        Background="#4A5568"
-                        CornerRadius="12"
+                        CornerRadius="15"
                         Padding="20"
-                        BorderBrush="#68D391"
+                        BorderBrush="#4FACFE"
                         BorderThickness="2"
                     >
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                <GradientStop Color="#3A3A6B" Offset="0"/>
+                                <GradientStop Color="#4A4A7B" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
                         <ScrollViewer
                             MaxHeight="500"
                             VerticalScrollBarVisibility="Auto"
@@ -376,7 +449,7 @@
                                     Text="🎯 Pega-Luz"
                                     FontSize="18"
                                     FontWeight="Bold"
-                                    Foreground="#68D391"
+                                    Foreground="#4FACFE"
                                     HorizontalAlignment="Center"
                                 />
 
