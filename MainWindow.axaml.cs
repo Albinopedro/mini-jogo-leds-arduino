@@ -285,10 +285,9 @@ public partial class MainWindow : Window
             RefreshPortsButton.IsVisible = false;
 
             // Set player name directly
-            _playerName = _currentUser?.Name ?? "Cliente";
-
-            // Update logout button text for clients
+            _playerName = _currentUser?.Name ?? "Cliente";            // Update logout button text for clients and make it visible
             LogoutButton.Content = "🚪 Encerrar Sessão";
+            LogoutButton.IsVisible = true;
 
             // Update status
             StatusText.Text = $"🎮 Bem-vindo, {_currentUser?.Name ?? "Cliente"}! Conectando ao Arduino...";
