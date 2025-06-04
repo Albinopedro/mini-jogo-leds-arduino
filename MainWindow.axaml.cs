@@ -40,6 +40,10 @@ public partial class MainWindow : Window
     private volatile bool _isSessionEnding = false;
     private readonly object _gameStateLock = new object();
     private bool _disposed = false;
+    private volatile bool _isClosing = false;
+    private readonly object _closingLock = new object();
+    private volatile bool _isShowingSessionDialog = false;
+    private readonly object _sessionDialogLock = new object();
 
     // LED Matrix (4x4)
     private readonly Ellipse[,] _ledMatrix = new Ellipse[4, 4];
@@ -267,11 +271,11 @@ public partial class MainWindow : Window
 
         // Set current game mode FIRST
         _currentGameMode = selectedGameMode;
-        
+
         // Then populate ComboBox and set selection
         PopulateGameModeComboBox();
         GameModeComboBox.SelectedIndex = selectedGameMode - 1;
-        
+
         AddDebugMessage($"Jogo selecionado configurado: {GetGameName(selectedGameMode)} (ID: {selectedGameMode})");
 
         // Configure UI based on user type
@@ -298,7 +302,7 @@ public partial class MainWindow : Window
 
             // Display session status for the selected game only
             UpdateRemainingRoundsDisplay();
-            
+
             // Show clear message about single game session
             var selectedGameName = GetGameName(_currentGameMode);
             AddDebugMessage($"Cliente {_currentUser?.Name} iniciará sessão de jogo único: {selectedGameName}");
@@ -324,6 +328,16 @@ public partial class MainWindow : Window
 
     private async void LogoutButton_Click(object? sender, RoutedEventArgs e)
     {
+        // Prevent multiple logout attempts
+        lock (_closingLock)
+        {
+            if (_isClosing || _disposed)
+            {
+                AddDebugMessage("[LOGOUT] Logout já em andamento, ignorando nova tentativa");
+                return;
+            }
+        }
+
         // Stop any active games
         if (_gameActive)
         {
@@ -332,7 +346,7 @@ public partial class MainWindow : Window
 
         // Show confirmation dialog with different messages for clients vs admins
         string title = _isClientMode ? "Encerrar Sessão" : "Logout";
-        string message = _isClientMode 
+        string message = _isClientMode
             ? $"Tem certeza que deseja encerrar sua sessão, {_currentUser?.Name}?\nSua sessão será finalizada e você retornará à tela de login."
             : "Tem certeza que deseja fazer logout?\nO jogo será fechado e você retornará à tela de login.";
 
@@ -340,6 +354,16 @@ public partial class MainWindow : Window
 
         if (result)
         {
+            lock (_closingLock)
+            {
+                if (_isClosing || _disposed)
+                {
+                    AddDebugMessage("[LOGOUT] Logout já em andamento, ignorando confirmação");
+                    return;
+                }
+                _isClosing = true;
+            }
+
             AddDebugMessage($"[LOGOUT] {(_isClientMode ? "Cliente" : "Administrador")} {_currentUser?.Name ?? "Usuário"} fazendo logout");
 
             // End client session if in client mode
@@ -352,9 +376,16 @@ public partial class MainWindow : Window
             // Disconnect Arduino
             if (_serialPort?.IsOpen == true)
             {
-                _serialPort.Close();
-                _serialPort = null;
-                AddDebugMessage("[LOGOUT] Arduino desconectado");
+                try
+                {
+                    _serialPort.Close();
+                    _serialPort = null;
+                    AddDebugMessage("[LOGOUT] Arduino desconectado");
+                }
+                catch (Exception ex)
+                {
+                    AddDebugMessage($"[LOGOUT] Erro ao desconectar Arduino: {ex.Message}");
+                }
             }
 
             // Return to login without closing application
@@ -370,39 +401,53 @@ public partial class MainWindow : Window
     {
         try
         {
-            AddDebugMessage("[LOGOUT] Iniciando retorno seguro ao login");
-            
+            AddDebugMessage("[LOGOUT] ⚠️ ReturnToLoginSafely chamado - iniciando retorno seguro ao login");
+            System.Diagnostics.Debug.WriteLine("[LOGOUT] ⚠️ ReturnToLoginSafely chamado");
+
+            // Set closing flag to prevent other operations
+            lock (_closingLock)
+            {
+                _isClosing = true;
+            }
+
             // Hide current window first
             Hide();
-            
-            // Small delay to ensure UI updates
-            await Task.Delay(100);
-            
-            // Create and show new login window
+
+            // Small delay to ensure UI updates and prevent race conditions
+            await Task.Delay(200);
+
+            // Just close this window - App.axaml.cs will handle showing login
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                var loginWindow = new Views.LoginWindow();
-                loginWindow.Show();
+                AddDebugMessage("[LOGOUT] 🚪 Fechando MainWindow via ReturnToLoginSafely");
+                System.Diagnostics.Debug.WriteLine("[LOGOUT] 🚪 Fechando MainWindow via ReturnToLoginSafely");
                 
-                // Close this window after login window is shown
-                Close();
-                
-                AddDebugMessage("[LOGOUT] Nova janela de login criada, MainWindow fechado");
+                try
+                {
+                    Close();
+                    AddDebugMessage("[LOGOUT] ✅ MainWindow fechado - App.axaml.cs irá mostrar login");
+                }
+                catch (Exception closeEx)
+                {
+                    AddDebugMessage($"[LOGOUT] ❌ Erro ao fechar window: {closeEx.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[LOGOUT] ❌ Erro ao fechar window: {closeEx.Message}");
+                }
             });
         }
         catch (Exception ex)
         {
-            AddDebugMessage($"[LOGOUT] Erro no retorno seguro ao login: {ex.Message}");
-            // Fallback: still try to show login
+            AddDebugMessage($"[LOGOUT] ❌ Erro no retorno seguro ao login: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[LOGOUT] ❌ Erro no retorno seguro ao login: {ex.Message}");
+            
+            // Fallback: still try to close the window
             try
             {
-                var loginWindow = new Views.LoginWindow();
-                loginWindow.Show();
-                Close();
+                await Dispatcher.UIThread.InvokeAsync(() => Close());
             }
             catch (Exception fallbackEx)
             {
-                AddDebugMessage($"[LOGOUT] Erro crítico no fallback: {fallbackEx.Message}");
+                AddDebugMessage($"[LOGOUT] 💥 Erro crítico no fallback: {fallbackEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"[LOGOUT] 💥 Erro crítico no fallback: {fallbackEx.Message}");
             }
         }
     }
@@ -572,7 +617,7 @@ public partial class MainWindow : Window
                     if (_serialPort?.IsOpen != true)
                     {
                         StatusText.Text = "⚠️ Arduino não encontrado. Conecte o dispositivo e tente novamente.";
-                        
+
                         // For clients, if Arduino can't connect, they can't play
                         if (_isClientMode)
                         {
@@ -584,7 +629,7 @@ public partial class MainWindow : Window
                 else
                 {
                     StatusText.Text = "⚠️ Nenhuma porta serial encontrada. Verifique a conexão do Arduino.";
-                    
+
                     // For clients, disable game functions if no Arduino
                     if (_isClientMode)
                     {
@@ -597,7 +642,7 @@ public partial class MainWindow : Window
             {
                 StatusText.Text = $"❌ Erro na conexão automática: {ex.Message}";
                 AddDebugMessage($"Erro na conexão automática: {ex.Message}");
-                
+
                 // For clients, ensure they can't start without Arduino
                 if (_isClientMode)
                 {
@@ -809,7 +854,7 @@ public partial class MainWindow : Window
                 {
                     var remainingRounds = _sessionService.GetRemainingRounds(_currentUser.Id);
                     AddDebugMessage($"Após GAME_OVER - Rodadas restantes no jogo selecionado: {remainingRounds}");
-                    
+
                     if (remainingRounds <= 0)
                     {
                         lock (_gameStateLock)
@@ -817,7 +862,20 @@ public partial class MainWindow : Window
                             _isSessionEnding = true;
                         }
                         AddDebugMessage($"Cliente {_currentUser.Name} esgotou todas as chances do jogo selecionado - iniciando fim de sessão");
-                        Task.Run(async () => await ShowRoundsCompletedDialog());
+                        
+                        // Prevent multiple session dialogs
+                        lock (_sessionDialogLock)
+                        {
+                            if (!_isShowingSessionDialog)
+                            {
+                                _isShowingSessionDialog = true;
+                                Task.Run(async () => await ShowRoundsCompletedDialog());
+                            }
+                            else
+                            {
+                                AddDebugMessage("[SESSÃO] Diálogo de sessão já está sendo mostrado, ignorando");
+                            }
+                        }
                     }
                     else
                     {
@@ -1061,23 +1119,23 @@ public partial class MainWindow : Window
                 {
                     StatusText.Text = $"⏰ TEMPO ESGOTADO! Você capturou {captures} ratos em 2 minutos. Sessão finalizada!";
                     AddDebugMessage($"[NEGÓCIO] Gato e Rato timeout - {captures} capturas - Sessão sendo finalizada por regra de negócio");
-                    
+
                     // Business rule: timeout ends the session permanently for this client
                     if (_isClientMode && _currentUser != null)
                     {
                         AddDebugMessage($"[NEGÓCIO] Cliente {_currentUser.Name} atingiu timeout no Gato e Rato - finalizando sessão permanentemente");
-                        
+
                         // Mark session as completed due to timeout with business rule
                         _sessionService.EndSessionByTimeout(_currentUser.Id, "Timeout de 2 minutos no jogo Gato e Rato");
-                        
+
                         // Set flag to prevent further gameplay
                         lock (_gameStateLock)
                         {
                             _isSessionEnding = true;
                         }
-                        
+
                         // Show timeout completion dialog after a brief delay
-                        Task.Run(async () => 
+                        Task.Run(async () =>
                         {
                             await Task.Delay(2000); // Give time to read the timeout message
                             await ShowTimeoutCompletedDialog(captures);
@@ -1645,7 +1703,7 @@ public partial class MainWindow : Window
         {
             _debugWindow = new DebugWindow();
             _debugWindow.Closed += (s, args) => _debugWindow = null;
-            
+
             // Configure debug window based on user type
             if (_isClientMode && _currentUser != null)
             {
@@ -1674,16 +1732,16 @@ public partial class MainWindow : Window
             _debugWindow.AddMessage("═══════════════════════════════════════", true);
             _debugWindow.AddMessage($"[INFO] 👤 Cliente: {_currentUser.Name}", true);
             _debugWindow.AddMessage($"[INFO] 🆔 ID: {_currentUser.Id}", true);
-            
+
             var sessionStatus = _sessionService.GetClientSessionStatus(_currentUser.Id);
             _debugWindow.AddMessage($"[INFO] 📊 Status da Sessão: {sessionStatus}", true);
-            
+
             var selectedGame = _sessionService.GetClientSelectedGame(_currentUser.Id);
             _debugWindow.AddMessage($"[INFO] 🎮 Jogo Selecionado: {selectedGame.GetDisplayName()}", true);
-            
+
             var remainingRounds = _sessionService.GetRemainingRounds(_currentUser.Id);
             _debugWindow.AddMessage($"[INFO] 🔄 Rodadas Restantes: {remainingRounds}", true);
-            
+
             var session = _sessionService.GetSession(_currentUser.Id);
             if (session != null)
             {
@@ -1691,12 +1749,12 @@ public partial class MainWindow : Window
                 _debugWindow.AddMessage($"[INFO] ⏰ Sessão Iniciada: {session.SessionStart:HH:mm:ss}", true);
                 _debugWindow.AddMessage($"[INFO] ✅ Sessão Ativa: {(session.IsActive ? "Sim" : "Não")}", true);
             }
-            
+
             _debugWindow.AddMessage($"[INFO] 🔗 Arduino Conectado: {(_serialPort?.IsOpen == true ? "Sim" : "Não")}", true);
             _debugWindow.AddMessage($"[INFO] 🎯 Jogo Ativo: {(_gameActive ? "Sim" : "Não")}", true);
             _debugWindow.AddMessage($"[INFO] 🏆 Pontuação Atual: {_score}", true);
             _debugWindow.AddMessage($"[INFO] 📈 Nível Atual: {_level}", true);
-            
+
             _debugWindow.AddMessage("═══════════════════════════════════════", true);
             _debugWindow.AddMessage("[INFO] 💡 Dica: Esta janela mostra informações técnicas que podem ajudar", true);
             _debugWindow.AddMessage("[INFO] 💡 a resolver problemas durante o jogo. Mantenha-a aberta se", true);
@@ -1734,23 +1792,23 @@ public partial class MainWindow : Window
         {
             var gameMode = (GameMode)_currentGameMode;
             AddDebugMessage($"[INÍCIO] 🎮 Cliente {_currentUser.Name} tentando iniciar jogo {gameMode.GetDisplayName()}");
-            
+
             // Check if session is blocked due to timeout (business rule)
             bool isSessionEnding;
             lock (_gameStateLock)
             {
                 isSessionEnding = _isSessionEnding;
             }
-            
+
             if (isSessionEnding)
             {
                 AddDebugMessage($"[INÍCIO] 🚫 Cliente bloqueado - Sessão finalizada por timeout ou regra de negócio");
-                await ShowMessage("Sessão Finalizada", 
+                await ShowMessage("Sessão Finalizada",
                     "Sua sessão foi finalizada permanentemente devido ao timeout no jogo Gato e Rato.\n" +
                     "Para jogar novamente, faça logout e entre com uma nova sessão.");
                 return;
             }
-            
+
             if (!_sessionService.CanClientPlayGame(_currentUser.Id))
             {
                 var remaining = _sessionService.GetRemainingRounds(_currentUser.Id);
@@ -1760,7 +1818,7 @@ public partial class MainWindow : Window
                     $"Erros restantes: {remaining}");
                 return;
             }
-            
+
             AddDebugMessage($"[INÍCIO] ✅ Cliente autorizado a jogar - Rodadas restantes: {_sessionService.GetRemainingRounds(_currentUser.Id)}");
         }
 
@@ -1776,7 +1834,7 @@ public partial class MainWindow : Window
         _serialPort.WriteLine(command);
 
         StatusText.Text = "🚀 Jogo iniciado! Boa sorte!";
-        
+
         if (_isClientMode && _currentUser != null)
         {
             AddDebugMessage($"[INÍCIO] 🚀 Cliente {_currentUser.Name} iniciou jogo {GetGameName(_currentGameMode)} - Comando: {command}");
@@ -1785,7 +1843,7 @@ public partial class MainWindow : Window
         {
             AddDebugMessage($"[INÍCIO] 🚀 Administrador iniciou jogo {GetGameName(_currentGameMode)} - Comando: {command}");
         }
-        
+
         UpdateUI();
     }
 
@@ -2122,11 +2180,22 @@ O Arduino possui animações épicas para:
 
     protected override void OnClosed(EventArgs e)
     {
-        if (_disposed) return;
+        // Prevent multiple cleanup attempts
+        lock (_closingLock)
+        {
+            if (_disposed) return;
+            _disposed = true;
+            _isClosing = true;
+        }
 
         try
         {
-            _disposed = true;
+            AddDebugMessage("[CLOSE] 🔥 MainWindow OnClosed chamado - iniciando cleanup");
+            System.Diagnostics.Debug.WriteLine("[CLOSE] 🔥 MainWindow OnClosed chamado - iniciando cleanup");
+            System.Diagnostics.Debug.WriteLine($"[CLOSE] 🔍 Usuário atual: {_currentUser?.Name ?? "null"}");
+            System.Diagnostics.Debug.WriteLine($"[CLOSE] 🔍 Modo cliente: {_isClientMode}");
+            System.Diagnostics.Debug.WriteLine($"[CLOSE] 🔍 Sessão terminando: {_isSessionEnding}");
+            System.Diagnostics.Debug.WriteLine($"[CLOSE] 🔍 Está fechando: {_isClosing}");
 
             // Stop the status timer
             _statusTimer?.Dispose();
@@ -2190,7 +2259,10 @@ O Arduino possui animações épicas para:
         }
         finally
         {
+            AddDebugMessage("[CLOSE] ✅ MainWindow OnClosed concluído - cleanup finalizado");
+            System.Diagnostics.Debug.WriteLine("[CLOSE] ✅ MainWindow OnClosed concluído - chamando base.OnClosed");
             base.OnClosed(e);
+            System.Diagnostics.Debug.WriteLine("[CLOSE] 🏁 base.OnClosed executado - MainWindow totalmente fechado");
         }
     }
 
@@ -2252,11 +2324,11 @@ O Arduino possui animações épicas para:
         {
             var selectedGame = _sessionService.GetClientSelectedGame(_currentUser.Id);
             var remainingBefore = _sessionService.GetRemainingRounds(_currentUser.Id);
-            
+
             AddDebugMessage($"[DEBUG] 🔄 RecordClientRoundLoss - Antes: {remainingBefore} chances restantes para {_currentUser.Name} em {selectedGame.GetDisplayName()}");
-            
+
             _sessionService.RecordGameError(_currentUser.Id);
-            
+
             var remainingAfter = _sessionService.GetRemainingRounds(_currentUser.Id);
             AddDebugMessage($"[DEBUG] 🔄 RecordClientRoundLoss - Depois: {remainingAfter} chances restantes para {_currentUser.Name} em {selectedGame.GetDisplayName()}");
 
@@ -2269,8 +2341,7 @@ O Arduino possui animações épicas para:
             {
                 lock (_gameStateLock)
                 {
-                    if (_isSessionEnding) return; // Double-check to prevent race condition
-                    _isSessionEnding = true; // Define a flag para bloquear outras ações
+                    _isSessionEnding = true;
                 }
 
                 AddDebugMessage($"[SESSÃO] 🚫 Cliente {_currentUser.Name} esgotou todas as chances em {selectedGame.GetDisplayName()} - iniciando fim de sessão automático");
@@ -2278,7 +2349,18 @@ O Arduino possui animações épicas para:
                 StopGameImmediately();
 
                 // Show session completed dialog and return to login
-                Task.Run(async () => await ShowRoundsCompletedDialog());
+                lock (_sessionDialogLock)
+                {
+                    if (!_isShowingSessionDialog)
+                    {
+                        _isShowingSessionDialog = true;
+                        Task.Run(async () => await ShowRoundsCompletedDialog());
+                    }
+                    else
+                    {
+                        AddDebugMessage("[SESSÃO] Diálogo de sessão já está sendo mostrado, ignorando");
+                    }
+                }
             }
             else
             {
@@ -2320,7 +2402,7 @@ O Arduino possui animações épicas para:
                 {
                     StartGameButton.IsEnabled = false;
                     StopGameButton.IsEnabled = false;
-                    StatusText.Text = "🛑 Jogo interrompido - Limite de erros atingido!";
+                    StatusText.Text = "🛑 GAME OVER - Limite de erros atingido! Termine sessão";
                 }
                 catch (Exception uiEx)
                 {
@@ -2500,20 +2582,22 @@ O Arduino possui animações épicas para:
     {
         try
         {
-            // Ensure this method is only called once
-            lock (_gameStateLock)
+            AddDebugMessage("[SESSÃO] ShowRoundsCompletedDialog iniciado");
+
+            // Double-check dialog is not already showing
+            lock (_sessionDialogLock)
             {
-                if (_isSessionEnding)
+                if (_isShowingSessionDialog && _disposed)
                 {
-                    AddDebugMessage("ShowRoundsCompletedDialog já está em execução, ignorando chamada duplicada");
+                    AddDebugMessage("[SESSÃO] Window já foi descartado, cancelando diálogo");
                     return;
                 }
-                _isSessionEnding = true;
             }
 
             if (_currentUser == null)
             {
                 AddDebugMessage("ShowRoundsCompletedDialog: _currentUser é null, forçando retorno ao login");
+                lock (_sessionDialogLock) { _isShowingSessionDialog = false; }
                 await ForceReturnToLogin();
                 return;
             }
@@ -2522,6 +2606,7 @@ O Arduino possui animações épicas para:
             if (session == null)
             {
                 AddDebugMessage("ShowRoundsCompletedDialog: sessão não encontrada, forçando retorno ao login");
+                lock (_sessionDialogLock) { _isShowingSessionDialog = false; }
                 await ForceReturnToLogin();
                 return;
             }
@@ -2543,27 +2628,54 @@ O Arduino possui animações épicas para:
                     {
                         try
                         {
-                            AddDebugMessage("Evento OnReturnToLogin disparado - processando retorno ao login");
+                            // Prevent multiple calls
+                            lock (_closingLock)
+                            {
+                                if (_isClosing || _disposed)
+                                {
+                                    AddDebugMessage("[SESSÃO] OnReturnToLogin chamado mas window já está fechando");
+                                    return;
+                                }
+                                _isClosing = true;
+                            }
+
+                            // Reset session dialog flag
+                            lock (_sessionDialogLock)
+                            {
+                                _isShowingSessionDialog = false;
+                            }
+
+                            AddDebugMessage("[SESSÃO] Evento OnReturnToLogin disparado - processando retorno ao login");
 
                             // End the session
                             if (_currentUser != null)
                                 _sessionService.EndSession(_currentUser.Id);
 
-                            // Force close this window first
-                            Close();
-
-                            // Small delay to ensure window closes
+                            // Small delay to ensure session is properly ended
                             await Task.Delay(100);
 
-                            // Create and show login window
-                            var loginWindow = new LoginWindow();
-                            loginWindow.Show();
-
-                            AddDebugMessage("Retorno ao login concluído com sucesso");
+                            // Force close this window first
+                            await Dispatcher.UIThread.InvokeAsync(() =>
+                            {
+                                AddDebugMessage("[SESSÃO] 🚪 Fechando MainWindow via RoundsCompletedDialog");
+                                System.Diagnostics.Debug.WriteLine("[SESSÃO] 🚪 Fechando MainWindow via RoundsCompletedDialog");
+                                
+                                try
+                                {
+                                    Close();
+                                    AddDebugMessage("[SESSÃO] ✅ Retorno ao login concluído com sucesso - App.axaml.cs irá mostrar login");
+                                }
+                                catch (Exception closeEx)
+                                {
+                                    AddDebugMessage($"[SESSÃO] Erro ao fechar window: {closeEx.Message}");
+                                }
+                            });
                         }
                         catch (Exception ex)
                         {
                             AddDebugMessage($"Erro no evento OnReturnToLogin: {ex.Message}");
+                            // Reset dialog flag on error
+                            lock (_sessionDialogLock) { _isShowingSessionDialog = false; }
                             // If anything fails, still try to close and show login
                             await ForceReturnToLogin();
                         }
@@ -2592,6 +2704,7 @@ O Arduino possui animações épicas para:
                 catch (Exception ex)
                 {
                     AddDebugMessage($"Erro ao criar RoundsCompletedWindow: {ex.Message}");
+                    lock (_sessionDialogLock) { _isShowingSessionDialog = false; }
                     await ForceReturnToLogin();
                 }
             });
@@ -2599,6 +2712,7 @@ O Arduino possui animações épicas para:
         catch (Exception ex)
         {
             AddDebugMessage($"Erro crítico em ShowRoundsCompletedDialog: {ex.Message}");
+            lock (_sessionDialogLock) { _isShowingSessionDialog = false; }
             await ForceReturnToLogin();
         }
     }
@@ -2607,28 +2721,69 @@ O Arduino possui animações épicas para:
     {
         try
         {
-            AddDebugMessage("[LOGOUT] ForceReturnToLogin: iniciando retorno forçado ao login");
+            // Prevent multiple calls
+            lock (_closingLock)
+            {
+                if (_isClosing || _disposed)
+                {
+                    AddDebugMessage("[LOGOUT] ForceReturnToLogin chamado mas window já está fechando");
+                    return;
+                }
+                _isClosing = true;
+            }
+
+            AddDebugMessage("[LOGOUT] ⚠️ ForceReturnToLogin: iniciando retorno forçado ao login");
+            System.Diagnostics.Debug.WriteLine("[LOGOUT] ⚠️ ForceReturnToLogin chamado");
 
             // End session if user exists
             if (_currentUser != null)
-                _sessionService.EndSession(_currentUser.Id);
+            {
+                try
+                {
+                    _sessionService.EndSession(_currentUser.Id);
+                    AddDebugMessage($"[LOGOUT] 📝 Sessão do usuário {_currentUser.Name} encerrada");
+                }
+                catch (Exception sessionEx)
+                {
+                    AddDebugMessage($"[LOGOUT] Erro ao encerrar sessão: {sessionEx.Message}");
+                }
+            }
 
-            // Use the same safe return logic
-            await ReturnToLoginSafely();
+            // Small delay to ensure session cleanup
+            await Task.Delay(150);
+
+            // Just close the window - App.axaml.cs will handle showing login
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                AddDebugMessage("[LOGOUT] 🚪 Fechando MainWindow via ForceReturnToLogin");
+                System.Diagnostics.Debug.WriteLine("[LOGOUT] 🚪 Fechando MainWindow via ForceReturnToLogin");
+                
+                try
+                {
+                    Close();
+                    AddDebugMessage("[LOGOUT] ✅ MainWindow fechado via ForceReturnToLogin");
+                }
+                catch (Exception closeEx)
+                {
+                    AddDebugMessage($"[LOGOUT] Erro ao fechar window: {closeEx.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[LOGOUT] Erro ao fechar window: {closeEx.Message}");
+                }
+            });
         }
         catch (Exception ex)
         {
-            AddDebugMessage($"[LOGOUT] ForceReturnToLogin: erro crítico: {ex.Message}");
-            // Last resort fallback
+            AddDebugMessage($"[LOGOUT] ❌ ForceReturnToLogin: erro crítico: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"[LOGOUT] ❌ ForceReturnToLogin: erro crítico: {ex.Message}");
+            
+            // Last resort fallback - just close window
             try
             {
-                var loginWindow = new Views.LoginWindow();
-                loginWindow.Show();
-                Close();
+                await Dispatcher.UIThread.InvokeAsync(() => Close());
             }
-            catch
+            catch (Exception fallbackEx)
             {
-                AddDebugMessage("[LOGOUT] Falha crítica total - mantendo aplicação ativa");
+                AddDebugMessage($"[LOGOUT] 💥 Falha crítica total: {fallbackEx.Message}");
+                System.Diagnostics.Debug.WriteLine($"[LOGOUT] 💥 Falha crítica total: {fallbackEx.Message}");
             }
         }
     }

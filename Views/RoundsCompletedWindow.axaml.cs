@@ -12,6 +12,8 @@ namespace miniJogo.Views
     public partial class RoundsCompletedWindow : Window
     {
         private System.Threading.Timer? _autoReturnTimer;
+        private volatile bool _isReturning = false;
+        private readonly object _returnLock = new object();
         
         public event EventHandler? OnReturnToLogin;
 
@@ -200,6 +202,17 @@ namespace miniJogo.Views
         {
             try
             {
+                // Prevent multiple calls
+                lock (_returnLock)
+                {
+                    if (_isReturning)
+                    {
+                        System.Diagnostics.Debug.WriteLine("TriggerReturnToLogin já em andamento, ignorando");
+                        return;
+                    }
+                    _isReturning = true;
+                }
+
                 var msg = "TriggerReturnToLogin chamado - retornando ao login";
                 System.Diagnostics.Debug.WriteLine(msg);
                 Console.WriteLine(msg);
@@ -212,20 +225,29 @@ namespace miniJogo.Views
                 }
                 
                 // Trigger event before closing to ensure proper cleanup
-                OnReturnToLogin?.Invoke(this, EventArgs.Empty);
+                try
+                {
+                    OnReturnToLogin?.Invoke(this, EventArgs.Empty);
+                    System.Diagnostics.Debug.WriteLine("OnReturnToLogin event disparado com sucesso");
+                }
+                catch (Exception eventEx)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Erro ao disparar OnReturnToLogin: {eventEx.Message}");
+                }
                 
                 // Small delay to allow event processing
-                _ = Task.Delay(100).ContinueWith(_ => 
+                _ = Task.Delay(200).ContinueWith(_ => 
                 {
                     Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() => 
                     {
                         try
                         {
+                            System.Diagnostics.Debug.WriteLine("Fechando RoundsCompletedWindow...");
                             Close();
                         }
                         catch (Exception closeEx)
                         {
-                            System.Diagnostics.Debug.WriteLine($"Erro ao fechar janela: {closeEx.Message}");
+                            System.Diagnostics.Debug.WriteLine($"Erro ao fechar RoundsCompletedWindow: {closeEx.Message}");
                         }
                     });
                 });
@@ -241,12 +263,23 @@ namespace miniJogo.Views
                 {
                     _autoReturnTimer?.Dispose();
                     _autoReturnTimer = null;
-                    Close();
+                    
+                    // Force close as last resort
+                    Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                    {
+                        try
+                        {
+                            Close();
+                        }
+                        catch (Exception closeEx)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Erro crítico ao fechar: {closeEx.Message}");
+                        }
+                    });
                 }
-                catch
+                catch (Exception finalEx)
                 {
-                    // Last resort - force application shutdown
-                    Environment.Exit(1);
+                    System.Diagnostics.Debug.WriteLine($"Erro final em TriggerReturnToLogin: {finalEx.Message}");
                 }
             }
         }
@@ -255,6 +288,12 @@ namespace miniJogo.Views
         {
             try
             {
+                // Mark as returning to prevent further actions
+                lock (_returnLock)
+                {
+                    _isReturning = true;
+                }
+
                 // Cleanup timer
                 if (_autoReturnTimer != null)
                 {
@@ -266,7 +305,7 @@ namespace miniJogo.Views
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Erro durante cleanup da janela: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Erro durante cleanup da RoundsCompletedWindow: {ex.Message}");
             }
             finally
             {
