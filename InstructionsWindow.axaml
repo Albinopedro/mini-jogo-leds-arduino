@@ -57,7 +57,7 @@
                        Opacity="0.9"
                        FontSize="13"/>
 
-            <TextBlock Text="TECLAS: 0-9, A-F (correspondendo aos 16 LEDs da matriz 4x4)"
+            <TextBlock Text="TECLAS: W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L (correspondendo aos 16 LEDs da matriz 4x4)"
                        FontWeight="Medium"
                        Foreground="White"
                        Opacity="0.9"
@@ -123,7 +123,7 @@
                        FontSize="14"
                        FontWeight="Bold"
                        Foreground="White"/>
-            <TextBlock Text="• O gato aparece como um LED sempre aceso&#10;• O rato aparece como um LED piscando&#10;• Mova o gato pressionando as teclas&#10;• Posicione o gato na mesma posição do rato para capturá-lo&#10;• O rato fica mais rápido a cada captura!"
+            <TextBlock Text="• O gato aparece como um LED sempre aceso&#10;• O rato aparece como um LED piscando&#10;• Mova o gato pressionando as teclas correspondentes&#10;• Posicione o gato na mesma posição do rato para capturá-lo&#10;• O rato fica mais rápido a cada captura!"
                        TextWrapping="Wrap"
                        Foreground="White"
                        Opacity="0.9"
@@ -201,11 +201,11 @@
                        Opacity="0.9"
                        FontSize="13"/>
 
-            <TextBlock Text="RITMO: Use apenas as 4 primeiras teclas (0,1,2,3)!"
+            <TextBlock Text="RITMO: Use apenas a primeira linha de teclas (W,E,R,T)!"
                        FontWeight="Medium"
                        Foreground="White"
                        Opacity="0.9"
-                       FontSize="12"/>
+                       FontSize="13"/>
           </StackPanel>
         </Border>
 
@@ -231,7 +231,7 @@
                        FontSize="14"
                        FontWeight="Bold"
                        Foreground="White"/>
-            <TextBlock Text="• Todos os LEDs piscam criando tensão&#10;• Escolha um LED pressionando 0-9, A-F&#10;• Se for o LED seguro: ganhe multiplicador e continue&#10;• Se for perigoso: BOOM! Perde toda a pontuação&#10;• Multiplicadores: 2x, 4x, 8x, 16x... até 256x!"
+            <TextBlock Text="• Todos os LEDs piscam criando tensão&#10;• Escolha um LED pressionando W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L&#10;• Se for o LED seguro: ganhe multiplicador e continue&#10;• Se for perigoso: BOOM! Perde toda a pontuação&#10;• Multiplicadores: 2x, 4x, 8x, 16x... até 256x!"
                        TextWrapping="Wrap"
                        Foreground="White"
                        Opacity="0.9"
@@ -333,33 +333,33 @@
               </Grid.ColumnDefinitions>
               
               <StackPanel Grid.Column="0" Spacing="10">
-                <TextBlock Text="🔴 LINHA VERMELHA (LEDs 0-3):" 
+                <TextBlock Text="🔴 LINHA 1 (LEDs 0-3):" 
                            FontWeight="Bold" 
-                           Foreground="#E53E3E"/>
-                <TextBlock Text="Teclas: 0, 1, 2, 3" 
+                           Foreground="#4FACFE"/>
+                <TextBlock Text="Teclas: W, E, R, T" 
                            Foreground="White" 
                            Margin="20,0,0,0"/>
                 
-                <TextBlock Text="🟡 LINHA AMARELA (LEDs 4-7):" 
+                <TextBlock Text="🟡 LINHA 2 (LEDs 4-7):" 
                            FontWeight="Bold" 
-                           Foreground="#D69E2E"/>
-                <TextBlock Text="Teclas: 4, 5, 6, 7" 
+                           Foreground="#00F2FE"/>
+                <TextBlock Text="Teclas: S, D, F, G" 
                            Foreground="White" 
                            Margin="20,0,0,0"/>
               </StackPanel>
               
               <StackPanel Grid.Column="1" Spacing="10">
-                <TextBlock Text="🟢 LINHA VERDE (LEDs 8-11):" 
+                <TextBlock Text="🟢 LINHA 3 (LEDs 8-11):" 
                            FontWeight="Bold" 
-                           Foreground="#38A169"/>
-                <TextBlock Text="Teclas: 8, 9, A, B" 
+                           Foreground="#B794F6"/>
+                <TextBlock Text="Teclas: Y, U, I, O" 
                            Foreground="White" 
                            Margin="20,0,0,0"/>
                 
-                <TextBlock Text="🔵 LINHA AZUL (LEDs 12-15):" 
+                <TextBlock Text="🔵 LINHA 4 (LEDs 12-15):" 
                            FontWeight="Bold" 
-                           Foreground="#3182CE"/>
-                <TextBlock Text="Teclas: C, D, E, F" 
+                           Foreground="#667EEA"/>
+                <TextBlock Text="Teclas: H, J, K, L" 
                            Foreground="White" 
                            Margin="20,0,0,0"/>
               </StackPanel>
@@ -371,7 +371,7 @@
                            FontWeight="Bold" 
                            Foreground="#E2E8F0" 
                            HorizontalAlignment="Center"/>
-                <TextBlock Text="• Cada linha tem sua cor: Vermelha (0-3), Amarela (4-7), Verde (8-B), Azul (C-F)&#10;• Use ambas as mãos: esquerda (0-7), direita (8-F)&#10;• Roleta Russa: Calcule probabilidades - 1 em 16 chance&#10;• Lightning Strike: Concentre-se totalmente na tela&#10;• Sniper Mode: Mantenha dedos sobre as teclas sempre"
+                <TextBlock Text="• Layout QWERTY otimizado para gaming&#10;• Use ambas as mãos: esquerda (W,E,R,T/S,D,F,G), direita (Y,U,I,O/H,J,K,L)&#10;• Roleta Russa: Calcule probabilidades - 1 em 16 chance&#10;• Lightning Strike: Concentre-se totalmente na tela&#10;• Sniper Mode: Mantenha dedos sobre as teclas sempre"
                            TextWrapping="Wrap" 
                            Foreground="#E2E8F0" 
                            HorizontalAlignment="Center"

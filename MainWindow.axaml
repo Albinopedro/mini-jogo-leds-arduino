@@ -393,7 +393,7 @@
                   </LinearGradientBrush>
                 </Border.Background>
                 <TextBlock
-                  Text="⌨️ F1=Iniciar | F2=Parar | F3=Reset | F4=Ranks"
+                  Text="⌨️ F1=Iniciar | F2=Parar | F3=Reset | F4=Ranks | F5=Atualizar Portas"
                   Foreground="#E2E8F0"
                   FontSize="11"
                   HorizontalAlignment="Center"
@@ -898,7 +898,7 @@
 
         <TextBlock
           Grid.Column="0"
-          Text="⌨️ Controles: 0-9, A-F = LEDs | Setas = Navegação | Enter = Confirmar | Esc = Cancelar"
+          Text="⌨️ Controles: W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs | Setas = Navegação | Enter = Confirmar | Esc = Cancelar"
           Foreground="White"
           VerticalAlignment="Center"
           FontSize="14"

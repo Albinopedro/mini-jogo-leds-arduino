@@ -51,7 +51,7 @@ namespace miniJogo
                 instructions.AppendLine("Objetivo: Memorize e reproduza sequências cada vez mais longas.");
                 instructions.AppendLine("- Observe a sequência de LEDs que acendem");
                 instructions.AppendLine("- Memorize a ordem exata");
-                instructions.AppendLine("- Reproduza a sequência pressionando as teclas na ordem correta");
+                instructions.AppendLine("- Reproduza a sequência pressionando as teclas correspondentes na ordem correta");
                 instructions.AppendLine("- A cada acerto, a sequência fica um LED mais longa");
                 instructions.AppendLine();
 
@@ -59,7 +59,7 @@ namespace miniJogo
                 instructions.AppendLine("Objetivo: Controle o gato para capturar o rato.");
                 instructions.AppendLine("- O gato aparece como um LED sempre aceso");
                 instructions.AppendLine("- O rato aparece como um LED piscando");
-                instructions.AppendLine("- Mova o gato pressionando as teclas");
+                instructions.AppendLine("- Mova o gato pressionando as teclas correspondentes");
                 instructions.AppendLine("- Posicione o gato na mesma posição do rato para capturá-lo");
                 instructions.AppendLine();
 
@@ -82,7 +82,7 @@ namespace miniJogo
                 instructions.AppendLine("6. ROLETA RUSSA LED");
                 instructions.AppendLine("Objetivo: Jogue com a sorte! Escolha um LED - acerte e multiplique, erre e perca tudo!");
                 instructions.AppendLine("- Todos os LEDs piscam criando tensão");
-                instructions.AppendLine("- Escolha um LED pressionando 0-9, A-F");
+                instructions.AppendLine("- Escolha um LED pressionando W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L");
                 instructions.AppendLine("- LED seguro: ganhe multiplicador e continue");
                 instructions.AppendLine("- LED perigoso: BOOM! Perde toda a pontuação");
                 instructions.AppendLine("- Multiplicadores: 2x, 4x, 8x, 16x... até 256x");
@@ -107,10 +107,10 @@ namespace miniJogo
                 instructions.AppendLine();
 
                 instructions.AppendLine("MAPEAMENTO DE TECLAS:");
-                instructions.AppendLine("Linha Vermelha (LEDs 0-3): Teclas 0, 1, 2, 3");
-                instructions.AppendLine("Linha Verde (LEDs 4-7): Teclas 4, 5, 6, 7");
-                instructions.AppendLine("Linha Amarela (LEDs 8-11): Teclas 8, 9, A, B");
-                instructions.AppendLine("Linha Azul (LEDs 12-15): Teclas C, D, E, F");
+                instructions.AppendLine("Linha 1 (LEDs 0-3): Teclas W, E, R, T");
+                instructions.AppendLine("Linha 2 (LEDs 4-7): Teclas S, D, F, G");
+                instructions.AppendLine("Linha 3 (LEDs 8-11): Teclas Y, U, I, O");
+                instructions.AppendLine("Linha 4 (LEDs 12-15): Teclas H, J, K, L");
 
                 // Save to desktop
                 var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");

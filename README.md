@@ -80,14 +80,14 @@ Sistema de jogos interativos com matriz 4x4 de LEDs conectada ao Arduino, contro
 
 ```
 Matriz 4x4:    Teclas:
-🔴🔴🔴🔴      0 1 2 3
-🟡🟡🟡🟡  →   4 5 6 7
-🟢🟢🟢🟢      8 9 A B
-🔵🔵🔵🔵      C D E F
+🔴🔴🔴🔴      W E R T
+🟡🟡🟡🟡  →   S D F G
+🟢🟢🟢🟢      Y U I O
+🔵🔵🔵🔵      H J K L
 
-F1: Iniciar   | F2: Parar    | F3: Reset   | F4: Rankings
-F5: 🌈 Arco-íris | F6: ⏹️ Parar FX | F7: 💚 Matrix | F8: 💓 Pulso
-F9: 🎆 Fogos   | F10: ✨ Demo Completa | F11: 🖥️ Tela Cheia (secreto)
+F1: Iniciar   | F2: Parar    | F3: Reset   | F4: Rankings | F5: 🔄 Atualizar Portas
+F6: ⏹️ Parar FX | F7: 💚 Matrix | F8: 💓 Pulso | F9: 🎆 Fogos | F10: ✨ Demo Completa
+F11: 🖥️ Tela Cheia (secreto)
 ```
 
 ## 🔧 Hardware Setup

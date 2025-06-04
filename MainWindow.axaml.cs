@@ -57,7 +57,7 @@ public partial class MainWindow : Window
     {
         { 1, "🎯 Pressione o LED que acende antes que ele apague! Reflexos rápidos são essenciais." },
         { 2, "🧠 Memorize e repita a sequência de LEDs que pisca. Cada nível adiciona mais LEDs!" },
-        { 3, "🐱 Você é o gato! Persiga o rato (LED vermelho) pela matriz usando as teclas." },
+        { 3, "🐱 Você é o gato! Persiga o rato (LED vermelho) pela matriz usando as teclas W,E,R,T/S,D,F,G/Y,U,I,O/H,J,K,L." },
         { 4, "☄️ Desvie dos meteoros (LEDs vermelhos) que caem! Use as setas para mover." },
         { 5, "🎸 Pressione os LEDs no ritmo da música! Timing perfeito = pontos extras." },
         { 6, "🎲 Roleta Russa LED! Escolha um LED - acerte e multiplique sua pontuação, erre e perca tudo!" },
@@ -68,12 +68,12 @@ public partial class MainWindow : Window
     // Game instructions for the new games
     private readonly Dictionary<int, string> _gameInstructions = new()
     {
-        { 1, "PEGA-LUZ:\n• Pressione 0-9, A-F quando o LED acender\n• Seja rápido! LEDs apagam sozinhos\n• +10 pontos por acerto\n• +5 pontos por velocidade" },
-        { 2, "SEQUÊNCIA MALUCA:\n• Observe a sequência de LEDs\n• Repita pressionando 0-9, A-F\n• Cada nível adiciona +1 LED\n• Erro = Game Over" },
+        { 1, "PEGA-LUZ:\n• Pressione W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L quando o LED acender\n• Seja rápido! LEDs apagam sozinhos\n• +10 pontos por acerto\n• +5 pontos por velocidade" },
+        { 2, "SEQUÊNCIA MALUCA:\n• Observe a sequência de LEDs\n• Repita pressionando W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L\n• Cada nível adiciona +1 LED\n• Erro = Game Over" },
         { 3, "GATO E RATO:\n• Use setas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas azuis\n• +20 pontos por captura" },
         { 4, "ESQUIVA METEOROS:\n• Use ↑↓←→ para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo" },
-        { 5, "GUITAR HERO:\n• Pressione 0-9, A-F no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental" },
-        { 6, "ROLETA RUSSA:\n• Escolha um LED pressionando 0-9, A-F\n• Multiplicador: 2x, 4x, 8x, 16x...\n• Acerte = continua com multiplicador maior\n• Erre = perde TODA a pontuação!" },
+        { 5, "GUITAR HERO:\n• Pressione W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental" },
+        { 6, "ROLETA RUSSA:\n• Escolha um LED pressionando W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L\n• Multiplicador: 2x, 4x, 8x, 16x...\n• Acerte = continua com multiplicador maior\n• Erre = perde TODA a pontuação!" },
         { 7, "LIGHTNING STRIKE:\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo de exibição diminui por nível\n• Erro = Game Over instantâneo" },
         { 8, "SNIPER MODE:\n• Alvos piscam por apenas 0.1 segundo\n• Pressione a tecla exata no tempo\n• 10 acertos = vitória impossível\n• Bônus x10 se completar!" }
     };
@@ -1487,25 +1487,25 @@ public partial class MainWindow : Window
 
     private int GetKeyForLed(int ledIndex)
     {
-        // Convert LED index to key code
+        // Convert LED index to key code (W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L)
         return ledIndex switch
         {
-            0 => (int)Key.D0,
-            1 => (int)Key.D1,
-            2 => (int)Key.D2,
-            3 => (int)Key.D3,
-            4 => (int)Key.D4,
-            5 => (int)Key.D5,
-            6 => (int)Key.D6,
-            7 => (int)Key.D7,
-            8 => (int)Key.D8,
-            9 => (int)Key.D9,
-            10 => (int)Key.A,
-            11 => (int)Key.B,
-            12 => (int)Key.C,
-            13 => (int)Key.D,
-            14 => (int)Key.E,
-            15 => (int)Key.F,
+            0 => (int)Key.W,   // Row 0, Col 0
+            1 => (int)Key.E,   // Row 0, Col 1
+            2 => (int)Key.R,   // Row 0, Col 2
+            3 => (int)Key.T,   // Row 0, Col 3
+            4 => (int)Key.S,   // Row 1, Col 0
+            5 => (int)Key.D,   // Row 1, Col 1
+            6 => (int)Key.F,   // Row 1, Col 2
+            7 => (int)Key.G,   // Row 1, Col 3
+            8 => (int)Key.Y,   // Row 2, Col 0
+            9 => (int)Key.U,   // Row 2, Col 1
+            10 => (int)Key.I,  // Row 2, Col 2
+            11 => (int)Key.O,  // Row 2, Col 3
+            12 => (int)Key.H,  // Row 3, Col 0
+            13 => (int)Key.J,  // Row 3, Col 1
+            14 => (int)Key.K,  // Row 3, Col 2
+            15 => (int)Key.L,  // Row 3, Col 3
             _ => -1
         };
     }
@@ -1514,22 +1514,22 @@ public partial class MainWindow : Window
     {
         return key switch
         {
-            Key.D0 => 0,
-            Key.D1 => 1,
-            Key.D2 => 2,
-            Key.D3 => 3,
-            Key.D4 => 4,
-            Key.D5 => 5,
-            Key.D6 => 6,
-            Key.D7 => 7,
-            Key.D8 => 8,
-            Key.D9 => 9,
-            Key.A => 10,
-            Key.B => 11,
-            Key.C => 12,
-            Key.D => 13,
-            Key.E => 14,
-            Key.F => 15,
+            Key.W => 0,   // Row 0, Col 0
+            Key.E => 1,   // Row 0, Col 1
+            Key.R => 2,   // Row 0, Col 2
+            Key.T => 3,   // Row 0, Col 3
+            Key.S => 4,   // Row 1, Col 0
+            Key.D => 5,   // Row 1, Col 1
+            Key.F => 6,   // Row 1, Col 2
+            Key.G => 7,   // Row 1, Col 3
+            Key.Y => 8,   // Row 2, Col 0
+            Key.U => 9,   // Row 2, Col 1
+            Key.I => 10,  // Row 2, Col 2
+            Key.O => 11,  // Row 2, Col 3
+            Key.H => 12,  // Row 3, Col 0
+            Key.J => 13,  // Row 3, Col 1
+            Key.K => 14,  // Row 3, Col 2
+            Key.L => 15,  // Row 3, Col 3
             _ => -1
         };
 
@@ -1557,9 +1557,8 @@ public partial class MainWindow : Window
                 e.Handled = true;
                 return;
             case Key.F5:
-                // Efeito Rainbow
-                TriggerVisualEffect("RAINBOW");
-                StatusText.Text = "🌈 Efeito Arco-íris ativado! (F6 para parar)";
+                // Atualizar portas
+                RefreshPortsButton_Click(null, new RoutedEventArgs());
                 e.Handled = true;
                 return;
             case Key.F6:
@@ -1605,7 +1604,7 @@ public partial class MainWindow : Window
 
         string command = "";
 
-        // Handle LED keys (0-9, A-F)
+        // Handle LED keys (W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L)
         var ledIndex = GetLedForKey(e.Key);
         if (ledIndex >= 0)
         {
@@ -1632,7 +1631,7 @@ public partial class MainWindow : Window
     {
         if (!_gameActive || _serialPort?.IsOpen != true) return;
 
-        // Handle LED keys (0-9, A-F) - restore original color when key is released
+        // Handle LED keys (W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L) - restore original color when key is released
         var ledIndex = GetLedForKey(e.Key);
         if (ledIndex >= 0)
         {
@@ -2239,7 +2238,7 @@ public partial class MainWindow : Window
 3. Clique em 'Iniciar' ou use F1
 
 ⌨️ CONTROLES:
-• 0-9, A-F: Pressionar LEDs específicos
+• W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L: Pressionar LEDs específicos
 • Setas: Mover cursor/personagem
 • Enter: Confirmar ação
 • Esc: Cancelar/Voltar

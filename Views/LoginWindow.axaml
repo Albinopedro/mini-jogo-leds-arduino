@@ -455,7 +455,7 @@
 
                                 <TextBlock
                                     x:Name="GameInstructionsText"
-                                    Text="🎯 PEGA-LUZ:&#x0a;&#x0a;• Pressione 0-9, A-F quando o LED acender&#x0a;• Seja rápido! LEDs apagam sozinhos&#x0a;• +10 pontos por acerto&#x0a;• +5 pontos por velocidade&#x0a;&#x0a;⌨️ Controles:&#x0a;Teclas 0-9, A-F = LEDs da matriz&#x0a;&#x0a;🎯 Objetivo:&#x0a;Conseguir a maior pontuação possível!"
+                                    Text="🎯 PEGA-LUZ:&#x0a;&#x0a;• Pressione W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L quando o LED acender&#x0a;• Seja rápido! LEDs apagam sozinhos&#x0a;• +10 pontos por acerto&#x0a;• +5 pontos por velocidade&#x0a;&#x0a;⌨️ Controles:&#x0a;Teclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs da matriz&#x0a;&#x0a;🎯 Objetivo:&#x0a;Conseguir a maior pontuação possível!"
                                     FontSize="14"
                                     Foreground="#E2E8F0"
                                     TextWrapping="Wrap"
