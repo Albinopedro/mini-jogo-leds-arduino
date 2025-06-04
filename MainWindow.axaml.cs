@@ -285,9 +285,10 @@ public partial class MainWindow : Window
             RefreshPortsButton.IsVisible = false;
 
             // Set player name directly
-            _playerName = _currentUser?.Name ?? "Cliente";            // Update logout button text for clients and make it visible
+            _playerName = _currentUser?.Name ?? "Cliente";
+
+            // Update logout button text for clients
             LogoutButton.Content = "🚪 Encerrar Sessão";
-            LogoutButton.IsVisible = true;
 
             // Update status
             StatusText.Text = $"🎮 Bem-vindo, {_currentUser?.Name ?? "Cliente"}! Conectando ao Arduino...";
@@ -356,14 +357,53 @@ public partial class MainWindow : Window
                 AddDebugMessage("[LOGOUT] Arduino desconectado");
             }
 
-            // Close current window and show login again
-            var loginWindow = new Views.LoginWindow();
-            loginWindow.Show();
-            this.Close();
+            // Return to login without closing application
+            await ReturnToLoginSafely();
         }
         else
         {
             AddDebugMessage($"[LOGOUT] Logout cancelado pelo {(_isClientMode ? "cliente" : "administrador")}");
+        }
+    }
+
+    private async Task ReturnToLoginSafely()
+    {
+        try
+        {
+            AddDebugMessage("[LOGOUT] Iniciando retorno seguro ao login");
+            
+            // Hide current window first
+            Hide();
+            
+            // Small delay to ensure UI updates
+            await Task.Delay(100);
+            
+            // Create and show new login window
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                var loginWindow = new Views.LoginWindow();
+                loginWindow.Show();
+                
+                // Close this window after login window is shown
+                Close();
+                
+                AddDebugMessage("[LOGOUT] Nova janela de login criada, MainWindow fechado");
+            });
+        }
+        catch (Exception ex)
+        {
+            AddDebugMessage($"[LOGOUT] Erro no retorno seguro ao login: {ex.Message}");
+            // Fallback: still try to show login
+            try
+            {
+                var loginWindow = new Views.LoginWindow();
+                loginWindow.Show();
+                Close();
+            }
+            catch (Exception fallbackEx)
+            {
+                AddDebugMessage($"[LOGOUT] Erro crítico no fallback: {fallbackEx.Message}");
+            }
         }
     }
 
@@ -2567,53 +2607,28 @@ O Arduino possui animações épicas para:
     {
         try
         {
-            AddDebugMessage("ForceReturnToLogin: iniciando retorno forçado ao login");
+            AddDebugMessage("[LOGOUT] ForceReturnToLogin: iniciando retorno forçado ao login");
 
             // End session if user exists
             if (_currentUser != null)
                 _sessionService.EndSession(_currentUser.Id);
 
-            await Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                try
-                {
-                    Close();
-                    var loginWindow = new LoginWindow();
-                    loginWindow.Show();
-                    AddDebugMessage("ForceReturnToLogin: login window criada com sucesso");
-                }
-                catch (Exception ex)
-                {
-                    AddDebugMessage($"ForceReturnToLogin: erro ao criar login window: {ex.Message}");
-                    // Graceful shutdown instead of forced exit
-                    try
-                    {
-                        if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
-                        {
-                            lifetime.Shutdown(1);
-                        }
-                    }
-                    catch
-                    {
-                        Environment.Exit(1);
-                    }
-                }
-            });
+            // Use the same safe return logic
+            await ReturnToLoginSafely();
         }
         catch (Exception ex)
         {
-            AddDebugMessage($"ForceReturnToLogin: erro crítico: {ex.Message}");
-            // Graceful shutdown instead of forced exit
+            AddDebugMessage($"[LOGOUT] ForceReturnToLogin: erro crítico: {ex.Message}");
+            // Last resort fallback
             try
             {
-                if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime lifetime)
-                {
-                    lifetime.Shutdown(1);
-                }
+                var loginWindow = new Views.LoginWindow();
+                loginWindow.Show();
+                Close();
             }
             catch
             {
-                Environment.Exit(1);
+                AddDebugMessage("[LOGOUT] Falha crítica total - mantendo aplicação ativa");
             }
         }
     }

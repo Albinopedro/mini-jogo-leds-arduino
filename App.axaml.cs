@@ -40,7 +40,13 @@ public partial class App : Application
         try
         {
             var loginWindow = new LoginWindow();
-            desktop.MainWindow = loginWindow;
+            
+            // Keep the first window as main window to prevent app shutdown
+            if (desktop.MainWindow == null)
+            {
+                desktop.MainWindow = loginWindow;
+            }
+            
             loginWindow.Show();
 
             // Wait for login completion
@@ -50,13 +56,43 @@ public partial class App : Application
                 {
                     // Authentication successful, show main window
                     var mainWindow = new MainWindow(loginWindow.AuthenticatedUser, loginWindow.SelectedGameMode);
-                    desktop.MainWindow = mainWindow;
+                    
+                    // Set up logout handler to return to login instead of shutting down
+                    mainWindow.Closed += (mainSender, mainArgs) =>
+                    {
+                        // When main window closes, show login again instead of shutting down
+                        Task.Run(async () =>
+                        {
+                            await Task.Delay(100); // Small delay to ensure cleanup
+                            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                            {
+                                ShowLoginWindow(desktop);
+                            });
+                        });
+                    };
+                    
                     mainWindow.Show();
                 }
                 else
                 {
-                    // Authentication failed or cancelled, exit application
-                    desktop.Shutdown();
+                    // Authentication failed or cancelled - show login again instead of exit
+                    // Only shutdown if this is the first time (no previous windows)
+                    if (desktop.Windows.Count <= 1)
+                    {
+                        desktop.Shutdown();
+                    }
+                    else
+                    {
+                        // There are other windows, just show login again
+                        Task.Run(async () =>
+                        {
+                            await Task.Delay(500);
+                            await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                            {
+                                ShowLoginWindow(desktop);
+                            });
+                        });
+                    }
                 }
             };
         }
@@ -69,7 +105,10 @@ public partial class App : Application
             try
             {
                 var loginWindow = new LoginWindow();
-                desktop.MainWindow = loginWindow;
+                if (desktop.MainWindow == null)
+                {
+                    desktop.MainWindow = loginWindow;
+                }
                 loginWindow.Show();
             }
             catch (Exception fallbackEx)
