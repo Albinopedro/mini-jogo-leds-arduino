@@ -235,9 +235,9 @@ public partial class MainWindow : Window
                     Width = 80,
                     Height = 80,
                     Fill = GetLedDefaultColor(row),
-                    Stroke = Brushes.White,
-                    StrokeThickness = 3,
-                    Margin = new Avalonia.Thickness(10)
+                    Stroke = new SolidColorBrush(Color.FromRgb(79, 172, 254)), // #4FACFE
+                    StrokeThickness = 2,
+                    Margin = new Avalonia.Thickness(12)
                 };
 
                 Grid.SetRow(led, row);
@@ -677,8 +677,17 @@ public partial class MainWindow : Window
             _serialPort = null;
             ConnectButton.Content = "🔗 Conectar";
             ConnectionText.Text = "Desconectado";
-            ConnectionStatus.Fill = Brushes.White;
-            ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(197, 48, 48));
+            ConnectionStatus.Fill = new SolidColorBrush(Color.FromRgb(79, 172, 254)); // #4FACFE
+            ConnectionBorder.Background = new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                GradientStops = new GradientStops
+                {
+                    new GradientStop(Color.FromRgb(58, 58, 107), 0),  // #3A3A6B
+                    new GradientStop(Color.FromRgb(74, 74, 123), 1)   // #4A4A7B
+                }
+            };
             AddDebugMessage("Arduino desconectado.");
         }
         else
@@ -694,8 +703,17 @@ public partial class MainWindow : Window
 
                     ConnectButton.Content = "🔌 Desconectar";
                     ConnectionText.Text = "Conectado";
-                    ConnectionStatus.Fill = Brushes.LimeGreen;
-                    ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(56, 161, 105));
+                    ConnectionStatus.Fill = new SolidColorBrush(Color.FromRgb(0, 242, 254)); // #00F2FE
+                    ConnectionBorder.Background = new LinearGradientBrush
+                    {
+                        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                        EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                        GradientStops = new GradientStops
+                        {
+                            new GradientStop(Color.FromRgb(79, 172, 254), 0),  // #4FACFE
+                            new GradientStop(Color.FromRgb(0, 242, 254), 1)    // #00F2FE
+                        }
+                    };
                     StartGameButton.IsEnabled = true;
 
                     // Lock game selection for clients after connection
@@ -713,9 +731,18 @@ public partial class MainWindow : Window
                 catch (Exception ex)
                 {
                     ConnectButton.Content = "🔌 Conectar";
-                    ConnectionText.Text = "Desconectado";
-                    ConnectionStatus.Fill = Brushes.Red;
-                    ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(220, 38, 127));
+                    ConnectionText.Text = "Erro de Conexão";
+                    ConnectionStatus.Fill = new SolidColorBrush(Color.FromRgb(183, 148, 246)); // #B794F6
+                    ConnectionBorder.Background = new LinearGradientBrush
+                    {
+                        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                        EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                        GradientStops = new GradientStops
+                        {
+                            new GradientStop(Color.FromRgb(102, 126, 234), 0),  // #667EEA
+                            new GradientStop(Color.FromRgb(118, 75, 162), 1)    // #764BA2
+                        }
+                    };
                     StartGameButton.IsEnabled = false;
 
                     AddDebugMessage($"Erro ao conectar: {ex.Message}");
@@ -1352,7 +1379,17 @@ public partial class MainWindow : Window
 
         if (row < 4 && col < 4)
         {
+            // Set active color with enhanced visual effect
             _ledMatrix[row, col].Fill = GetLedActiveColor(row);
+            
+            // Add glow effect
+            _ledMatrix[row, col].Effect = new DropShadowEffect
+            {
+                Color = Color.FromRgb(79, 172, 254), // #4FACFE
+                BlurRadius = 15,
+                OffsetX = 0,
+                OffsetY = 0
+            };
 
             // Auto-restore LED after 200ms as fallback (in case KeyUp is missed)
             lock (_ledTimersLock)
@@ -1404,11 +1441,11 @@ public partial class MainWindow : Window
     {
         return row switch
         {
-            0 => new SolidColorBrush(Color.FromRgb(80, 20, 20)),    // Dark red
-            1 => new SolidColorBrush(Color.FromRgb(80, 60, 20)),    // Dark yellow
-            2 => new SolidColorBrush(Color.FromRgb(20, 80, 20)),    // Dark green
-            3 => new SolidColorBrush(Color.FromRgb(20, 20, 80)),    // Dark blue
-            _ => Brushes.Gray
+            0 => new SolidColorBrush(Color.FromRgb(60, 15, 30)),     // Dark purple-red
+            1 => new SolidColorBrush(Color.FromRgb(30, 45, 75)),     // Dark blue
+            2 => new SolidColorBrush(Color.FromRgb(25, 35, 65)),     // Darker blue
+            3 => new SolidColorBrush(Color.FromRgb(45, 25, 60)),     // Dark purple
+            _ => new SolidColorBrush(Color.FromRgb(30, 30, 60))      // Dark blue-gray
         };
     }
 
@@ -1416,11 +1453,11 @@ public partial class MainWindow : Window
     {
         return row switch
         {
-            0 => new SolidColorBrush(Color.FromRgb(255, 100, 100)), // Bright red
-            1 => new SolidColorBrush(Color.FromRgb(255, 255, 100)), // Bright yellow
-            2 => new SolidColorBrush(Color.FromRgb(100, 255, 100)), // Bright green
-            3 => new SolidColorBrush(Color.FromRgb(100, 150, 255)), // Bright blue
-            _ => Brushes.White
+            0 => new SolidColorBrush(Color.FromRgb(79, 172, 254)),  // Bright cyan-blue #4FACFE
+            1 => new SolidColorBrush(Color.FromRgb(0, 242, 254)),   // Bright cyan #00F2FE
+            2 => new SolidColorBrush(Color.FromRgb(183, 148, 246)), // Light purple #B794F6
+            3 => new SolidColorBrush(Color.FromRgb(102, 126, 234)), // Blue-purple #667EEA
+            _ => new SolidColorBrush(Color.FromRgb(79, 172, 254))   // Default cyan
         };
     }
 
@@ -1443,6 +1480,7 @@ public partial class MainWindow : Window
             for (int col = 0; col < 4; col++)
             {
                 _ledMatrix[row, col].Fill = GetLedDefaultColor(row);
+                _ledMatrix[row, col].Effect = null; // Remove any glow effects
             }
         }
     }
@@ -1619,15 +1657,17 @@ public partial class MainWindow : Window
         if (row < 4 && col < 4)
         {
             _ledMatrix[row, col].Fill = GetLedDefaultColor(row);
+            // Remove glow effect
+            _ledMatrix[row, col].Effect = null;
+        }
 
-            // Cancel auto-restore timer since we're manually restoring
-            lock (_ledTimersLock)
+        // Clear the timer for this LED
+        lock (_ledTimersLock)
+        {
+            if (_ledTimers.TryGetValue(ledIndex, out var timer))
             {
-                if (_ledTimers.TryGetValue(ledIndex, out var timer))
-                {
-                    timer.Dispose();
-                    _ledTimers.Remove(ledIndex);
-                }
+                timer.Dispose();
+                _ledTimers.Remove(ledIndex);
             }
         }
     }
@@ -1878,10 +1918,26 @@ public partial class MainWindow : Window
         StatusText.Text = "🔄 Pontuação resetada!";
     }
 
-    private void RefreshPortsButton_Click(object? sender, RoutedEventArgs e)
+    private async void RefreshPortsButton_Click(object? sender, RoutedEventArgs e)
     {
-        RefreshPorts();
-        AddDebugMessage("Lista de portas atualizada");
+        // Visual feedback for button click
+        if (sender is Button button)
+        {
+            var originalContent = button.Content;
+            button.Content = "🔄 Atualizando...";
+            button.IsEnabled = false;
+            
+            await Task.Delay(500); // Small delay for visual feedback
+            
+            RefreshPorts();
+            
+            button.Content = originalContent;
+            button.IsEnabled = true;
+        }
+        else
+        {
+            RefreshPorts();
+        }
     }
 
     private async void ViewScoresButton_Click(object? sender, RoutedEventArgs e)
@@ -1999,9 +2055,10 @@ public partial class MainWindow : Window
         var settingsWindow = new Window
         {
             Title = "⚙️ Configurações",
-            Width = 500,
-            Height = 400,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner
+            Width = 600,
+            Height = 500,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Background = new SolidColorBrush(Color.FromRgb(15, 15, 35)) // Dark background #0F0F23
         };
 
         var stackPanel = new StackPanel { Margin = new Avalonia.Thickness(20), Spacing = 15 };
@@ -2009,22 +2066,67 @@ public partial class MainWindow : Window
         stackPanel.Children.Add(new TextBlock
         {
             Text = "⚙️ Configurações do Jogo",
-            FontSize = 18,
+            FontSize = 20,
             FontWeight = FontWeight.Bold,
-            Margin = new Avalonia.Thickness(0, 0, 0, 15)
+            Foreground = Brushes.White,
+            Margin = new Avalonia.Thickness(0, 0, 0, 20)
         });
 
         // Player name setting
-        var playerPanel = new StackPanel { Spacing = 5 };
-        playerPanel.Children.Add(new TextBlock { Text = "👤 Nome do Jogador:" });
-        var playerTextBox = new TextBox { Text = _playerName, Watermark = "Digite seu nome..." };
+        var playerPanel = new StackPanel { Spacing = 8 };
+        playerPanel.Children.Add(new TextBlock 
+        { 
+            Text = "👤 Nome do Jogador:",
+            Foreground = new SolidColorBrush(Color.FromRgb(226, 232, 240)), // #E2E8F0
+            FontWeight = FontWeight.Medium
+        });
+        var playerTextBox = new TextBox 
+        { 
+            Text = _playerName, 
+            Watermark = "Digite seu nome...",
+            Background = new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                GradientStops = new GradientStops
+                {
+                    new GradientStop(Color.FromRgb(58, 58, 107), 0),  // #3A3A6B
+                    new GradientStop(Color.FromRgb(74, 74, 123), 1)   // #4A4A7B
+                }
+            },
+            Foreground = Brushes.White,
+            BorderBrush = new SolidColorBrush(Color.FromRgb(79, 172, 254)), // #4FACFE
+            CornerRadius = new CornerRadius(8),
+            Padding = new Avalonia.Thickness(12, 8)
+        };
         playerPanel.Children.Add(playerTextBox);
         stackPanel.Children.Add(playerPanel);
 
         // Serial port settings
-        var portPanel = new StackPanel { Spacing = 5 };
-        portPanel.Children.Add(new TextBlock { Text = "🔌 Porta Serial:" });
-        var portCombo = new ComboBox();
+        var portPanel = new StackPanel { Spacing = 8 };
+        portPanel.Children.Add(new TextBlock 
+        { 
+            Text = "🔌 Porta Serial:",
+            Foreground = new SolidColorBrush(Color.FromRgb(226, 232, 240)), // #E2E8F0
+            FontWeight = FontWeight.Medium
+        });
+        var portCombo = new ComboBox
+        {
+            Background = new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                GradientStops = new GradientStops
+                {
+                    new GradientStop(Color.FromRgb(58, 58, 107), 0),  // #3A3A6B
+                    new GradientStop(Color.FromRgb(74, 74, 123), 1)   // #4A4A7B
+                }
+            },
+            Foreground = Brushes.White,
+            BorderBrush = new SolidColorBrush(Color.FromRgb(79, 172, 254)), // #4FACFE
+            CornerRadius = new CornerRadius(8),
+            Padding = new Avalonia.Thickness(12, 8)
+        };
         foreach (var port in SerialPort.GetPortNames())
         {
             portCombo.Items.Add(port);
@@ -2039,7 +2141,25 @@ public partial class MainWindow : Window
         // Buttons
         var buttonPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 10, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
 
-        var saveButton = new Button { Content = "💾 Salvar", MinWidth = 80 };
+        var saveButton = new Button 
+        { 
+            Content = "💾 Salvar", 
+            MinWidth = 100,
+            Background = new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                GradientStops = new GradientStops
+                {
+                    new GradientStop(Color.FromRgb(79, 172, 254), 0),  // #4FACFE
+                    new GradientStop(Color.FromRgb(0, 242, 254), 1)    // #00F2FE
+                }
+            },
+            Foreground = Brushes.White,
+            CornerRadius = new CornerRadius(8),
+            Padding = new Avalonia.Thickness(15, 8),
+            FontWeight = FontWeight.SemiBold
+        };
         saveButton.Click += (s, e) =>
         {
             _playerName = playerTextBox.Text ?? "";
@@ -2057,7 +2177,25 @@ public partial class MainWindow : Window
             settingsWindow.Close();
         };
 
-        var cancelButton = new Button { Content = "❌ Cancelar", MinWidth = 80 };
+        var cancelButton = new Button 
+        { 
+            Content = "❌ Cancelar", 
+            MinWidth = 100,
+            Background = new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                GradientStops = new GradientStops
+                {
+                    new GradientStop(Color.FromRgb(102, 126, 234), 0),  // #667EEA
+                    new GradientStop(Color.FromRgb(118, 75, 162), 1)    // #764BA2
+                }
+            },
+            Foreground = Brushes.White,
+            CornerRadius = new CornerRadius(8),
+            Padding = new Avalonia.Thickness(15, 8),
+            FontWeight = FontWeight.SemiBold
+        };
         cancelButton.Click += (s, e) => settingsWindow.Close();
 
         buttonPanel.Children.Add(saveButton);
