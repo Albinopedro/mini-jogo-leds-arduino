@@ -12,9 +12,11 @@
     CanResize="False"
     Background="#1A202C"
     Topmost="True"
+    ShowInTaskbar="False"
     ExtendClientAreaToDecorationsHint="True"
     ExtendClientAreaChromeHints="NoChrome"
     ExtendClientAreaTitleBarHeightHint="-1"
+    SystemDecorations="None"
 >
 
     <Grid>
@@ -26,7 +28,7 @@
             HorizontalScrollBarVisibility="Disabled"
             VerticalScrollBarVisibility="Auto"
         >
-            <Grid Margin="50">
+            <Grid Margin="30">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -40,13 +42,13 @@
                 <Viewbox
                     Grid.Row="0"
                     Stretch="Uniform"
-                    MaxHeight="150"
-                    Margin="0,20,0,40"
+                    MaxHeight="100"
+                    Margin="0,15,0,25"
                 >
                     <TextBlock
                         x:Name="GameOverTitle"
                         Text="🎮 GAME OVER"
-                        FontSize="120"
+                        FontSize="72"
                         FontWeight="Bold"
                         Foreground="#FF6B6B"
                         HorizontalAlignment="Center"
@@ -58,13 +60,13 @@
                 <Viewbox
                     Grid.Row="1"
                     Stretch="Uniform"
-                    MaxHeight="80"
-                    Margin="0,0,0,30"
+                    MaxHeight="50"
+                    Margin="0,0,0,20"
                 >
                     <TextBlock
                         x:Name="SessionMessage"
                         Text="Sua sessão foi finalizada!"
-                        FontSize="60"
+                        FontSize="36"
                         FontWeight="Medium"
                         Foreground="White"
                         HorizontalAlignment="Center"
@@ -77,31 +79,31 @@
                     Grid.Row="2"
                     x:Name="PlayerNameText"
                     Text="👤 Jogador: [Nome]"
-                    FontSize="36"
+                    FontSize="24"
                     FontWeight="Medium"
                     Foreground="#E2E8F0"
                     HorizontalAlignment="Center"
                     TextAlignment="Center"
-                    Margin="0,0,0,40"
+                    Margin="0,0,0,25"
                 />
 
                 <!-- Games Summary -->
                 <Border
                     Grid.Row="3"
                     Background="#2D3748"
-                    CornerRadius="20"
-                    Padding="50"
-                    MaxWidth="1200"
+                    CornerRadius="15"
+                    Padding="30"
+                    MaxWidth="900"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     BorderBrush="#4A5568"
                     BorderThickness="2"
-                    Margin="0,20"
+                    Margin="0,15"
                 >
-                    <StackPanel Spacing="30">
+                    <StackPanel Spacing="20">
                         <TextBlock
                             Text="📊 Resumo da Sessão"
-                            FontSize="42"
+                            FontSize="28"
                             FontWeight="Bold"
                             Foreground="White"
                             HorizontalAlignment="Center"
@@ -109,14 +111,14 @@
 
                         <ScrollViewer
                             x:Name="GamesSummaryScrollViewer"
-                            MaxHeight="400"
+                            MaxHeight="300"
                             HorizontalScrollBarVisibility="Disabled"
                             VerticalScrollBarVisibility="Auto"
                             Background="Transparent"
                         >
                             <StackPanel
                                 x:Name="GamesSummaryPanel"
-                                Spacing="25"
+                                Spacing="15"
                                 HorizontalAlignment="Center"
                             />
                         </ScrollViewer>
@@ -127,12 +129,12 @@
                 <TextBlock
                     Grid.Row="4"
                     Text="🔄 Retornando ao login em alguns segundos..."
-                    FontSize="28"
+                    FontSize="18"
                     FontWeight="Medium"
                     Foreground="#A0AEC0"
                     HorizontalAlignment="Center"
                     TextAlignment="Center"
-                    Margin="0,40,0,20"
+                    Margin="0,25,0,15"
                 />
 
                 <!-- Return Button -->
@@ -140,17 +142,17 @@
                     Grid.Row="5"
                     x:Name="ReturnToLoginButton"
                     Content="🔙 Voltar ao Login Agora"
-                    FontSize="32"
+                    FontSize="20"
                     FontWeight="Bold"
-                    Padding="60,25"
-                    MinWidth="400"
-                    MinHeight="80"
+                    Padding="40,15"
+                    MinWidth="300"
+                    MinHeight="60"
                     Background="#4299E1"
                     Foreground="White"
-                    CornerRadius="15"
+                    CornerRadius="12"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Margin="0,20,0,40"
+                    Margin="0,15,0,30"
                     Click="ReturnToLoginButton_Click"
                 >
                     <Button.Styles>

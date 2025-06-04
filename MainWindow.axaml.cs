@@ -2773,9 +2773,7 @@ O Arduino possui animações épicas para:
                     var roundsCompletedWindow = new RoundsCompletedWindow();
                     var gameSummary = new Dictionary<GameMode, int>();
                     gameSummary[session.SelectedGame] = session.ErrorsCommitted;
-                    roundsCompletedWindow.SetGameSummary(gameSummary, _currentUser.Name);
-
-                    // Handle return to login event - this MUST happen
+                    roundsCompletedWindow.SetGameSummary(gameSummary, _currentUser.Name);                    // Handle return to login event - this MUST happen
                     roundsCompletedWindow.OnReturnToLogin += async (sender, e) =>
                     {
                         try
@@ -2799,6 +2797,19 @@ O Arduino possui animações épicas para:
 
                             AddDebugMessage("[SESSÃO] Evento OnReturnToLogin disparado - processando retorno ao login");
 
+                            // Close the RoundsCompletedWindow first
+                            try
+                            {
+                                if (sender is RoundsCompletedWindow window)
+                                {
+                                    window.Close();
+                                }
+                            }
+                            catch (Exception windowEx)
+                            {
+                                AddDebugMessage($"[SESSÃO] Erro ao fechar RoundsCompletedWindow: {windowEx.Message}");
+                            }
+
                             // End the session
                             if (_currentUser != null)
                                 _sessionService.EndSession(_currentUser.Id);
@@ -2806,7 +2817,7 @@ O Arduino possui animações épicas para:
                             // Small delay to ensure session is properly ended
                             await Task.Delay(100);
 
-                            // Force close this window first
+                            // Force close this window
                             await Dispatcher.UIThread.InvokeAsync(() =>
                             {
                                 AddDebugMessage("[SESSÃO] 🚪 Fechando MainWindow via RoundsCompletedDialog");
@@ -2831,19 +2842,42 @@ O Arduino possui animações épicas para:
                             // If anything fails, still try to close and show login
                             await ForceReturnToLogin();
                         }
-                    };
-
-
-                    // Show as modal dialog to block all interaction
+                    };                    // Show as independent fullscreen window (not modal to allow proper fullscreen)
                     try
                     {
-                        await roundsCompletedWindow.ShowDialog(this);
+                        AddDebugMessage("[SESSÃO] 📺 Tentando mostrar RoundsCompletedWindow em fullscreen");
+                        
+                        // Strategy 1: Hide main window first, then show fullscreen window
+                        this.Hide();
+                        await Task.Delay(50); // Brief delay to ensure main window is hidden
+                        
+                        roundsCompletedWindow.Show();
+                        
+                        // Wait for the window to be shown and processed
+                        await Task.Delay(200);
+                        
+                        AddDebugMessage("[SESSÃO] ✅ RoundsCompletedWindow mostrada com sucesso");
                     }
                     catch (Exception ex)
                     {
-                        AddDebugMessage($"Erro ao mostrar diálogo modal: {ex.Message}");
-                        // If ShowDialog fails, show normally and force modal behavior
-                        roundsCompletedWindow.Show();
+                        AddDebugMessage($"Erro ao mostrar janela fullscreen (estratégia 1): {ex.Message}");
+                        
+                        // Strategy 2: Try alternative approach
+                        try
+                        {
+                            AddDebugMessage("[SESSÃO] 🔄 Tentando estratégia alternativa para mostrar fullscreen");
+                            this.WindowState = WindowState.Minimized;
+                            await Task.Delay(50);
+                            roundsCompletedWindow.Show();
+                            await Task.Delay(100);
+                            roundsCompletedWindow.Activate();
+                        }
+                        catch (Exception ex2)
+                        {
+                            AddDebugMessage($"Erro na estratégia alternativa: {ex2.Message}");
+                            // Last resort: just show the window
+                            roundsCompletedWindow.Show();
+                        }
 
                         // Auto-trigger return to login after a delay as fallback
                         _ = Task.Run(async () =>
