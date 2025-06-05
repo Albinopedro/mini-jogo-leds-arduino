@@ -896,19 +896,28 @@
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <TextBlock
-          Grid.Column="0"
-          Text="⌨️ Controles: W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs | Setas = Navegação | Enter = Confirmar | Esc = Cancelar"
-          Foreground="White"
-          VerticalAlignment="Center"
-          FontSize="14"
-          FontWeight="Medium"
-          Opacity="0.9"
-        />
+        <StackPanel Grid.Column="0" Orientation="Vertical" Spacing="5">
+          <TextBlock
+            Text="⌨️ Controles: W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs | Setas = Navegação | Enter = Confirmar | Esc = Cancelar"
+            Foreground="White"
+            VerticalAlignment="Center"
+            FontSize="14"
+            FontWeight="Medium"
+            Opacity="0.9"
+          />
+          <TextBlock
+            Text="🎭 Animações Arduino: F5 = 🔄 Atualizar Portas | F6 = ⏹️ Parar FX | F7 = 💚 Matrix | F8 = 💓 Pulso | F9 = 🎆 Fogos | F10 = ✨ Demo | F11 = 🖥️ Tela Cheia"
+            Foreground="White"
+            VerticalAlignment="Center"
+            FontSize="13"
+            FontWeight="Medium"
+            Opacity="0.8"
+          />
+        </StackPanel>
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="15">
           <TextBlock
-            Text="v2.0.0"
+            Text="v2.2.0"
             Foreground="White"
             VerticalAlignment="Center"
             FontSize="13"

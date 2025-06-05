@@ -52,6 +52,9 @@ namespace miniJogo.Views
                 dueTime: TimeSpan.FromSeconds(1),
                 period: TimeSpan.FromSeconds(1)
             );
+            
+            // Configure window events
+            Deactivated += OnWindowDeactivated;
         }
 
         public void SetGameSummary(Dictionary<GameMode, int> roundsPlayed, string playerName)
@@ -394,10 +397,8 @@ namespace miniJogo.Views
             }
         }
         
-        protected override void OnDeactivated(EventArgs e)
+        private void OnWindowDeactivated(object? sender, EventArgs e)
         {
-            base.OnDeactivated(e);
-            
             if (!_isReturning)
             {
                 System.Diagnostics.Debug.WriteLine("⚠️ RoundsCompletedWindow foi desativada - reativando");
