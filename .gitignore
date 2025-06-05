@@ -416,6 +416,59 @@ TEMP_*.md
 *.backup
 *_backup.*
 
+# ====================================
+# AUDIO SYSTEM - Sistema de Áudio
+# ====================================
+
+# Python audio generation environment
+audio_env/
+venv_audio/
+.audio_env/
+generate_audio_files.py
+
+# Audio generation cache and temporary files
+*.wav.tmp
+*.wav.bak
+audio_cache/
+temp_audio/
+generated_audio/
+
+# Audio processing logs
+audio_generation.log
+audio_*.log
+sound_*.log
+
+# NAudio temporary files
+naudio_*.tmp
+audio_output_*.tmp
+
+# Audio configuration files
+audio_config.json
+sound_settings.json
+volume_settings.json
+
+# Python audio generation files (keep the generator but ignore outputs)
+__pycache__/
+*.pyc
+*.pyo
+audio_output/
+generated_sounds/
+
+# Audio test files
+test_*.wav
+*_test.wav
+sample_*.wav
+debug_*.wav
+
+# Temporary audio exports
+audio_exports/
+sound_exports/
+
+# Audio system debugging
+audio_debug/
+sound_debug/
+performance_audio.log
+
 # Windows system files
 Thumbs.db
 ehthumbs.db

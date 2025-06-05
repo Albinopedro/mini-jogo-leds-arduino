@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     private DateTime _gameStartTime;
     private ScoreService _scoreService;
     private ClientSessionService _sessionService;
+    private AudioService _audioService;
     private DebugWindow? _debugWindow;
     private bool _isFullScreen = true;
     private User? _currentUser;
@@ -90,6 +91,10 @@ public partial class MainWindow : Window
         InitializeTimer();
         _scoreService = new ScoreService();
         _sessionService = new ClientSessionService();
+        _audioService = new AudioService();
+
+        // Play startup sound
+        _audioService.PlaySound(AudioEvent.Startup);
 
         // Set user and configure interface
         _currentUser = user ?? new User { Name = "Designer", Type = UserType.Admin };
@@ -328,6 +333,7 @@ public partial class MainWindow : Window
 
     private async void LogoutButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.ButtonClick);
         // Prevent multiple logout attempts
         lock (_closingLock)
         {
@@ -454,6 +460,7 @@ public partial class MainWindow : Window
 
     private async void GenerateCodesButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.ButtonClick);
         if (_currentUser?.Type != UserType.Admin)
         {
             await ShowMessage("Acesso Negado", "Apenas administradores podem gerar códigos de cliente.");
@@ -670,6 +677,7 @@ public partial class MainWindow : Window
 
     private async void ConnectButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.ButtonClick);
         if (_serialPort?.IsOpen == true)
         {
             // Disconnect
@@ -872,6 +880,7 @@ public partial class MainWindow : Window
                 }
 
                 StatusText.Text = $"🎮 GAME OVER! Pontuação Final: {_score}";
+                _audioService.PlaySound(AudioEvent.GameOver);
                 SaveGameScore();
                 AddDebugMessage($"[EVENTO] GAME_OVER - Fim de jogo - Pontuação final: {_score}");
                 TriggerVisualEffect("GAME_OVER");
@@ -919,6 +928,7 @@ public partial class MainWindow : Window
                 break;
 
             case "HIT":
+                _audioService.PlaySound(AudioEvent.ScoreHit);
                 var hitData = eventValue.Split(',');
                 if (hitData.Length >= 2 && int.TryParse(hitData[0], out var ledHit) && int.TryParse(hitData[1], out var hitTotalScore))
                 {
@@ -932,6 +942,7 @@ public partial class MainWindow : Window
                 break;
 
             case "MISS":
+                _audioService.PlaySound(AudioEvent.Error);
                 StatusText.Text = "❌ Muito lento! O LED apagou sozinho.";
                 AddDebugMessage("[EVENTO] MISS - LED apagou antes do jogador pressionar");
                 RecordClientRoundLoss();
@@ -972,6 +983,7 @@ public partial class MainWindow : Window
                         _score = score;
                     }
                     StatusText.Text = $"🆙 NÍVEL {level}! Dificuldade aumentada! Pontuação: {_score}";
+                    _audioService.PlaySound(AudioEvent.LevelUp);
                     UpdateUI();
                     AddDebugMessage($"[EVENTO] LEVEL_UP - Nível: {level}, Pontuação: {_score}");
                     TriggerVisualEffect("LEVEL_UP");
@@ -1000,6 +1012,7 @@ public partial class MainWindow : Window
                 break;
 
             case "METEOR_HIT":
+                _audioService.PlaySound(AudioEvent.MeteoroExplosion);
                 if (int.TryParse(eventValue, out var meteorPos))
                 {
                     StatusText.Text = "💥 IMPACTO! Um meteoro te atingiu! Game Over!";
@@ -1024,29 +1037,34 @@ public partial class MainWindow : Window
                         _score += pointsEarned;
                     }
                     StatusText.Text = $"🎵 NOTA PERFEITA! Coluna {column} +{pointsEarned} pontos (Total: {_score})";
+                    _audioService.PlaySound(AudioEvent.GuitarNote);
                     UpdateUI();
                     AddDebugMessage($"Nota acertada coluna {column}, pontuação: {_score}");
                 }
                 break;
 
             case "NOTE_MISS":
+                _audioService.PlaySound(AudioEvent.Error);
                 StatusText.Text = "🎵 Nota perdida! Muito cedo ou muito tarde. Siga o ritmo!";
                 RecordClientRoundLoss();
                 break;
 
             case "SEQUENCE_START":
+                _audioService.PlaySound(AudioEvent.SequenciaShow);
                 StatusText.Text = "👀 ATENÇÃO! Memorize a sequência de LEDs que vai piscar...";
                 break;
 
             case "SEQUENCE_REPEAT":
+                _audioService.PlaySound(AudioEvent.ButtonHover);
                 StatusText.Text = "🔄 Sua vez! Repita a sequência na mesma ordem.";
                 break;
 
             case "PLAYER_MOVE":
-                if (int.TryParse(eventValue, out var playerPos))
+                _audioService.PlaySound(AudioEvent.PlayerMove);
+                if (int.TryParse(eventValue, out var playerNewPos))
                 {
-                    ClearLedMatrix();
-                    HighlightLed(playerPos);
+                    StatusText.Text = $"🏃 Moveu para posição {playerNewPos}. Continue desviando!";
+                    HighlightLed(playerNewPos);
                 }
                 break;
 
@@ -1076,10 +1094,12 @@ public partial class MainWindow : Window
                 break;
 
             case "ROLETA_SAFE":
+                _audioService.PlaySound(AudioEvent.RoletaSafe);
                 StatusText.Text = "💚 SEGURO! Parabéns! Pontuação multiplicada. Continuar para próxima rodada?";
                 break;
 
             case "ROLETA_EXPLODE":
+                _audioService.PlaySound(AudioEvent.RoletaExplosion);
                 StatusText.Text = "💥 EXPLODIU! Era o LED com bomba. Perdeu toda a pontuação!";
                 ClearLedMatrix();
                 TriggerVisualEffect("EXPLOSION");
@@ -1087,12 +1107,14 @@ public partial class MainWindow : Window
                 break;
 
             case "ROLETA_MAX_WIN":
+                _audioService.PlaySound(AudioEvent.Victory);
                 StatusText.Text = "🏆 VITÓRIA MÁXIMA! Você é corajoso demais!";
                 TriggerVisualEffect("VICTORY");
                 break;
 
             // Lightning Strike Events
             case "LIGHTNING_PATTERN_SHOW":
+                _audioService.PlaySound(AudioEvent.LightningFlash);
                 var lightningData = eventValue.Split(',');
                 if (lightningData.Length >= 2)
                 {
@@ -1105,20 +1127,24 @@ public partial class MainWindow : Window
                 break;
 
             case "LIGHTNING_COMPLETE":
+                _audioService.PlaySound(AudioEvent.LightningCorrect);
                 StatusText.Text = "⚡ PERFEITO! Reflexos incríveis! Próximo nível será mais difícil...";
                 break;
 
             case "LIGHTNING_WRONG":
+                _audioService.PlaySound(AudioEvent.LightningWrong);
                 StatusText.Text = "❌ Errou! O padrão correto está sendo mostrado agora. Game Over!";
                 RecordClientRoundLoss();
                 break;
 
             // Sniper Mode Events
             case "SNIPER_TARGET_SPAWN":
+                _audioService.PlaySound(AudioEvent.SniperShot);
                 StatusText.Text = "🎯 ALVO À VISTA! Você tem 0.1 segundo para atirar!";
                 break;
 
             case "SNIPER_HIT":
+                _audioService.PlaySound(AudioEvent.SniperHit);
                 var sniperData = eventValue.Split(',');
                 if (sniperData.Length >= 2)
                 {
@@ -1127,21 +1153,25 @@ public partial class MainWindow : Window
                 break;
 
             case "SNIPER_MISS":
+                _audioService.PlaySound(AudioEvent.SniperMiss);
                 StatusText.Text = "❌ Tiro errado! Mirou no lugar errado ou muito devagar.";
                 RecordClientRoundLoss();
                 break;
 
             case "SNIPER_TIMEOUT":
+                _audioService.PlaySound(AudioEvent.Error);
                 StatusText.Text = "⏰ MUITO LENTO! O alvo desapareceu antes de você atirar.";
                 RecordClientRoundLoss();
                 break;
 
             case "SNIPER_VICTORY":
+                _audioService.PlaySound(AudioEvent.Victory);
                 StatusText.Text = "🏆 LEGENDÁRIO! 10/10 acertos! Você é um sniper de elite!";
                 TriggerVisualEffect("VICTORY");
                 break;
 
             case "GATO_RATO_TIMEOUT":
+                _audioService.PlaySound(AudioEvent.Error);
                 if (int.TryParse(eventValue, out var captures))
                 {
                     StatusText.Text = $"⏰ TEMPO ESGOTADO! Você capturou {captures} ratos em 2 minutos. Sessão finalizada!";
@@ -1172,7 +1202,37 @@ public partial class MainWindow : Window
                 break;
 
             case "GATO_RATO_WIN":
+                _audioService.PlaySound(AudioEvent.Victory);
                 StatusText.Text = "🏆 VITÓRIA! Você capturou todos os ratos necessários!";
+                break;
+
+            case "GATO_CAPTURE":
+                _audioService.PlaySound(AudioEvent.GatoCapture);
+                StatusText.Text = "🐱 CAPTURA! O gato pegou o rato! +20 pontos!";
+                break;
+
+            case "GATO_MOVE":
+                _audioService.PlaySound(AudioEvent.GatoMove);
+                break;
+
+            case "RATO_MOVE":
+                _audioService.PlaySound(AudioEvent.RatoMove);
+                break;
+
+            case "SEQUENCIA_CORRECT":
+                _audioService.PlaySound(AudioEvent.SequenciaCorrect);
+                StatusText.Text = "✅ CORRETO! Sequência reproduzida perfeitamente!";
+                break;
+
+            case "SEQUENCIA_WRONG":
+                _audioService.PlaySound(AudioEvent.SequenciaWrong);
+                StatusText.Text = "❌ ERRO! Sequência incorreta. Game Over!";
+                RecordClientRoundLoss();
+                break;
+
+            case "METEORO_SPAWN":
+                _audioService.PlaySound(AudioEvent.MeteoroSpawn);
+                StatusText.Text = "☄️ METEORO À VISTA! Desvie rapidamente!";
                 TriggerVisualEffect("VICTORY");
                 break;
 
@@ -1241,6 +1301,7 @@ public partial class MainWindow : Window
                 break;
 
             case "NEW_RECORD":
+                _audioService.PlaySound(AudioEvent.Victory);
                 StatusText.Text = "🏆 NOVO RECORDE! Parabéns!";
                 TriggerVisualEffect("FIREWORKS");
                 break;
@@ -1569,18 +1630,21 @@ public partial class MainWindow : Window
                 return;
             case Key.F7:
                 // Efeito Matrix
+                _audioService.PlaySound(AudioEvent.MatrixSound);
                 TriggerVisualEffect("MATRIX");
                 StatusText.Text = "💚 Matrix Rain ativado! (F6 para parar)";
                 e.Handled = true;
                 return;
             case Key.F8:
                 // Efeito Pulse
+                _audioService.PlaySound(AudioEvent.PulseSound);
                 TriggerVisualEffect("PULSE");
                 StatusText.Text = "💓 Pulso Universal ativado! (F6 para parar)";
                 e.Handled = true;
                 return;
             case Key.F9:
                 // Fogos de artifício
+                _audioService.PlaySound(AudioEvent.Fireworks);
                 TriggerVisualEffect("FIREWORKS");
                 StatusText.Text = "🎆 Fogos de artifício! Efeito único de 2 segundos.";
                 e.Handled = true;
@@ -1673,6 +1737,7 @@ public partial class MainWindow : Window
 
     private void SavePlayerButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.ButtonClick);
         // This is only for admin mode now
         if (_isClientMode) return;
 
@@ -1737,6 +1802,7 @@ public partial class MainWindow : Window
 
     private void OpenDebugButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.ButtonClick);
         // Both admins and clients can access debug for troubleshooting
         if (_debugWindow == null)
         {
@@ -1808,6 +1874,7 @@ public partial class MainWindow : Window
 
     private async void StartGameButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.GameStart);
         if (_serialPort?.IsOpen != true)
         {
             await ShowMessage("Erro", "Arduino não está conectado!");
@@ -1888,6 +1955,7 @@ public partial class MainWindow : Window
 
     private void StopGameButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.ButtonClick);
         if (_serialPort?.IsOpen == true)
         {
             _serialPort.WriteLine("STOP_GAME");
@@ -1910,6 +1978,7 @@ public partial class MainWindow : Window
 
     private void ResetScoreButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.ButtonClick);
         _score = 0;
         _level = 1;
         UpdateUI();
@@ -1919,6 +1988,7 @@ public partial class MainWindow : Window
 
     private async void RefreshPortsButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.ButtonClick);
         // Visual feedback for button click
         if (sender is Button button)
         {
@@ -1941,6 +2011,7 @@ public partial class MainWindow : Window
 
     private async void ViewScoresButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.ButtonClick);
         var scoresWindow = new Views.ScoresWindow(_scoreService);
         await scoresWindow.ShowDialog(this);
     }
@@ -1970,6 +2041,7 @@ public partial class MainWindow : Window
 
     private async void QuickStartButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.GameStart);
         // Quick start with default settings
         if (_serialPort?.IsOpen != true)
         {
@@ -1994,12 +2066,14 @@ public partial class MainWindow : Window
 
     private async void InstructionsButton_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.ButtonClick);
         var instructionsWindow = new InstructionsWindow(_gameInstructions);
         await instructionsWindow.ShowDialog(this);
     }
 
     private async void VisualEffectsDemo_Click(object? sender, RoutedEventArgs e)
     {
+        _audioService.PlaySound(AudioEvent.DemoMusic);
         if (_serialPort?.IsOpen != true)
         {
             await ShowMessage("Aviso", "Conecte o Arduino primeiro para ver os efeitos visuais!");

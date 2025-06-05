@@ -19,9 +19,16 @@
     </PackageReference>
     <PackageReference Include="System.IO.Ports" Version="8.0.0" />
     <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.0" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="System.Windows.Extensions" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <AvaloniaResource Include="techPlay.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Audio\**\*.wav" />
+    <EmbeddedResource Include="Assets\Audio\**\*.mp3" />
   </ItemGroup>
 </Project>

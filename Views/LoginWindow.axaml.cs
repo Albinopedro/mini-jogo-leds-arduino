@@ -16,6 +16,7 @@ namespace miniJogo.Views
     {
         private AuthService _authService;
         private ScoreService _scoreService;
+        private AudioService _audioService;
         private User? _currentUser;
         private int _selectedGameMode = 1;
         private bool _isFullScreen = true;
@@ -28,6 +29,7 @@ namespace miniJogo.Views
             InitializeComponent();
             _authService = new AuthService();
             _scoreService = new ScoreService();
+            _audioService = new AudioService();
             InitializeGameModeSelector();
             LoadRankings();
 
@@ -269,11 +271,13 @@ namespace miniJogo.Views
 
         private async void LoginButton_Click(object? sender, RoutedEventArgs e)
         {
+            _audioService.PlaySound(AudioEvent.ButtonClick);
             var code = CodeTextBox.Text?.Trim() ?? "";
             var name = NameTextBox.Text?.Trim() ?? "";
 
             if (string.IsNullOrWhiteSpace(code))
             {
+                _audioService.PlaySound(AudioEvent.LoginError);
                 ShowStatus("❌ Digite um código de acesso!", Brushes.Red);
                 return;
             }
@@ -287,6 +291,7 @@ namespace miniJogo.Views
 
                 if (result.Success)
                 {
+                    _audioService.PlaySound(AudioEvent.LoginSuccess);
                     _currentUser = result.User;
                     ShowStatus($"✅ {result.Message}", Brushes.LimeGreen);
 
@@ -297,6 +302,7 @@ namespace miniJogo.Views
                 }
                 else
                 {
+                    _audioService.PlaySound(AudioEvent.LoginError);
                     ShowStatus($"❌ {result.Message}", Brushes.Red);
 
                     // Clear sensitive information on failure
@@ -308,6 +314,7 @@ namespace miniJogo.Views
             }
             catch (Exception ex)
             {
+                _audioService.PlaySound(AudioEvent.Error);
                 ShowStatus($"❌ Erro na autenticação: {ex.Message}", Brushes.Red);
             }
             finally
@@ -320,6 +327,7 @@ namespace miniJogo.Views
 
         private async void GenerateCodesButton_Click(object? sender, RoutedEventArgs e)
         {
+            _audioService.PlaySound(AudioEvent.ButtonClick);
             var dialog = new CodeGeneratorDialog();
             var result = await dialog.ShowDialog<int?>(this);
 
@@ -331,10 +339,12 @@ namespace miniJogo.Views
                     var fileName = $"bilhetes_jogo_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
                     _authService.SaveCodesToFile(codes, fileName);
 
-                    ShowStatus($"✅ {codes.Count} códigos gerados e salvos em {fileName}", Brushes.LimeGreen);
+                    _audioService.PlaySound(AudioEvent.Notification);
+                    ShowStatus($"✅ {codes.Count} códigos gerados! Arquivo: {fileName}", Brushes.LimeGreen);
                 }
                 catch (Exception ex)
                 {
+                    _audioService.PlaySound(AudioEvent.Error);
                     ShowStatus($"❌ Erro ao gerar códigos: {ex.Message}", Brushes.Red);
                 }
             }
@@ -342,6 +352,7 @@ namespace miniJogo.Views
 
         private void GameModeComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
         {
+            _audioService.PlaySound(AudioEvent.ButtonHover);
             if (GameModeComboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag)
             {
                 _selectedGameMode = int.Parse(tag);
