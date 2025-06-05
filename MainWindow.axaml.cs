@@ -421,7 +421,7 @@ public partial class MainWindow : Window
             {
                 AddDebugMessage("[LOGOUT] 🚪 Fechando MainWindow via ReturnToLoginSafely");
                 System.Diagnostics.Debug.WriteLine("[LOGOUT] 🚪 Fechando MainWindow via ReturnToLoginSafely");
-                
+
                 try
                 {
                     Close();
@@ -438,7 +438,7 @@ public partial class MainWindow : Window
         {
             AddDebugMessage($"[LOGOUT] ❌ Erro no retorno seguro ao login: {ex.Message}");
             System.Diagnostics.Debug.WriteLine($"[LOGOUT] ❌ Erro no retorno seguro ao login: {ex.Message}");
-            
+
             // Fallback: still try to close the window
             try
             {
@@ -788,7 +788,7 @@ public partial class MainWindow : Window
         }
         else if (message == "READY")
         {
-            StatusText.Text = "🟢 Arduino pronto! Conexão estabelecida com sucesso!";
+            StatusText.Text = "🟢 Arduino pronto! Conexão estabelecida com sucesso! Inicie o jogo.";
             // Trigger visual celebration
             TriggerVisualEffect("CONNECTION_SUCCESS");
         }
@@ -889,7 +889,7 @@ public partial class MainWindow : Window
                             _isSessionEnding = true;
                         }
                         AddDebugMessage($"Cliente {_currentUser.Name} esgotou todas as chances do jogo selecionado - iniciando fim de sessão");
-                        
+
                         // Prevent multiple session dialogs
                         lock (_sessionDialogLock)
                         {
@@ -1381,7 +1381,7 @@ public partial class MainWindow : Window
         {
             // Set active color with enhanced visual effect
             _ledMatrix[row, col].Fill = GetLedActiveColor(row);
-            
+
             // Add glow effect
             _ledMatrix[row, col].Effect = new DropShadowEffect
             {
@@ -1925,11 +1925,11 @@ public partial class MainWindow : Window
             var originalContent = button.Content;
             button.Content = "🔄 Atualizando...";
             button.IsEnabled = false;
-            
+
             await Task.Delay(500); // Small delay for visual feedback
-            
+
             RefreshPorts();
-            
+
             button.Content = originalContent;
             button.IsEnabled = true;
         }
@@ -2073,15 +2073,15 @@ public partial class MainWindow : Window
 
         // Player name setting
         var playerPanel = new StackPanel { Spacing = 8 };
-        playerPanel.Children.Add(new TextBlock 
-        { 
+        playerPanel.Children.Add(new TextBlock
+        {
             Text = "👤 Nome do Jogador:",
             Foreground = new SolidColorBrush(Color.FromRgb(226, 232, 240)), // #E2E8F0
             FontWeight = FontWeight.Medium
         });
-        var playerTextBox = new TextBox 
-        { 
-            Text = _playerName, 
+        var playerTextBox = new TextBox
+        {
+            Text = _playerName,
             Watermark = "Digite seu nome...",
             Background = new LinearGradientBrush
             {
@@ -2103,8 +2103,8 @@ public partial class MainWindow : Window
 
         // Serial port settings
         var portPanel = new StackPanel { Spacing = 8 };
-        portPanel.Children.Add(new TextBlock 
-        { 
+        portPanel.Children.Add(new TextBlock
+        {
             Text = "🔌 Porta Serial:",
             Foreground = new SolidColorBrush(Color.FromRgb(226, 232, 240)), // #E2E8F0
             FontWeight = FontWeight.Medium
@@ -2140,9 +2140,9 @@ public partial class MainWindow : Window
         // Buttons
         var buttonPanel = new StackPanel { Orientation = Avalonia.Layout.Orientation.Horizontal, Spacing = 10, HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Right };
 
-        var saveButton = new Button 
-        { 
-            Content = "💾 Salvar", 
+        var saveButton = new Button
+        {
+            Content = "💾 Salvar",
             MinWidth = 100,
             Background = new LinearGradientBrush
             {
@@ -2176,9 +2176,9 @@ public partial class MainWindow : Window
             settingsWindow.Close();
         };
 
-        var cancelButton = new Button 
-        { 
-            Content = "❌ Cancelar", 
+        var cancelButton = new Button
+        {
+            Content = "❌ Cancelar",
             MinWidth = 100,
             Background = new LinearGradientBrush
             {
@@ -2822,7 +2822,7 @@ O Arduino possui animações épicas para:
                             {
                                 AddDebugMessage("[SESSÃO] 🚪 Fechando MainWindow via RoundsCompletedDialog");
                                 System.Diagnostics.Debug.WriteLine("[SESSÃO] 🚪 Fechando MainWindow via RoundsCompletedDialog");
-                                
+
                                 try
                                 {
                                     Close();
@@ -2846,22 +2846,22 @@ O Arduino possui animações épicas para:
                     try
                     {
                         AddDebugMessage("[SESSÃO] 📺 Tentando mostrar RoundsCompletedWindow em fullscreen");
-                        
+
                         // Strategy 1: Hide main window first, then show fullscreen window
                         this.Hide();
                         await Task.Delay(50); // Brief delay to ensure main window is hidden
-                        
+
                         roundsCompletedWindow.Show();
-                        
+
                         // Wait for the window to be shown and processed
                         await Task.Delay(200);
-                        
+
                         AddDebugMessage("[SESSÃO] ✅ RoundsCompletedWindow mostrada com sucesso");
                     }
                     catch (Exception ex)
                     {
                         AddDebugMessage($"Erro ao mostrar janela fullscreen (estratégia 1): {ex.Message}");
-                        
+
                         // Strategy 2: Try alternative approach
                         try
                         {
@@ -2943,7 +2943,7 @@ O Arduino possui animações épicas para:
             {
                 AddDebugMessage("[LOGOUT] 🚪 Fechando MainWindow via ForceReturnToLogin");
                 System.Diagnostics.Debug.WriteLine("[LOGOUT] 🚪 Fechando MainWindow via ForceReturnToLogin");
-                
+
                 try
                 {
                     Close();
@@ -2960,7 +2960,7 @@ O Arduino possui animações épicas para:
         {
             AddDebugMessage($"[LOGOUT] ❌ ForceReturnToLogin: erro crítico: {ex.Message}");
             System.Diagnostics.Debug.WriteLine($"[LOGOUT] ❌ ForceReturnToLogin: erro crítico: {ex.Message}");
-            
+
             // Last resort fallback - just close window
             try
             {
