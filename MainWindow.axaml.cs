@@ -91,9 +91,7 @@ public partial class MainWindow : Window
         InitializeTimer();
         _scoreService = new ScoreService();
         _sessionService = new ClientSessionService();
-        _audioService = new AudioService();
-
-        // Play startup sound
+        _audioService = new AudioService();        // Play startup sound
         _audioService.PlaySound(AudioEvent.Startup);
 
         // Set user and configure interface
@@ -110,9 +108,16 @@ public partial class MainWindow : Window
 
         // Start in fullscreen
         WindowState = WindowState.FullScreen;
-        _isFullScreen = true;
-
-        RefreshPorts();
+        _isFullScreen = true;        RefreshPorts();        
+          // Start background music after a short delay to let startup sound finish
+        _ = Task.Run(async () =>
+        {
+            Console.WriteLine("🎵 Aguardando 2 segundos para iniciar playlist de música de fundo...");
+            await Task.Delay(2000); // Wait 2 seconds for startup sound
+            Console.WriteLine("🎵 Iniciando playlist de música de fundo (Moog City 2, Aria Math, Sweden)...");
+            await _audioService.StartBackgroundMusicAsync();
+            Console.WriteLine("🎵 Playlist de música de fundo iniciada com sucesso!");
+        });
 
         // Auto-connect for clients
         if (_isClientMode)
@@ -1602,28 +1607,34 @@ public partial class MainWindow : Window
         switch (e.Key)
         {
             case Key.Space:
+                _audioService.PlaySound(AudioEvent.FunctionKey);
                 if (StartGameButton.IsEnabled) StartGameButton_Click(null, new RoutedEventArgs());
                 e.Handled = true;
                 return;
             case Key.F2:
+                _audioService.PlaySound(AudioEvent.FunctionKey);
                 if (StopGameButton.IsEnabled) StopGameButton_Click(null, new RoutedEventArgs());
                 e.Handled = true;
                 return;
             case Key.F3:
+                _audioService.PlaySound(AudioEvent.FunctionKey);
                 ResetScoreButton_Click(null, new RoutedEventArgs());
                 e.Handled = true;
                 return;
             case Key.F4:
+                _audioService.PlaySound(AudioEvent.FunctionKey);
                 ViewScoresButton_Click(null, new RoutedEventArgs());
                 e.Handled = true;
                 return;
             case Key.F5:
                 // Atualizar portas
+                _audioService.PlaySound(AudioEvent.FunctionKey);
                 RefreshPortsButton_Click(null, new RoutedEventArgs());
                 e.Handled = true;
                 return;
             case Key.F6:
                 // Parar todos os efeitos
+                _audioService.PlaySound(AudioEvent.FunctionKey);
                 TriggerVisualEffect("STOP_EFFECTS");
                 StatusText.Text = "⏹️ Efeitos visuais interrompidos.";
                 e.Handled = true;
@@ -1651,6 +1662,7 @@ public partial class MainWindow : Window
                 return;
             case Key.F10:
                 // Demo completa dos efeitos
+                _audioService.PlaySound(AudioEvent.FunctionKey);
                 if (_serialPort?.IsOpen == true)
                 {
                     VisualEffectsDemo_Click(null, new RoutedEventArgs());
@@ -1659,6 +1671,7 @@ public partial class MainWindow : Window
                 return;
             case Key.F11:
                 // Toggle full-screen
+                _audioService.PlaySound(AudioEvent.FunctionKey);
                 ToggleFullScreen();
                 e.Handled = true;
                 return;
@@ -1672,16 +1685,41 @@ public partial class MainWindow : Window
         var ledIndex = GetLedForKey(e.Key);
         if (ledIndex >= 0)
         {
+            _audioService.PlaySound(AudioEvent.KeyPress);
             command = $"KEY_PRESS:{ledIndex}";
             HighlightLed(ledIndex);
         }
         // Handle arrow keys
-        else if (e.Key == Key.Up) command = "MOVE:UP";
-        else if (e.Key == Key.Down) command = "MOVE:DOWN";
-        else if (e.Key == Key.Left) command = "MOVE:LEFT";
-        else if (e.Key == Key.Right) command = "MOVE:RIGHT";
-        else if (e.Key == Key.Enter) command = "ACTION:CONFIRM";
-        else if (e.Key == Key.Escape) command = "ACTION:CANCEL";
+        else if (e.Key == Key.Up) 
+        {
+            _audioService.PlaySound(AudioEvent.ArrowKey);
+            command = "MOVE:UP";
+        }
+        else if (e.Key == Key.Down) 
+        {
+            _audioService.PlaySound(AudioEvent.ArrowKey);
+            command = "MOVE:DOWN";
+        }
+        else if (e.Key == Key.Left) 
+        {
+            _audioService.PlaySound(AudioEvent.ArrowKey);
+            command = "MOVE:LEFT";
+        }
+        else if (e.Key == Key.Right) 
+        {
+            _audioService.PlaySound(AudioEvent.ArrowKey);
+            command = "MOVE:RIGHT";
+        }
+        else if (e.Key == Key.Enter) 
+        {
+            _audioService.PlaySound(AudioEvent.GameControl);
+            command = "ACTION:CONFIRM";
+        }
+        else if (e.Key == Key.Escape) 
+        {
+            _audioService.PlaySound(AudioEvent.GameControl);
+            command = "ACTION:CANCEL";
+        }
 
         if (!string.IsNullOrEmpty(command))
         {
@@ -1699,6 +1737,7 @@ public partial class MainWindow : Window
         var ledIndex = GetLedForKey(e.Key);
         if (ledIndex >= 0)
         {
+            _audioService.PlaySound(AudioEvent.KeyRelease);
             RestoreLedColor(ledIndex);
 
             // Send key release command to Arduino

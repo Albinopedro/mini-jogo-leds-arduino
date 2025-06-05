@@ -50,7 +50,12 @@ namespace miniJogo.Services
                 new AudioDef("Assets/Audio/Efeitos/matrix_sound.wav", ToneType.Matrix, 2.0f),
                 new AudioDef("Assets/Audio/Efeitos/pulse_sound.wav", ToneType.Pulse, 1.0f),
                 new AudioDef("Assets/Audio/Efeitos/fireworks.wav", ToneType.Fireworks, 3.0f),
-                new AudioDef("Assets/Audio/Efeitos/demo_music.wav", ToneType.Demo, 5.0f)
+                new AudioDef("Assets/Audio/Efeitos/demo_music.wav", ToneType.Demo, 5.0f),
+                
+                // Ambiente - Loops de fundo
+                new AudioDef("Assets/Audio/Ambiente/menu_ambient.wav", ToneType.MenuAmbient, 10.0f),
+                new AudioDef("Assets/Audio/Ambiente/tension_build.wav", ToneType.TensionBuild, 8.0f),
+                new AudioDef("Assets/Audio/Ambiente/calm_loop.wav", ToneType.CalmLoop, 12.0f)
             };
 
             foreach (var audio in audioDefinitions)
@@ -197,6 +202,18 @@ namespace miniJogo.Services
                     
                 case ToneType.Demo:
                     GenerateDemo(buffer, sampleRate);
+                    break;
+                    
+                case ToneType.MenuAmbient:
+                    GenerateMenuAmbient(buffer, sampleRate);
+                    break;
+                    
+                case ToneType.TensionBuild:
+                    GenerateTensionBuild(buffer, sampleRate);
+                    break;
+                    
+                case ToneType.CalmLoop:
+                    GenerateCalmLoop(buffer, sampleRate);
                     break;
             }
         }
@@ -437,6 +454,93 @@ namespace miniJogo.Services
             }
         }
 
+        private static void GenerateMenuAmbient(short[] buffer, int sampleRate)
+        {
+            // Ambient suave para menu - tons baixos e relaxantes
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                var time = (double)i / sampleRate;
+                
+                // Base drone em C2 (65.4Hz)
+                var bass = Math.Sin(2 * Math.PI * 65.4 * time) * 0.3;
+                
+                // Harmônico suave em G2 (98Hz)
+                var harmony = Math.Sin(2 * Math.PI * 98 * time) * 0.2;
+                
+                // Modulação lenta para variação
+                var modulation = Math.Sin(2 * Math.PI * 0.1 * time) * 0.1;
+                
+                // Envelope suave
+                var envelope = 0.5 + 0.3 * Math.Sin(2 * Math.PI * 0.05 * time);
+                
+                var sample = (bass + harmony + modulation) * envelope;
+                buffer[i] = (short)(sample * short.MaxValue * 0.4);
+            }
+        }
+
+        private static void GenerateTensionBuild(short[] buffer, int sampleRate)
+        {
+            // Tensão crescente - frequências que aumentam gradualmente
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                var time = (double)i / sampleRate;
+                var progress = (double)i / buffer.Length;
+                
+                // Frequência base que aumenta com o tempo
+                var baseFreq = 40 + progress * 80; // 40Hz to 120Hz
+                
+                // Harmônicos tensos
+                var fundamental = Math.Sin(2 * Math.PI * baseFreq * time);
+                var overtone1 = Math.Sin(2 * Math.PI * baseFreq * 1.5 * time) * 0.6;
+                var overtone2 = Math.Sin(2 * Math.PI * baseFreq * 2.3 * time) * 0.4;
+                
+                // Ruído sutil para tensão
+                var noise = (Random.Shared.NextDouble() - 0.5) * 0.1 * progress;
+                
+                // Envelope que cresce
+                var envelope = 0.3 + 0.4 * progress;
+                
+                var sample = (fundamental + overtone1 + overtone2 + noise) * envelope;
+                buffer[i] = (short)(sample * short.MaxValue * 0.3);
+            }
+        }
+
+        private static void GenerateCalmLoop(short[] buffer, int sampleRate)
+        {
+            // Loop calmo e relaxante - progressão harmônica suave
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                var time = (double)i / sampleRate;
+                
+                // Acordes suaves em progressão I-vi-IV-V em C maior
+                var chordDuration = buffer.Length / 4;
+                var chordIndex = i / chordDuration;
+                
+                double[] baseFreqs = chordIndex switch
+                {
+                    0 => new double[] { 130.8, 164.8, 196.0 }, // C maj (C3-E3-G3)
+                    1 => new double[] { 110.0, 130.8, 164.8 }, // A min (A2-C3-E3)
+                    2 => new double[] { 87.3, 130.8, 174.6 },  // F maj (F2-C3-F3)
+                    3 => new double[] { 98.0, 123.5, 146.8 },  // G maj (G2-B2-D3)
+                    _ => new double[] { 130.8, 164.8, 196.0 }   // Default C maj
+                };
+                
+                var sample = 0.0;
+                foreach (var freq in baseFreqs)
+                {
+                    sample += Math.Sin(2 * Math.PI * freq * time) / baseFreqs.Length;
+                }
+                
+                // Envelope suave com fade
+                var fadeIn = Math.Min(1.0, time * 2); // Fade in 0.5s
+                var fadeOut = Math.Min(1.0, (buffer.Length / (double)sampleRate - time) * 2); // Fade out 0.5s
+                var envelope = Math.Min(fadeIn, fadeOut) * 0.6;
+                
+                sample *= envelope;
+                buffer[i] = (short)(sample * short.MaxValue * 0.3);
+            }
+        }
+
         private record AudioDef(string FilePath, ToneType Type, float Duration);
     }
 
@@ -465,6 +569,9 @@ namespace miniJogo.Services
         Matrix,
         Pulse,
         Fireworks,
-        Demo
+        Demo,
+        MenuAmbient,
+        TensionBuild,
+        CalmLoop
     }
 }

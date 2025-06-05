@@ -39,6 +39,31 @@ namespace miniJogo.Views
 
             // Focus on name field initially
             NameTextBox.Focus();
+
+            // Subscribe to closing event to stop music
+            Closing += OnWindowClosing;
+
+            // Start background music playlist when login window opens
+            _ = Task.Run(async () =>
+            {
+                Console.WriteLine("🎵 LoginWindow criada - iniciando playlist de música de fundo...");
+                await _audioService.StartBackgroundMusicAsync();
+                Console.WriteLine("🎵 Playlist de música de fundo iniciada no LoginWindow!");
+            });
+        }
+
+        private async void OnWindowClosing(object? sender, WindowClosingEventArgs e)
+        {
+            try
+            {
+                Console.WriteLine("🎵 LoginWindow fechando - parando música de fundo...");
+                await _audioService.StopBackgroundMusicAsync();
+                Console.WriteLine("🎵 Música de fundo parada!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Erro ao parar música: {ex.Message}");
+            }
         }
 
         private void InitializeGameModeSelector()
@@ -209,6 +234,9 @@ namespace miniJogo.Views
 
         private void NameTextBox_KeyDown(object? sender, KeyEventArgs e)
         {
+            // Play key sound for any key press
+            _audioService.PlaySound(AudioEvent.KeyPress);
+
             if (e.Key == Key.Enter)
             {
                 CodeTextBox.Focus();
@@ -244,6 +272,9 @@ namespace miniJogo.Views
 
         private void CodeTextBox_KeyDown(object? sender, KeyEventArgs e)
         {
+            // Play key sound for any key press
+            _audioService.PlaySound(AudioEvent.KeyPress);
+
             if (e.Key == Key.Enter && LoginButton.IsEnabled)
             {
                 LoginButton_Click(null, new RoutedEventArgs());
@@ -362,8 +393,10 @@ namespace miniJogo.Views
 
         private void Window_KeyDown(object? sender, KeyEventArgs e)
         {
+            // Play function key sound for F11
             if (e.Key == Key.F11)
             {
+                _audioService.PlaySound(AudioEvent.FunctionKey);
                 ToggleFullScreen();
                 e.Handled = true;
             }

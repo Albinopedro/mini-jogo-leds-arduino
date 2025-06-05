@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using miniJogo.Views;
 using miniJogo.Models.Auth;
+using miniJogo.Services;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -171,13 +172,14 @@ public partial class App : Application
                 });
             }
         }
-    }
-
-    private void OnLoginWindowClosed(object? sender, EventArgs e)
+    }    private void OnLoginWindowClosed(object? sender, EventArgs e)
     {
         if (sender is not LoginWindow loginWindow || _desktop == null || _isShuttingDown) return;
 
         System.Diagnostics.Debug.WriteLine("[APP] OnLoginWindowClosed chamado");
+
+        // Background music is now handled by the LoginWindow itself via OnWindowClosing event
+        // No need to create a new AudioService instance here
 
         // Remove event handler to prevent multiple calls
         loginWindow.Closed -= OnLoginWindowClosed;
