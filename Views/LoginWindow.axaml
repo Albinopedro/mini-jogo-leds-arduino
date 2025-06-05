@@ -294,12 +294,11 @@
                                 Tag="4"
                             />
                             <ComboBoxItem Content="🎸 Guitar Hero" Tag="5" />
-                            <ComboBoxItem Content="🎲 Roleta Russa" Tag="6" />
                             <ComboBoxItem
                                 Content="⚡ Lightning Strike"
-                                Tag="7"
+                                Tag="6"
                             />
-                            <ComboBoxItem Content="🎯 Sniper Mode" Tag="8" />
+                            <ComboBoxItem Content="🎯 Sniper Mode" Tag="7" />
                         </ComboBox>
                     </StackPanel>
 

@@ -61,9 +61,8 @@ public partial class MainWindow : Window
         { 3, "🐱 Você é o gato! Persiga o rato (LED vermelho) pela matriz usando as teclas W,E,R,T/S,D,F,G/Y,U,I,O/H,J,K,L." },
         { 4, "☄️ Desvie dos meteoros (LEDs vermelhos) que caem! Use as setas para mover." },
         { 5, "🎸 Pressione os LEDs no ritmo da música! Timing perfeito = pontos extras." },
-        { 6, "🎲 Roleta Russa LED! Escolha um LED - acerte e multiplique sua pontuação, erre e perca tudo!" },
-        { 7, "⚡ Lightning Strike! Memorize padrões ultra-rápidos que aparecem por milissegundos!" },
-        { 8, "🎯 Sniper Mode! Atire nos alvos que piscam por apenas 0.1 segundo - precisão extrema!" }
+        { 6, "⚡ Lightning Strike! Memorize padrões ultra-rápidos que aparecem por milissegundos!" },
+        { 7, "🎯 Sniper Mode! Atire nos alvos que piscam por apenas 0.1 segundo - precisão extrema!" }
     };
 
     // Game instructions for the new games
@@ -74,9 +73,8 @@ public partial class MainWindow : Window
         { 3, "GATO E RATO:\n• Use setas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas azuis\n• +20 pontos por captura" },
         { 4, "ESQUIVA METEOROS:\n• Use ↑↓←→ para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo" },
         { 5, "GUITAR HERO:\n• Pressione W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental" },
-        { 6, "ROLETA RUSSA:\n• Escolha um LED pressionando W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L\n• Multiplicador: 2x, 4x, 8x, 16x...\n• Acerte = continua com multiplicador maior\n• Erre = perde TODA a pontuação!" },
-        { 7, "LIGHTNING STRIKE:\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo de exibição diminui por nível\n• Erro = Game Over instantâneo" },
-        { 8, "SNIPER MODE:\n• Alvos piscam por apenas 0.1 segundo\n• Pressione a tecla exata no tempo\n• 10 acertos = vitória impossível\n• Bônus x10 se completar!" }
+        { 6, "LIGHTNING STRIKE:\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo de exibição diminui por nível\n• Erro = Game Over instantâneo" },
+        { 7, "SNIPER MODE:\n• Alvos piscam por apenas 0.1 segundo\n• Pressione a tecla exata no tempo\n• 10 acertos = vitória impossível\n• Bônus x10 se completar!" }
     };
 
     public MainWindow() : this(null, 1)
@@ -108,8 +106,10 @@ public partial class MainWindow : Window
 
         // Start in fullscreen
         WindowState = WindowState.FullScreen;
-        _isFullScreen = true;        RefreshPorts();        
-          // Start background music after a short delay to let startup sound finish
+        _isFullScreen = true;
+        RefreshPorts();
+        
+        // Start background music after a short delay to let startup sound finish
         _ = Task.Run(async () =>
         {
             Console.WriteLine("🎵 Aguardando 2 segundos para iniciar playlist de música de fundo...");
@@ -574,9 +574,8 @@ public partial class MainWindow : Window
             3 => "🐱 Gato e Rato",
             4 => "☄️ Esquiva Meteoros",
             5 => "🎸 Guitar Hero",
-            6 => "🎲 Roleta Russa",
-            7 => "⚡ Lightning Strike",
-            8 => "🎯 Sniper Mode",
+            6 => "⚡ Lightning Strike",
+            7 => "🎯 Sniper Mode",
             _ => "Nenhum"
         };
     }
@@ -1089,33 +1088,7 @@ public partial class MainWindow : Window
                 ClearLedMatrix();
                 break;
 
-            // Roleta Russa Events
-            case "ROLETA_ROUND_START":
-                var roletaData = eventValue.Split(',');
-                if (roletaData.Length >= 2)
-                {
-                    StatusText.Text = $"🎲 Roleta Russa - Rodada {roletaData[0]} | Multiplicador: {roletaData[1]}x | Escolha um LED!";
-                }
-                break;
 
-            case "ROLETA_SAFE":
-                _audioService.PlaySound(AudioEvent.RoletaSafe);
-                StatusText.Text = "💚 SEGURO! Parabéns! Pontuação multiplicada. Continuar para próxima rodada?";
-                break;
-
-            case "ROLETA_EXPLODE":
-                _audioService.PlaySound(AudioEvent.RoletaExplosion);
-                StatusText.Text = "💥 EXPLODIU! Era o LED com bomba. Perdeu toda a pontuação!";
-                ClearLedMatrix();
-                TriggerVisualEffect("EXPLOSION");
-                RecordClientRoundLoss();
-                break;
-
-            case "ROLETA_MAX_WIN":
-                _audioService.PlaySound(AudioEvent.Victory);
-                StatusText.Text = "🏆 VITÓRIA MÁXIMA! Você é corajoso demais!";
-                TriggerVisualEffect("VICTORY");
-                break;
 
             // Lightning Strike Events
             case "LIGHTNING_PATTERN_SHOW":
@@ -1344,9 +1317,8 @@ public partial class MainWindow : Window
             new { Id = 3, Name = "🐱 Gato e Rato", Description = "Perseguição" },
             new { Id = 4, Name = "☄️ Esquiva Meteoros", Description = "Sobrevivência" },
             new { Id = 5, Name = "🎸 Guitar Hero", Description = "Ritmo" },
-            new { Id = 6, Name = "🎲 Roleta Russa", Description = "Sorte e Coragem" },
-            new { Id = 7, Name = "⚡ Lightning Strike", Description = "Velocidade Extrema" },
-            new { Id = 8, Name = "🎯 Sniper Mode", Description = "Precisão Máxima" }
+            new { Id = 6, Name = "⚡ Lightning Strike", Description = "Velocidade Extrema" },
+            new { Id = 7, Name = "🎯 Sniper Mode", Description = "Precisão Máxima" }
         };
 
         foreach (var game in games)
@@ -1428,7 +1400,7 @@ public partial class MainWindow : Window
 
         if (_currentGameMode > 0 && _currentGameMode <= _gameDescriptions.Count)
         {
-            var gameNames = new[] { "", "Pega-Luz", "Sequência Maluca", "Gato e Rato", "Esquiva Meteoros", "Guitar Hero", "Roleta Russa", "Lightning Strike", "Sniper Mode" };
+            var gameNames = new[] { "", "Pega-Luz", "Sequência Maluca", "Gato e Rato", "Esquiva Meteoros", "Guitar Hero", "Lightning Strike", "Sniper Mode" };
             if (_currentGameMode < gameNames.Length)
             {
                 CurrentGameText.Text = gameNames[_currentGameMode];
@@ -1690,32 +1662,32 @@ public partial class MainWindow : Window
             HighlightLed(ledIndex);
         }
         // Handle arrow keys
-        else if (e.Key == Key.Up) 
+        else if (e.Key == Key.Up)
         {
             _audioService.PlaySound(AudioEvent.ArrowKey);
             command = "MOVE:UP";
         }
-        else if (e.Key == Key.Down) 
+        else if (e.Key == Key.Down)
         {
             _audioService.PlaySound(AudioEvent.ArrowKey);
             command = "MOVE:DOWN";
         }
-        else if (e.Key == Key.Left) 
+        else if (e.Key == Key.Left)
         {
             _audioService.PlaySound(AudioEvent.ArrowKey);
             command = "MOVE:LEFT";
         }
-        else if (e.Key == Key.Right) 
+        else if (e.Key == Key.Right)
         {
             _audioService.PlaySound(AudioEvent.ArrowKey);
             command = "MOVE:RIGHT";
         }
-        else if (e.Key == Key.Enter) 
+        else if (e.Key == Key.Enter)
         {
             _audioService.PlaySound(AudioEvent.GameControl);
             command = "ACTION:CONFIRM";
         }
-        else if (e.Key == Key.Escape) 
+        else if (e.Key == Key.Escape)
         {
             _audioService.PlaySound(AudioEvent.GameControl);
             command = "ACTION:CANCEL";
@@ -2059,7 +2031,7 @@ public partial class MainWindow : Window
     {
         if (!string.IsNullOrWhiteSpace(_playerName) && _score > 0)
         {
-            var gameNames = new[] { "", "Pega-Luz", "Sequência Maluca", "Gato e Rato", "Esquiva Meteoros", "Guitar Hero", "Roleta Russa", "Lightning Strike", "Sniper Mode" };
+            var gameNames = new[] { "", "Pega-Luz", "Sequência Maluca", "Gato e Rato", "Esquiva Meteoros", "Guitar Hero", "Lightning Strike", "Sniper Mode" };
             var gameName = _currentGameMode < gameNames.Length ? gameNames[_currentGameMode] : "Desconhecido";
 
             var duration = DateTime.Now - _gameStartTime;
@@ -2372,7 +2344,6 @@ public partial class MainWindow : Window
 • 🐱 Gato e Rato: Perseguição
 • ☄️ Esquiva Meteoros: Sobrevivência
 • 🎸 Guitar Hero: Ritmo
-• 🎲 Roleta Russa: Sorte extrema
 • ⚡ Lightning Strike: Velocidade máxima
 • 🎯 Sniper Mode: Precisão impossível
 

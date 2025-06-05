@@ -42,7 +42,6 @@ namespace miniJogo.Services
                 new AudioDef("Assets/Audio/Específicos/gato_capture.wav", ToneType.Capture, 0.4f),
                 new AudioDef("Assets/Audio/Específicos/meteoro_explosion.wav", ToneType.Explosion, 0.6f),
                 new AudioDef("Assets/Audio/Específicos/guitar_note.wav", ToneType.Note, 0.3f),
-                new AudioDef("Assets/Audio/Específicos/roleta_tick.wav", ToneType.Tick, 0.1f),
                 new AudioDef("Assets/Audio/Específicos/lightning_flash.wav", ToneType.Lightning, 0.2f),
                 new AudioDef("Assets/Audio/Específicos/sniper_shot.wav", ToneType.Shot, 0.3f),
                 

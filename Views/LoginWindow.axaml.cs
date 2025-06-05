@@ -225,9 +225,8 @@ namespace miniJogo.Views
                 3 => "🐱 Gato e Rato",
                 4 => "☄️ Esquiva Meteoros",
                 5 => "🎸 Guitar Hero",
-                6 => "🎲 Roleta Russa",
-                7 => "⚡ Lightning Strike",
-                8 => "🎯 Sniper Mode",
+                6 => "⚡ Lightning Strike",
+                7 => "🎯 Sniper Mode",
                 _ => "Desconhecido"
             };
         }
@@ -434,9 +433,8 @@ namespace miniJogo.Views
                 3 => ("🐱 Gato e Rato", "🐱 GATO E RATO:\n\n• Use setas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas azuis\n• +20 pontos por captura\n\n⌨️ Controles:\nSetas ↑↓←→ = Movimento\n\n🎯 Objetivo:\nCapturar o máximo de ratos possível!"),
                 4 => ("☄️ Esquiva Meteoros", "☄️ ESQUIVA METEOROS:\n\n• Use ↑↓←→ para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo\n\n⌨️ Controles:\nSetas ↑↓←→ = Movimento\n\n🎯 Objetivo:\nSobreviver o máximo de tempo!"),
                 5 => ("🎸 Guitar Hero", "🎸 GUITAR HERO:\n\n• Pressione W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = Notas musicais\n\n🎯 Objetivo:\nTocar no ritmo perfeito!"),
-                6 => ("🎲 Roleta Russa", "🎲 ROLETA RUSSA:\n\n• Escolha um LED pressionando W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L\n• Multiplicador: 2x, 4x, 8x, 16x...\n• Acerte = continua com multiplicador maior\n• Erre = perde TODA a pontuação!\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = Escolha do LED\n\n🎯 Objetivo:\nArriscar para multiplicar pontos!"),
-                7 => ("⚡ Lightning Strike", "⚡ LIGHTNING STRIKE:\n\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo de exibição diminui por nível\n• Erro = Game Over instantâneo\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs da matriz\n\n🎯 Objetivo:\nMemória e reflexos ultra-rápidos!"),
-                8 => ("🎯 Sniper Mode", "🎯 SNIPER MODE:\n\n• Alvos piscam por apenas 0.1 segundo\n• Pressione a tecla exata no tempo\n• 10 acertos = vitória impossível\n• Bônus x10 se completar!\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = Mira precisa\n\n🎯 Objetivo:\nPrecisão absoluta em tempo mínimo!"),
+                6 => ("⚡ Lightning Strike", "⚡ LIGHTNING STRIKE:\n\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo de exibição diminui por nível\n• Erro = Game Over instantâneo\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs da matriz\n\n🎯 Objetivo:\nMemória e reflexos ultra-rápidos!"),
+                7 => ("🎯 Sniper Mode", "🎯 SNIPER MODE:\n\n• Alvos piscam por apenas 0.1 segundo\n• Pressione a tecla exata no tempo\n• 10 acertos = vitória impossível\n• Bônus x10 se completar!\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = Mira precisa\n\n🎯 Objetivo:\nPrecisão absoluta em tempo mínimo!"),
                 _ => ("Selecione um Jogo", "Selecione um jogo na lista para ver as instruções detalhadas.")
             };
 

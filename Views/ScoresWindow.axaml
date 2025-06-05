@@ -196,7 +196,6 @@
                                         Tag="Esquiva Meteoros"
                                     />
                   <ComboBoxItem Content="🎸 Guitar Hero" Tag="Guitar Hero" />
-                  <ComboBoxItem Content="🎲 Roleta Russa" Tag="Roleta Russa" />
                   <ComboBoxItem
                                         Content="⚡ Lightning Strike"
                                         Tag="Lightning Strike"

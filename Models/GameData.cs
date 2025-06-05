@@ -13,9 +13,8 @@ namespace miniJogo.Models
         GatoRato = 3,
         EsquivaMeteoros = 4,
         GuitarHero = 5,
-        RoletaRussa = 6,
-        LightningStrike = 7,
-        SniperMode = 8
+        LightningStrike = 6,
+        SniperMode = 7
     }
 
     public class GameState : INotifyPropertyChanged
@@ -106,7 +105,6 @@ namespace miniJogo.Models
             GameMode.GatoRato => "Gato e Rato",
             GameMode.EsquivaMeteoros => "Esquiva Meteoros",
             GameMode.GuitarHero => "Guitar Hero",
-            GameMode.RoletaRussa => "Roleta Russa",
             GameMode.LightningStrike => "Lightning Strike",
             GameMode.SniperMode => "Sniper Mode",
             _ => "Desconhecido"
@@ -160,7 +158,6 @@ namespace miniJogo.Models
                 GameMode.GatoRato => "Gato e Rato",
                 GameMode.EsquivaMeteoros => "Esquiva Meteoros",
                 GameMode.GuitarHero => "Guitar Hero",
-                GameMode.RoletaRussa => "Roleta Russa",
                 GameMode.LightningStrike => "Lightning Strike",
                 GameMode.SniperMode => "Sniper Mode",
                 _ => "Menu"
@@ -176,7 +173,6 @@ namespace miniJogo.Models
                 GameMode.GatoRato => "🐱",
                 GameMode.EsquivaMeteoros => "☄️",
                 GameMode.GuitarHero => "🎸",
-                GameMode.RoletaRussa => "🎲",
                 GameMode.LightningStrike => "⚡",
                 GameMode.SniperMode => "🎯",
                 _ => "🎮"
@@ -192,7 +188,6 @@ namespace miniJogo.Models
                 GameMode.GatoRato => "Controle o gato para pegar o rato em movimento.",
                 GameMode.EsquivaMeteoros => "Desvie dos meteoros e sobreviva o máximo possível!",
                 GameMode.GuitarHero => "Toque as notas no ritmo certo como um verdadeiro guitarrista.",
-                GameMode.RoletaRussa => "Teste sua sorte em uma roleta russa com LEDs!",
                 GameMode.LightningStrike => "Memorize padrões rápidos de LEDs com velocidade extrema.",
                 GameMode.SniperMode => "Mire e atire nos alvos que aparecem rapidamente!",
                 _ => "Selecione um jogo para começar."

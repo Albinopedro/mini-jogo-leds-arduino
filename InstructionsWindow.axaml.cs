@@ -79,16 +79,7 @@ namespace miniJogo
                 instructions.AppendLine("- Timing perfeito = mais pontos");
                 instructions.AppendLine();
 
-                instructions.AppendLine("6. ROLETA RUSSA LED");
-                instructions.AppendLine("Objetivo: Jogue com a sorte! Escolha um LED - acerte e multiplique, erre e perca tudo!");
-                instructions.AppendLine("- Todos os LEDs piscam criando tensão");
-                instructions.AppendLine("- Escolha um LED pressionando W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L");
-                instructions.AppendLine("- LED seguro: ganhe multiplicador e continue");
-                instructions.AppendLine("- LED perigoso: BOOM! Perde toda a pontuação");
-                instructions.AppendLine("- Multiplicadores: 2x, 4x, 8x, 16x... até 256x");
-                instructions.AppendLine();
-
-                instructions.AppendLine("7. LIGHTNING STRIKE");
+                instructions.AppendLine("6. LIGHTNING STRIKE");
                 instructions.AppendLine("Objetivo: Memorize padrões que aparecem por milissegundos.");
                 instructions.AppendLine("- Padrão de LEDs pisca ultra-rapidamente");
                 instructions.AppendLine("- Memorize quais LEDs acenderam");
@@ -97,7 +88,7 @@ namespace miniJogo
                 instructions.AppendLine("- UM ERRO = GAME OVER instantâneo");
                 instructions.AppendLine();
 
-                instructions.AppendLine("8. SNIPER MODE");
+                instructions.AppendLine("7. SNIPER MODE");
                 instructions.AppendLine("Objetivo: Atire nos alvos que piscam por apenas 0.1 segundo!");
                 instructions.AppendLine("- Alvo aparece aleatoriamente por 0.1 segundo");
                 instructions.AppendLine("- Pressione a tecla EXATA enquanto pisca");

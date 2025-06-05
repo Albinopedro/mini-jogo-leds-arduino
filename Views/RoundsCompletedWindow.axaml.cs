@@ -210,7 +210,6 @@ namespace miniJogo.Views
                 GameMode.SequenciaMaluca => 3,
                 GameMode.EsquivaMeteoros => 3,
                 GameMode.GuitarHero => 3,
-                GameMode.RoletaRussa => 3,
                 GameMode.LightningStrike => 3,
                 GameMode.SniperMode => 3,
                 _ => 3

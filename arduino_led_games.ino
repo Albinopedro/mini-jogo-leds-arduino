@@ -16,7 +16,7 @@ const int ledPins[NUM_LEDS] = {
 // ===== ENUMS DOS MODOS E ESTADOS DE JOGO =====
 enum GameMode {
   MENU = 0, PEGA_LUZ = 1, SEQUENCIA_MALUCA = 2, GATO_RATO = 3, ESQUIVA_METEOROS = 4,
-  GUITAR_HERO = 5, ROLETA_RUSSA = 6, LIGHTNING_STRIKE = 7, SNIPER_MODE = 8
+  GUITAR_HERO = 5, LIGHTNING_STRIKE = 6, SNIPER_MODE = 7
 };
 
 struct GameState {
@@ -81,14 +81,7 @@ unsigned long lastNoteSpawn = 0;
 unsigned long noteSpeed = 1000;
 int noteSpawnInterval = 2000;
 
-// Roleta Russa LED
-enum RoletaState { ROL_WAITING_CHOICE, ROL_ANIMATE_CHOICE, ROL_SAFE_PAUSE, ROL_EXPLODE_ANIMATION };
-RoletaState roletaState;
-int roletaSafeIndex = -1;
-int roletaRound = 1;
-float roletaMultiplier = 1.0;
-int roletaChosenKey = -1;
-int roletaBlinkCount = 0;
+
 
 // Lightning Strike
 enum LightningState { LS_SHOWING, LS_WAITING_INPUT, LS_WRONG_PAUSE, LS_CORRECT_PAUSE };
@@ -1088,74 +1081,9 @@ void handleGuitarHero(int key) {
   }
 }
 
-// ===== JOGO 6: ROLETA RUSSA LED =====
-void initRoletaRussa() {
-    roletaRound = 1;
-    roletaMultiplier = 1.0;
-    startRoletaRound();
-}
 
-void startRoletaRound() {
-    roletaSafeIndex = random(0, NUM_LEDS);
-    roletaState = ROL_WAITING_CHOICE;
-    roletaMultiplier = pow(2, roletaRound - 1);
-    clearAllLEDs();
-    sendGameEvent("ROLETA_ROUND_START", roletaRound, (int)roletaMultiplier);
-}
 
-void updateRoletaRussa() {
-    unsigned long currentTime = millis();
-    if (roletaState == ROL_ANIMATE_CHOICE) {
-        if (currentTime - stateChangeTime >= 150) { // REFACTOR: Animation timing
-            stateChangeTime = currentTime;
-            setLED(roletaChosenKey, roletaBlinkCount % 2 != 0); // Blink
-            roletaBlinkCount++;
-            if (roletaBlinkCount >= 10) { // 5 blinks
-                if (roletaChosenKey == roletaSafeIndex) {
-                    game.score += (int)roletaMultiplier;
-                    roletaRound++;
-                    setLED(roletaChosenKey, true);
-                    sendGameEvent("ROLETA_SAFE", roletaChosenKey, game.score);
-                    roletaState = ROL_SAFE_PAUSE;
-                    stateChangeTime = currentTime;
-                } else {
-                    // EXPLOSÃO! Perdeu tudo!
-                    playAnimation(ANIM_EXPLOSION, false);
-                    setLED(roletaChosenKey, true);
-                    sendGameEvent("ROLETA_EXPLODE", roletaChosenKey, 0);
-                    roletaState = ROL_EXPLODE_ANIMATION;
-                    stateChangeTime = currentTime;
-                }
-            }
-        }
-    } else if (roletaState == ROL_SAFE_PAUSE) {
-        if (currentTime - stateChangeTime >= 2000) { // REFACTOR: Non-blocking pause
-            if (roletaRound <= 8) {
-                startRoletaRound();
-            } else {
-                // Vitória máxima na roleta!
-                playAnimation(ANIM_FIREWORKS, false);
-                sendGameEvent("ROLETA_MAX_WIN", game.score);
-                stopGame();
-            }
-        }
-    } else if (roletaState == ROL_EXPLODE_ANIMATION) {
-        if (currentTime - stateChangeTime >= 1000) { // REFACTOR: Non-blocking pause
-            game.score = 0;
-            stopGame();
-        }
-    }
-}
-
-void handleRoletaRussaKey(int key) {
-    if (roletaState != ROL_WAITING_CHOICE) return;
-    roletaChosenKey = key;
-    roletaBlinkCount = 0;
-    roletaState = ROL_ANIMATE_CHOICE;
-    stateChangeTime = millis();
-}
-
-// ===== JOGO 7: LIGHTNING STRIKE =====
+// ===== JOGO 6: LIGHTNING STRIKE =====
 void initLightningStrike() {
     lightningPatternLength = 3;
     lightningShowDuration = 500;
@@ -1219,7 +1147,7 @@ void handleLightningStrikeKey(int key) {
     }
 }
 
-// ===== JOGO 8: SNIPER MODE =====
+// ===== JOGO 7: SNIPER MODE =====
 void initSniperMode() {
     sniperCurrentHits = 0;
     sniperHitsRequired = 10;
@@ -1298,7 +1226,6 @@ void handleKeyPress(int key) {
     case GATO_RATO: handleGatoRatoKey(key); break;
     case ESQUIVA_METEOROS: handleEsquivaMeteoros(key); break;
     case GUITAR_HERO: handleGuitarHero(key); break;
-    case ROLETA_RUSSA: handleRoletaRussaKey(key); break;
     case LIGHTNING_STRIKE: handleLightningStrikeKey(key); break;
     case SNIPER_MODE: handleSniperModeKey(key); break;
     default: break;
@@ -1337,7 +1264,6 @@ void startGame(GameMode mode) {
     case GATO_RATO: initGatoRato(); break;
     case ESQUIVA_METEOROS: initEsquivaMeteoros(); break;
     case GUITAR_HERO: initGuitarHero(); break;
-    case ROLETA_RUSSA: initRoletaRussa(); break;
     case LIGHTNING_STRIKE: initLightningStrike(); break;
     case SNIPER_MODE: initSniperMode(); break;
     default:
@@ -1389,7 +1315,6 @@ void loop() {
       case GATO_RATO: updateGatoRato(); break;
       case ESQUIVA_METEOROS: updateEsquivaMeteoros(); break;
       case GUITAR_HERO: updateGuitarHero(); break;
-      case ROLETA_RUSSA: updateRoletaRussa(); break;
       case LIGHTNING_STRIKE: updateLightningStrike(); break;
       case SNIPER_MODE: updateSniperMode(); break;
       default: break;

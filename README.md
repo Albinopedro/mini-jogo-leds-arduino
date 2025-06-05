@@ -98,7 +98,6 @@ O Mini Jogo LEDs agora conta com um **sistema de áudio de qualidade profissiona
 | 🐱 **Gato e Rato**      | ⭐⭐        | Persiga o LED piscante pela matriz      | Capture 5 vezes em 2 min    | 🏃 Animação de movimento |
 | ☄️ **Esquiva Meteoros** | ⭐⭐⭐      | Sobreviva aos meteoros que caem         | Sobrevivência máxima        | 💥 Explosões dinâmicas   |
 | 🎸 **Guitar Hero**      | ⭐⭐⭐⭐    | Toque as notas no ritmo certo           | Timing musical perfeito     | 🎵 Pulsos musicais       |
-| 🎲 **Roleta Russa**     | ⭐⭐⭐⭐⭐  | 1/16 chance, multiplicadores até 256x   | Sorte + estratégia          | 💣 Explosão épica        |
 | ⚡ **Lightning Strike** | ⭐⭐⭐⭐⭐  | Memorize padrões em milissegundos       | Velocidade sobre-humana     | ⚡ Raios ultra-rápidos   |
 | 🎯 **Sniper Mode**      | ⭐⭐⭐⭐⭐  | Mire em alvos que piscam por 0.3s       | Precisão impossível         | 🏆 Vitória lendária      |
 
@@ -317,7 +316,6 @@ PerformanceConfig.StartPerformanceMonitoring();
 - **Gato e Rato**: Rastro de movimento e captura
 - **Esquiva Meteoros**: Meteoros caindo com trail
 - **Guitar Hero**: Notas descendo com timing visual
-- **Roleta Russa**: Tensão crescente + explosão épica
 - **Lightning Strike**: Raios ultra-rápidos sincronizados
 - **Sniper Mode**: Mira laser + celebração impossível
 

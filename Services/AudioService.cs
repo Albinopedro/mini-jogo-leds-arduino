@@ -52,10 +52,7 @@ namespace miniJogo.Services
         GuitarPerfect,
         GuitarMiss,
         
-        // Roleta Russa
-        RoletaTick,
-        RoletaSafe,
-        RoletaExplosion,
+
         
         // Lightning Strike
         LightningFlash,
@@ -177,9 +174,6 @@ namespace miniJogo.Services
                 [AudioEvent.GuitarNote] = "Assets/Audio/Específicos/guitar_note.wav",
                 [AudioEvent.GuitarPerfect] = "Assets/Audio/Específicos/guitar_perfect.wav",
                 [AudioEvent.GuitarMiss] = "Assets/Audio/Específicos/guitar_miss.wav",
-                [AudioEvent.RoletaTick] = "Assets/Audio/Específicos/roleta_tick.wav",
-                [AudioEvent.RoletaSafe] = "Assets/Audio/Específicos/roleta_safe.wav",
-                [AudioEvent.RoletaExplosion] = "Assets/Audio/Específicos/roleta_explosion.wav",
                 [AudioEvent.LightningFlash] = "Assets/Audio/Específicos/lightning_flash.wav",
                 [AudioEvent.LightningCorrect] = "Assets/Audio/Específicos/lightning_correct.wav",
                 [AudioEvent.LightningWrong] = "Assets/Audio/Específicos/lightning_wrong.wav",
@@ -480,10 +474,9 @@ namespace miniJogo.Services
                 AudioEvent.Startup => 400,
                 
                 // Sons específicos
-                AudioEvent.MeteoroExplosion or AudioEvent.RoletaExplosion => 150,
+                AudioEvent.MeteoroExplosion => 150,
                 AudioEvent.LightningFlash => 1500,
                 AudioEvent.SniperShot => 350,
-                AudioEvent.RoletaTick => 750,
                 AudioEvent.GatoMove => 450,
                 AudioEvent.RatoMove => 650,
                 AudioEvent.PlayerMove => 550,
@@ -511,7 +504,6 @@ namespace miniJogo.Services
                 
                 // Sons curtos
                 AudioEvent.ScoreHit or AudioEvent.PegaLuzHit => 150,
-                AudioEvent.RoletaTick => 120,
                 
                 // Sons médios
                 AudioEvent.LoginSuccess or AudioEvent.LoginError => 300,
@@ -527,7 +519,7 @@ namespace miniJogo.Services
                 AudioEvent.Notification => 300,
                 
                 // Sons muito longos
-                AudioEvent.MeteoroExplosion or AudioEvent.RoletaExplosion => 600,
+                AudioEvent.MeteoroExplosion => 600,
                 AudioEvent.Startup => 1000,
                 AudioEvent.Fireworks => 800,
                 AudioEvent.DemoMusic => 1500,

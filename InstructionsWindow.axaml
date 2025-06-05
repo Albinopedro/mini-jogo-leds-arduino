@@ -209,46 +209,12 @@
           </StackPanel>
         </Border>
 
-        <!-- Game 6: Roleta Russa -->
-        <Border Background="#DC2626" CornerRadius="12" Padding="25">
-          <StackPanel Spacing="15">
-            <TextBlock Text="🎲 6. ROLETA RUSSA LED"
-                       FontSize="20"
-                       FontWeight="Bold"
-                       Foreground="White"/>
 
-            <TextBlock Text="OBJETIVO:"
-                       FontSize="14"
-                       FontWeight="Bold"
-                       Foreground="White"/>
-            <TextBlock Text="Jogue com a sorte! Escolha um LED - se acertar o seguro, multiplique sua pontuação. Se errar, perde TUDO!"
-                       TextWrapping="Wrap"
-                       Foreground="White"
-                       Opacity="0.9"
-                       FontSize="13"/>
 
-            <TextBlock Text="COMO JOGAR:"
-                       FontSize="14"
-                       FontWeight="Bold"
-                       Foreground="White"/>
-            <TextBlock Text="• Todos os LEDs piscam criando tensão&#10;• Escolha um LED pressionando W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L&#10;• Se for o LED seguro: ganhe multiplicador e continue&#10;• Se for perigoso: BOOM! Perde toda a pontuação&#10;• Multiplicadores: 2x, 4x, 8x, 16x... até 256x!"
-                       TextWrapping="Wrap"
-                       Foreground="White"
-                       Opacity="0.9"
-                       FontSize="13"/>
-
-            <TextBlock Text="RISCO EXTREMO: Quanto mais rodadas, maior o prêmio e o risco!"
-                       FontWeight="Medium"
-                       Foreground="White"
-                       Opacity="0.9"
-                       FontSize="12"/>
-          </StackPanel>
-        </Border>
-
-        <!-- Game 7: Lightning Strike -->
+        <!-- Game 6: Lightning Strike -->
         <Border Background="#7C2D12" CornerRadius="12" Padding="25">
           <StackPanel Spacing="15">
-            <TextBlock Text="⚡ 7. LIGHTNING STRIKE"
+            <TextBlock Text="⚡ 6. LIGHTNING STRIKE"
                        FontSize="20"
                        FontWeight="Bold"
                        Foreground="White"/>
@@ -281,10 +247,10 @@
           </StackPanel>
         </Border>
 
-        <!-- Game 8: Sniper Mode -->
-        <Border Background="#059669" CornerRadius="12" Padding="25">
+        <!-- Game 7: Sniper Mode -->
+        <Border Background="#991B1B" CornerRadius="12" Padding="25">
           <StackPanel Spacing="15">
-            <TextBlock Text="🎯 8. SNIPER MODE"
+            <TextBlock Text="🎯 7. SNIPER MODE"
                        FontSize="20"
                        FontWeight="Bold"
                        Foreground="White"/>
@@ -371,7 +337,7 @@
                            FontWeight="Bold" 
                            Foreground="#E2E8F0" 
                            HorizontalAlignment="Center"/>
-                <TextBlock Text="• Layout QWERTY otimizado para gaming&#10;• Use ambas as mãos: esquerda (W,E,R,T/S,D,F,G), direita (Y,U,I,O/H,J,K,L)&#10;• Roleta Russa: Calcule probabilidades - 1 em 16 chance&#10;• Lightning Strike: Concentre-se totalmente na tela&#10;• Sniper Mode: Mantenha dedos sobre as teclas sempre"
+                <TextBlock Text="• Layout QWERTY otimizado para gaming&#10;• Use ambas as mãos: esquerda (W,E,R,T/S,D,F,G), direita (Y,U,I,O/H,J,K,L)&#10;• Lightning Strike: Concentre-se totalmente na tela&#10;• Sniper Mode: Mantenha dedos sobre as teclas sempre"
                            TextWrapping="Wrap" 
                            Foreground="#E2E8F0" 
                            HorizontalAlignment="Center"

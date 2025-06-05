@@ -109,9 +109,7 @@ namespace miniJogo.Services
                     case GameMode.GuitarHero:
                         UpdateGuitarHero();
                         break;
-                    case GameMode.RoletaRussa:
-                        UpdateRoletaRussa();
-                        break;
+
                     case GameMode.LightningStrike:
                         UpdateLightningStrike();
                         break;
@@ -151,9 +149,7 @@ namespace miniJogo.Services
                     case GameMode.GuitarHero:
                         HandleGuitarHeroInput(input);
                         break;
-                    case GameMode.RoletaRussa:
-                        HandleRoletaRussaInput(input);
-                        break;
+
                     case GameMode.LightningStrike:
                         HandleLightningStrikeInput(input);
                         break;
@@ -204,9 +200,7 @@ namespace miniJogo.Services
                 case GameMode.GuitarHero:
                     // Initialize Guitar Hero game
                     break;
-                case GameMode.RoletaRussa:
-                    // Initialize Roleta Russa game
-                    break;
+
                 case GameMode.LightningStrike:
                     // Initialize Lightning Strike game
                     break;
@@ -242,10 +236,7 @@ namespace miniJogo.Services
             // Update Guitar Hero game logic
         }
 
-        private void UpdateRoletaRussa()
-        {
-            // Update Roleta Russa game logic  
-        }
+
 
         private void UpdateLightningStrike()
         {
@@ -282,10 +273,7 @@ namespace miniJogo.Services
             // Handle Guitar Hero input
         }
 
-        private void HandleRoletaRussaInput(string input)
-        {
-            // Handle Roleta Russa input
-        }
+
 
         private void HandleLightningStrikeInput(string input)
         {

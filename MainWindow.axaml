@@ -233,9 +233,8 @@
                 <ComboBoxItem Content="🐱 Gato e Rato" Tag="3" />
                 <ComboBoxItem Content="☄️ Esquiva Meteoros" Tag="4" />
                 <ComboBoxItem Content="🎸 Guitar Hero" Tag="5" />
-                <ComboBoxItem Content="🎲 Roleta Russa" Tag="6" />
-                <ComboBoxItem Content="⚡ Lightning Strike" Tag="7" />
-                <ComboBoxItem Content="🎯 Sniper Mode" Tag="8" />
+                <ComboBoxItem Content="⚡ Lightning Strike" Tag="6" />
+                <ComboBoxItem Content="🎯 Sniper Mode" Tag="7" />
               </ComboBox>
 
               <Border CornerRadius="12" Padding="15" BorderBrush="#4FACFE" BorderThickness="1">
