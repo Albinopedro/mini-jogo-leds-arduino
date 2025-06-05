@@ -424,7 +424,6 @@ TEMP_*.md
 audio_env/
 venv_audio/
 .audio_env/
-generate_audio_files.py
 
 # Audio generation cache and temporary files
 *.wav.tmp

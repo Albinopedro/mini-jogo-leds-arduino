@@ -40,6 +40,36 @@ Sistema de jogos interativos com matriz 4x4 de LEDs conectada ao Arduino, contro
 4. Sistema gera arquivo `.txt` com os códigos
 5. Códigos prontos para distribuição
 
+## 🎵 Sistema de Áudio Premium v2.0
+
+### ✨ **Experiência Sonora Imersiva**
+
+O Mini Jogo LEDs agora conta com um **sistema de áudio de qualidade profissional** com 42 sons únicos, síntese musical avançada e feedback sonoro para cada ação do jogo.
+
+#### 🎼 **Características Premium**
+- **42 arquivos de áudio** de alta qualidade (44.1kHz)
+- **Síntese musical** com harmônicos naturais
+- **Envelopes ADSR** para transições suaves
+- **Progressões harmônicas** baseadas em teoria musical
+- **5 categorias** organizadas: Sistema, Jogos, Específicos, Efeitos, Ambiente
+
+#### 🎮 **Sons por Categoria**
+
+| Categoria | Descrição | Exemplos |
+|-----------|-----------|----------|
+| 🖥️ **Sistema** | Interface elegante | Login, cliques, notificações |
+| 🎮 **Jogos** | Eventos dinâmicos | Vitória, game over, level up |
+| 🎯 **Específicos** | Únicos por jogo | Pega-luz hit, guitar hero, meteoros |
+| 💥 **Efeitos** | Animações visuais | Matrix, fogos, explosões |
+| 🌙 **Ambiente** | Loops atmosféricos | Menu ambient, tensão, calma |
+
+#### 🔊 **Feedback Sonoro Completo**
+- ✅ **Cada clique** tem som responsivo
+- ✅ **Cada acerto/erro** tem feedback único
+- ✅ **Cada jogo** tem sons específicos
+- ✅ **Efeitos visuais** sincronizados com áudio
+- ✅ **Loops ambiente** para imersão total
+
 ## 🚀 Quick Start
 
 ### 🎯 **Para Clientes**

@@ -69,7 +69,14 @@ namespace miniJogo.Services
         MatrixSound,
         PulseSound,
         Fireworks,
-        DemoMusic
+        DemoMusic,
+        BounceSound,
+        PowerDown,
+        
+        // Ambiente
+        MenuAmbient,
+        TensionBuild,
+        CalmLoop
     }
     
     public class AudioService
@@ -172,7 +179,14 @@ namespace miniJogo.Services
                 [AudioEvent.MatrixSound] = "Assets/Audio/Efeitos/matrix_sound.wav",
                 [AudioEvent.PulseSound] = "Assets/Audio/Efeitos/pulse_sound.wav",
                 [AudioEvent.Fireworks] = "Assets/Audio/Efeitos/fireworks.wav",
-                [AudioEvent.DemoMusic] = "Assets/Audio/Efeitos/demo_music.wav"
+                [AudioEvent.DemoMusic] = "Assets/Audio/Efeitos/demo_music.wav",
+                [AudioEvent.BounceSound] = "Assets/Audio/Efeitos/bounce_sound.wav",
+                [AudioEvent.PowerDown] = "Assets/Audio/Efeitos/power_down.wav",
+                
+                // Ambiente
+                [AudioEvent.MenuAmbient] = "Assets/Audio/Ambiente/menu_ambient.wav",
+                [AudioEvent.TensionBuild] = "Assets/Audio/Ambiente/tension_build.wav",
+                [AudioEvent.CalmLoop] = "Assets/Audio/Ambiente/calm_loop.wav"
             };
         }
         
