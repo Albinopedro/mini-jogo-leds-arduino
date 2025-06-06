@@ -399,9 +399,21 @@ namespace miniJogo.Views
 
         private Border CreateRankingItem(int position, string playerName, int score, int gameMode)
         {
+            // Use purple gradient background for all positions
+            var backgroundBrush = new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                GradientStops = new GradientStops
+                {
+                    new GradientStop(Color.FromRgb(94, 96, 206), 0),   // Purple
+                    new GradientStop(Color.FromRgb(116, 0, 184), 1)    // Darker Purple
+                }
+            };
+
             var border = new Border
             {
-                Background = new SolidColorBrush(Color.FromRgb(74, 85, 104)),
+                Background = backgroundBrush,
                 CornerRadius = new Avalonia.CornerRadius(8),
                 Padding = new Avalonia.Thickness(15)
             };
@@ -424,7 +436,8 @@ namespace miniJogo.Views
             {
                 Text = positionEmoji,
                 FontSize = 18,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Foreground = Brushes.White
             };
 
             // Player info
