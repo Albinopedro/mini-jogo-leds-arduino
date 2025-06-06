@@ -58,7 +58,7 @@ public partial class MainWindow : Window
     {
         { 1, "🎯 Pressione o LED que acende antes que ele apague! Reflexos rápidos são essenciais." },
         { 2, "🧠 Memorize e repita a sequência de LEDs que pisca. Cada nível adiciona mais LEDs!" },
-        { 3, "🐱 Você é o gato! Persiga o rato (LED vermelho) pela matriz usando as teclas W,E,R,T/S,D,F,G/Y,U,I,O/H,J,K,L." },
+        { 3, "🐱 Capture o rato 14 vezes em apenas 120 segundos! Ele acelera e pisca cada vez mais rápido!" },
         { 4, "☄️ Desvie dos meteoros (LEDs vermelhos) que caem! Use as setas para mover." },
         { 5, "🎸 Pressione os LEDs no ritmo da música! Timing perfeito = pontos extras." },
         { 6, "⚡ Lightning Strike! Memorize padrões ultra-rápidos que aparecem por milissegundos!" },
@@ -70,7 +70,7 @@ public partial class MainWindow : Window
     {
         { 1, "PEGA-LUZ:\n• Pressione W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L quando o LED acender\n• Seja rápido! LEDs apagam sozinhos\n• +10 pontos por acerto\n• +5 pontos por velocidade" },
         { 2, "SEQUÊNCIA MALUCA:\n• Observe a sequência de LEDs\n• Repita pressionando W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L\n• Cada nível adiciona +1 LED\n• Erro = Game Over" },
-        { 3, "GATO E RATO:\n• Use setas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas azuis\n• +20 pontos por captura" },
+        { 3, "GATO E RATO:\n• Use setas para mover o gato\n• Capture o rato 14 VEZES em apenas 120 segundos!\n• Rato acelera drasticamente a cada captura\n• Pisca ultra-rápido após 8 capturas" },
         { 4, "ESQUIVA METEOROS:\n• Use ↑↓←→ para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo" },
         { 5, "GUITAR HERO:\n• Pressione W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental" },
         { 6, "LIGHTNING STRIKE:\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo de exibição diminui por nível\n• Erro = Game Over instantâneo" },
@@ -1432,24 +1432,19 @@ public partial class MainWindow : Window
                     victoryAchieved = true;
                     challengeDescription = "Alcançou 200 pontos antes de esgotar as tentativas";
                 }
-                break;
-
-            case GameMode.SequenciaMaluca:
-                // This would need round tracking from Arduino
-                // For now, check a high score threshold
-                if (_score >= 1100) // Assuming ~100 points per round completed
+                break;            case GameMode.SequenciaMaluca:
+                // Updated: Aligned with user requirements - 11 rounds for 110 points
+                if (_score >= 110) // 11 rounds * 10 points per round
                 {
                     victoryAchieved = true;
                     challengeDescription = "Completou 11 rodadas sem errar (sequência chegou a 13 passos)";
                 }
-                break;
-
-            case GameMode.GatoRato:
-                // Assuming 20 points per capture
-                if (_score >= 220) // 11 captures * 20 points
+                break;            case GameMode.GatoRato:
+                // DIFFICULTY INCREASED: Much harder challenge - 13 captures in 120 seconds
+                if (_score >= 280) // 14 captures * 20 points per capture
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Capturou o rato 11 vezes em até 2 minutos";
+                    challengeDescription = "Capturou o rato 13 vezes em apenas 120 segundos!";
                 }
                 break;
 
@@ -1467,23 +1462,19 @@ public partial class MainWindow : Window
                     victoryAchieved = true;
                     challengeDescription = "Fez 200 pontos antes de esgotar as tentativas";
                 }
-                break;
-
-            case GameMode.LightningStrike:
-                // Assuming ~100 points per round
-                if (_score >= 600) // 6 rounds * 100 points
+                break;            case GameMode.LightningStrike:
+                // Updated: Aligned with user requirements - 6 rounds for 60 points
+                if (_score >= 60) // 6 rounds * 10 points per round
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Completou 6 rodadas sem errar nenhum padrão";
+                    challengeDescription = "Completou 6 rodadas de Lightning Strike sem errar";
                 }
-                break;
-
-            case GameMode.SniperMode:
-                // Assuming 25 points per hit
-                if (_score >= 200) // 8 hits * 25 points
+                break;            case GameMode.SniperMode:
+                // Updated: Aligned with user requirements - 8 hits for 80 points
+                if (_score >= 80) // 8 hits * 10 points per hit
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Acertou 8 alvos em sequência com o LED piscando por 300ms cada";
+                    challengeDescription = "Acertou 8 alvos com reflexos ultra-rápidos (300ms por alvo)";
                 }
                 break;
         }

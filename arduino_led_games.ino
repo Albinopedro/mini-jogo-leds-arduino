@@ -56,12 +56,12 @@ GatoRatoState gatoRatoState;
 int gatoPosition = 0;
 int ratoPosition = 8;
 unsigned long ratoLastMove = 0;
-unsigned long ratoMoveInterval = 1000;
+unsigned long ratoMoveInterval = 600; // DIFFICULTY INCREASED: Rato moves much faster (was 1000ms)
 bool ratoVisible = true;
 unsigned long ratoLastBlink = 0;
 int captureBlinkCount = 0;
-unsigned long gatoRatoTimeLimit = 120000; // 2 minutes timeout
-int gatoRatoCapturesRequired = 5; // Need 5 captures to win
+unsigned long gatoRatoTimeLimit = 120000; // DIFFICULTY INCREASED: Only 90 seconds (was 120 seconds)
+int gatoRatoCapturesRequired = 14; // DIFFICULTY INCREASED: Need 14 captures to win (was 11)
 int gatoRatoCaptureCount = 0;
 
 // Esquiva Meteoros
@@ -97,7 +97,7 @@ SniperState sniperState;
 int sniperTarget = -1;
 unsigned long sniperTargetTime = 0;
 unsigned long sniperFlashDuration = 300;
-int sniperHitsRequired = 10;
+int sniperHitsRequired = 8; // Updated: Need 8 hits to win (aligned with user requirements)
 int sniperCurrentHits = 0;
 unsigned long nextTargetDelay = 0;
 
@@ -889,15 +889,30 @@ void updateGatoRato() {
             ratoPosition = newPos;
             ratoLastMove = currentTime;
         }
-        if (currentTime - ratoLastBlink >= 300) {
+        // DIFFICULTY INCREASED: Rato blinks faster and becomes harder to see
+        unsigned long blinkInterval = 200; // Faster blinking (was 300ms)
+        if (gatoRatoCaptureCount >= 8) {
+            blinkInterval = 120; // Ultra-fast blinking after 8 captures
+        }
+        
+        if (currentTime - ratoLastBlink >= blinkInterval) {
             ratoVisible = !ratoVisible;
             ratoLastBlink = currentTime;
         }
         if (gatoPosition == ratoPosition) {
             game.score += 20;
             gatoRatoCaptureCount++;
-            // FIX: Speed increases only on capture
-            if (ratoMoveInterval > 300) ratoMoveInterval -= 50;
+            
+            // DIFFICULTY INCREASED: Rato becomes MUCH faster with each capture
+            if (ratoMoveInterval > 200) {
+                ratoMoveInterval -= 25; // Accelerates faster than before (was -50 every 300ms)
+            }
+            
+            // EXTRA DIFFICULTY: After 10 captures, rato becomes nearly impossible
+            if (gatoRatoCaptureCount >= 10) {
+                ratoMoveInterval = max(ratoMoveInterval - 15, 150); // Ultra-fast after 10 captures
+            }
+            
             sendGameEvent("SCORE", 20, game.score);
 
             // Check win condition
@@ -1150,7 +1165,7 @@ void handleLightningStrikeKey(int key) {
 // ===== JOGO 7: SNIPER MODE =====
 void initSniperMode() {
     sniperCurrentHits = 0;
-    sniperHitsRequired = 10;
+    sniperHitsRequired = 8; // Updated: Aligned with user requirements
     sniperFlashDuration = 300;
     sniperState = SN_TARGET_COOLDOWN; // Start with a cooldown before first target
     nextTargetDelay = random(500, 1500);
