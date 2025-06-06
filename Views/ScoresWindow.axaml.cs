@@ -42,6 +42,9 @@ namespace miniJogo.Views
             _allScores = new List<GameScore>();
             _allPlayers = new List<string>();
             
+            // Subscribe to score saved events for auto-refresh
+            _scoreService.ScoreSaved += OnScoreSaved;
+            
             // Configurar ListBox para virtualização
             PerformanceConfig.ConfigureOptimizedListBox(ScoresListBox, 1000);
             ScoresListBox.ItemsSource = _scoresCollection;
@@ -63,6 +66,10 @@ namespace miniJogo.Views
             {
                 // Mostrar indicador de carregamento
                 await ShowLoadingIndicator(true);
+                
+                // Carregar TODOS os dados primeiro para estatísticas
+                _allScores = await _scoreService.GetGameScoresAsync();
+                _allPlayers = _allScores.Select(s => s.PlayerName).Distinct().OrderBy(p => p).ToList();
                 
                 // Carregar dados de forma assíncrona usando o serviço virtualizado
                 await LoadVirtualizedDataAsync();
@@ -88,9 +95,9 @@ namespace miniJogo.Views
             }
         }
 
-        private void LoadDataSync()
+        private async void LoadDataSync()
         {
-            _allScores = _scoreService.GetGameScores();
+            _allScores = await _scoreService.GetGameScoresAsync();
             _allPlayers = _allScores.Select(s => s.PlayerName).Distinct().OrderBy(p => p).ToList();
             
             PopulatePlayerComboBox();
@@ -626,6 +633,10 @@ namespace miniJogo.Views
                 
                 await ShowLoadingIndicator(true);
                 
+                // Carregar TODOS os dados primeiro para estatísticas
+                _allScores = await _scoreService.GetGameScoresAsync();
+                _allPlayers = _allScores.Select(s => s.PlayerName).Distinct().OrderBy(p => p).ToList();
+                
                 // Forçar atualização dos dados
                 await _virtualizedDataService.RefreshDataAsync(_cancellationTokenSource.Token);
                 
@@ -675,9 +686,21 @@ namespace miniJogo.Views
                 // Operação cancelada
             }
         }
+
+        private void OnScoreSaved(object? sender, GameScore score)
+        {
+            // Auto-refresh when a new score is saved
+            Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
+            {
+                await RefreshAllDataAsync();
+            });
+        }
         
         protected override void OnClosed(EventArgs e)
         {
+            // Unsubscribe from events
+            _scoreService.ScoreSaved -= OnScoreSaved;
+            
             // Limpeza de recursos
             _cancellationTokenSource?.Cancel();
             _virtualizedDataService?.Dispose();

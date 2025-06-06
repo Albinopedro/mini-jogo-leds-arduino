@@ -382,16 +382,6 @@
                         />
                     </StackPanel>
 
-                    <!-- F11 Information -->
-                    <TextBlock
-                        DockPanel.Dock="Bottom"
-                        Text="Pressione F11 para alternar entre tela cheia e janela"
-                        FontSize="14"
-                        Foreground="#A0AEC0"
-                        HorizontalAlignment="Center"
-                        Margin="0,15,0,0"
-                    />
-
                     <!-- Game Content Grid -->
                     <Grid>
                         <Grid.ColumnDefinitions>

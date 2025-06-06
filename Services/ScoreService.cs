@@ -18,6 +18,8 @@ namespace miniJogo.Services
         private readonly SemaphoreSlim _semaphore = new(1, 1);
         private readonly object _lockObject = new();
 
+        public event EventHandler<GameScore>? ScoreSaved;
+
         public ScoreService()
         {
             var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "MiniJogo");
@@ -77,6 +79,9 @@ namespace miniJogo.Services
                 _gameScores.Add(score);
             }
             SaveGameScores();
+            
+            // Notify subscribers that a new score was saved
+            ScoreSaved?.Invoke(this, score);
         }
 
         public async Task<List<GameScore>> GetGameScoresAsync(string? gameMode = null, string? playerName = null)

@@ -35,6 +35,9 @@ namespace miniJogo.Views
             InitializeGameModeSelector();
             LoadRankings();
 
+            // Subscribe to score saved events to refresh rankings
+            _scoreService.ScoreSaved += OnScoreSaved;
+
             // Start in fullscreen
             WindowState = WindowState.FullScreen;
             _isFullScreen = true;
@@ -58,6 +61,9 @@ namespace miniJogo.Views
         {
             try
             {
+                // Unsubscribe from events
+                _scoreService.ScoreSaved -= OnScoreSaved;
+                
                 Console.WriteLine("🎵 LoginWindow fechando - parando música de fundo...");
                 await _audioService.StopBackgroundMusicAsync();
                 Console.WriteLine("🎵 Música de fundo parada!");
@@ -324,11 +330,11 @@ namespace miniJogo.Views
             };
         }
 
-        private void LoadRankings()
+        private async void LoadRankings()
         {
             try
             {
-                var allScores = _scoreService.GetAllScores();
+                var allScores = await _scoreService.GetGameScoresAsync();
                 var topScores = allScores
                     .OrderByDescending(s => s.Score)
                     .Take(10)
@@ -341,7 +347,8 @@ namespace miniJogo.Views
                     for (int i = 0; i < topScores.Count; i++)
                     {
                         var score = topScores[i];
-                        var rankBorder = CreateRankingItem(i + 1, score.PlayerName, score.Score, 1);
+                        var gameMode = GetGameModeFromString(score.GameMode);
+                        var rankBorder = CreateRankingItem(i + 1, score.PlayerName, score.Score, gameMode);
                         RankingsPanel.Children.Add(rankBorder);
                     }
                 }
@@ -479,6 +486,35 @@ namespace miniJogo.Views
                 7 => "🎯 Sniper Mode",
                 _ => "Desconhecido"
             };
+        }
+
+        private int GetGameModeFromString(string gameModeString)
+        {
+            return gameModeString switch
+            {
+                "Pega-Luz" => 1,
+                "Sequência Maluca" => 2,
+                "Gato e Rato" => 3,
+                "Esquiva Meteoros" => 4,
+                "Guitar Hero" => 5,
+                "Lightning Strike" => 6,
+                "Sniper Mode" => 7,
+                _ => 1
+            };
+        }
+
+        private void OnScoreSaved(object? sender, GameScore score)
+        {
+            // Update rankings on UI thread when a new score is saved
+            Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                LoadRankings();
+            });
+        }
+
+        public void RefreshRankings()
+        {
+            LoadRankings();
         }
 
         private void NameTextBox_KeyDown(object? sender, KeyEventArgs e)
