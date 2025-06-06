@@ -27,6 +27,10 @@ namespace miniJogo
 
         public void AddDebugMessage(string message, bool isDebug = false)
         {
+            // Use performance config to filter messages
+            if (!PerformanceConfig.ShouldLog(message, isDebug))
+                return;
+
             var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
             var prefix = isDebug ? "[DEBUG]" : "[INFO]";
             var formattedMessage = $"[{timestamp}]{prefix} {message}";
@@ -35,58 +39,87 @@ namespace miniJogo
             {
                 _debugMessages.Add(formattedMessage);
                 
-                // Manter apenas as últimas 500 mensagens para evitar uso excessivo de memória
-                if (_debugMessages.Count > 500)
+                // Use performance config for max messages limit
+                if (_debugMessages.Count > PerformanceConfig.MaxDebugMessages)
                 {
-                    _debugMessages.RemoveAt(0);
+                    // Remove multiple messages at once for better performance
+                    var removeCount = _debugMessages.Count - PerformanceConfig.MaxDebugMessages;
+                    _debugMessages.RemoveRange(0, removeCount);
                 }
             }
 
-            // Atualizar UI na thread principal
-            Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            // Only update UI if not in high performance mode or for critical messages
+            if (!PerformanceConfig.IsHighPerformanceMode() || message.Contains("ERRO") || message.Contains("CRITICAL"))
             {
-                UpdateDebugDisplay();
-                ScrollToBottom();
-            });
+                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    UpdateDebugDisplay();
+                    ScrollToBottom();
+                });
+            }
         }
 
         public void AddMessage(string message, bool isDebug = false)
         {
+            // Use performance config to filter messages
+            if (!PerformanceConfig.ShouldLog(message, isDebug))
+                return;
+
             lock (_messagesLock)
             {
                 _debugMessages.Add(message);
                 
-                // Manter apenas as últimas 500 mensagens para evitar uso excessivo de memória
-                if (_debugMessages.Count > 500)
+                // Use performance config for max messages limit
+                if (_debugMessages.Count > PerformanceConfig.MaxDebugMessages)
                 {
-                    _debugMessages.RemoveAt(0);
+                    var removeCount = _debugMessages.Count - PerformanceConfig.MaxDebugMessages;
+                    _debugMessages.RemoveRange(0, removeCount);
                 }
             }
 
-            // Atualizar UI na thread principal
-            Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            // Batch UI updates for better performance
+            if (!PerformanceConfig.IsHighPerformanceMode() || message.Contains("ERRO") || message.Contains("CRITICAL"))
             {
-                UpdateDebugDisplay();
-                ScrollToBottom();
-            });
+                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    UpdateDebugDisplay();
+                    ScrollToBottom();
+                });
+            }
         }
 
         private void UpdateDebugDisplay()
         {
             lock (_messagesLock)
             {
-                var sb = new StringBuilder();
-                foreach (var message in _debugMessages)
+                // Optimize string building for better performance
+                var sb = new StringBuilder(_debugMessages.Count * 50); // Pre-allocate capacity
+                
+                // Only show last messages if in high performance mode
+                var messagesToShow = PerformanceConfig.IsHighPerformanceMode() ? 
+                    Math.Min(_debugMessages.Count, 50) : _debugMessages.Count;
+                
+                var startIndex = Math.Max(0, _debugMessages.Count - messagesToShow);
+                
+                for (int i = startIndex; i < _debugMessages.Count; i++)
                 {
-                    sb.AppendLine(message);
+                    sb.AppendLine(_debugMessages[i]);
                 }
+                
                 DebugTextBlock.Text = sb.ToString();
             }
         }
 
         private void ScrollToBottom()
         {
-            DebugScrollViewer.ScrollToEnd();
+            try
+            {
+                DebugScrollViewer.ScrollToEnd();
+            }
+            catch
+            {
+                // Silent error handling for better performance
+            }
         }
 
         private void ClearButton_Click(object? sender, RoutedEventArgs e)
@@ -106,13 +139,16 @@ namespace miniJogo
                 var fileName = $"debug_log_{timestamp}.txt";
                 var filePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), fileName);
 
+                string content;
                 lock (_messagesLock)
                 {
-                    var content = string.Join(Environment.NewLine, _debugMessages);
-                    File.WriteAllText(filePath, content);
+                    content = string.Join(Environment.NewLine, _debugMessages);
                 }
 
-                // Mostrar confirmação
+                // Write file asynchronously for better performance
+                await File.WriteAllTextAsync(filePath, content);
+
+                // Simplified confirmation dialog for better performance
                 var dialog = new Window()
                 {
                     Title = "Log Salvo",
@@ -162,8 +198,11 @@ namespace miniJogo
             }
             catch (Exception ex)
             {
-                // Em caso de erro, mostrar no próprio console de debug
-                AddDebugMessage($"Erro ao salvar log: {ex.Message}", true);
+                // Only show critical errors
+                if (PerformanceConfig.ShouldLog(ex.Message, false))
+                {
+                    AddDebugMessage($"Erro ao salvar log: {ex.Message}", true);
+                }
             }
         }
 
@@ -176,18 +215,44 @@ namespace miniJogo
             }
             catch (Exception ex)
             {
-                AddMessage($"❌ Erro ao atualizar informações: {ex.Message}", false);
+                if (PerformanceConfig.ShouldLog(ex.Message, false))
+                {
+                    AddMessage($"❌ Erro ao atualizar informações: {ex.Message}", false);
+                }
             }
         }
 
         private void CloseButton_Click(object? sender, RoutedEventArgs e)
         {
-            Hide(); // Usar Hide() ao invés de Close() para poder reabrir a janela
+            Hide(); // Use Hide() instead of Close() to be able to reopen the window
         }
 
         protected override void OnClosed(EventArgs e)
         {
-            // Não fazer nada no close - deixar a janela principal gerenciar
+            // Let the main window manage closing
+        }
+
+        /// <summary>
+        /// Force update display for critical messages
+        /// </summary>
+        public void ForceUpdate()
+        {
+            Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                UpdateDebugDisplay();
+                ScrollToBottom();
+            });
+        }
+
+        /// <summary>
+        /// Get current message count for monitoring
+        /// </summary>
+        public int GetMessageCount()
+        {
+            lock (_messagesLock)
+            {
+                return _debugMessages.Count;
+            }
         }
     }
 }

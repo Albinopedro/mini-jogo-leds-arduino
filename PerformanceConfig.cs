@@ -1,290 +1,164 @@
 using System;
-using System.Collections.Generic;
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Threading;
-using Avalonia.Media;
-using Avalonia.Controls.Primitives;
 
 namespace miniJogo
 {
     /// <summary>
-    /// Configurações globais de performance para o Mini Jogo LEDs
-    /// Implementa otimizações baseadas nas melhores práticas do Avalonia
+    /// Configurações de performance otimizadas para melhor responsividade
     /// </summary>
     public static class PerformanceConfig
     {
-        private static readonly Dictionary<string, StreamGeometry> _geometryCache = new();
-        private static DateTime _lastMemoryCleanup = DateTime.Now;
-        private const int MEMORY_CLEANUP_INTERVAL_MINUTES = 5;
-        private const int MAX_GEOMETRY_CACHE_SIZE = 100;
-
+        // ===== CONFIGURAÇÕES DE COMUNICAÇÃO SERIAL =====
+        
         /// <summary>
-        /// Configura otimizações globais de performance da aplicação
+        /// Timeout reduzido para leitura serial (ms)
         /// </summary>
-        public static void Configure()
-        {
-            // Configurar Compiled Bindings como padrão
-            ConfigureCompiledBindings();
-
-            // Configurar virtualização para listas
-            ConfigureVirtualization();
-
-            // Configurar renderização otimizada
-            ConfigureRenderingOptimizations();
-
-            // Configurar threading otimizado
-            ConfigureThreadingOptimizations();
-
-            // Configurar otimizações de geometria
-            ConfigureGeometryOptimizations();
-
-            // Configurar limpeza automática de memória
-            ConfigureMemoryManagement();
-        }
-
-        private static void ConfigureCompiledBindings()
-        {
-            // Habilitar compiled bindings por padrão para melhor performance
-            Application.Current?.Resources.Add("UseCompiledBindings", true);
-        }
-
-        private static void ConfigureVirtualization()
-        {
-            // Configurar virtualização padrão para controles de lista
-            Application.Current?.Resources.Add("EnableVirtualization", true);
-        }
-
-        private static void ConfigureRenderingOptimizations()
-        {
-            // Configurar otimizações de renderização
-            try
-            {
-                // Configurar cache de geometrias para melhor performance
-                Application.Current?.Resources.Add("UseGeometryCache", true);
-
-                // Configurar limites de FPS para economizar recursos
-                Application.Current?.Resources.Add("MaxFrameRate", 60);
-
-                // Habilitar hardware acceleration quando disponível
-                Application.Current?.Resources.Add("UseHardwareAcceleration", true);
-
-                // Otimizar renderização de texto
-                Application.Current?.Resources.Add("TextFormattingMode", "Ideal");
-
-                // Configurar qualidade de renderização otimizada
-                Application.Current?.Resources.Add("RenderingTier", 2);
-
-                // Reduzir overhead de layout passes
-                Application.Current?.Resources.Add("LayoutRounding", true);
-            }
-            catch (Exception ex)
-            {
-                // Log em caso de erro, mas não interromper a aplicação
-                System.Diagnostics.Debug.WriteLine($"Erro ao configurar otimizações de renderização: {ex.Message}");
-            }
-        }
-
-        private static void ConfigureThreadingOptimizations()
-        {
-            // Configurar prioridade de thread UI
-            Dispatcher.UIThread.VerifyAccess();
-        }
-
+        public const int SerialReadTimeout = 300;
+        
         /// <summary>
-        /// Configurações específicas para controles de dados grandes
+        /// Timeout reduzido para escrita serial (ms)
         /// </summary>
-        public static void ConfigureDataControls(Control control)
-        {
-            if (control is ListBox listBox)
-            {
-                // Configurar scroll suave para melhor UX
-                ScrollViewer.SetHorizontalScrollBarVisibility(listBox, ScrollBarVisibility.Auto);
-                ScrollViewer.SetVerticalScrollBarVisibility(listBox, ScrollBarVisibility.Auto);
-            }
-            else if (control is DataGrid dataGrid)
-            {
-                // Para DataGrid, usar configurações específicas de performance
-                dataGrid.CanUserReorderColumns = false;
-                dataGrid.CanUserResizeColumns = true;
-                dataGrid.CanUserSortColumns = true;
-                dataGrid.IsReadOnly = true; // Para melhor performance se não precisar de edição
-            }
-        }
-
+        public const int SerialWriteTimeout = 300;
+        
         /// <summary>
-        /// Otimizações para reduzir uso de memória
+        /// Tempo de espera para inicialização do Arduino (ms)
         /// </summary>
-        public static void OptimizeMemoryUsage()
-        {
-            // Forçar garbage collection quando apropriado
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-        }
-
+        public const int ArduinoInitDelay = 800;
+        
         /// <summary>
-        /// Configurações para melhor responsividade da UI
+        /// Intervalo mínimo entre comandos seriais (ms)
         /// </summary>
-        public static void ConfigureUIResponsiveness()
+        public const int MinCommandInterval = 50;
+
+        // ===== CONFIGURAÇÕES DE DEBUG =====
+        
+        /// <summary>
+        /// Habilita apenas logs críticos (erros e game over)
+        /// </summary>
+        public const bool EnableCriticalLogsOnly = true;
+        
+        /// <summary>
+        /// Habilita logs de debug detalhados (desabilitado para performance)
+        /// </summary>
+        public const bool EnableVerboseLogging = false;
+        
+        /// <summary>
+        /// Habilita logs de comunicação serial (desabilitado para performance)
+        /// </summary>
+        public const bool EnableSerialLogging = false;
+
+        // ===== CONFIGURAÇÕES DE UI =====
+        
+        /// <summary>
+        /// Intervalo de atualização da UI (ms)
+        /// </summary>
+        public const int UIUpdateInterval = 100;
+        
+        /// <summary>
+        /// Intervalo reduzido para timer de status (ms)
+        /// </summary>
+        public const int StatusTimerInterval = 500;
+        
+        /// <summary>
+        /// Máximo de mensagens de debug na janela de debug
+        /// </summary>
+        public const int MaxDebugMessages = 100;
+
+        // ===== CONFIGURAÇÕES DE JOGO =====
+        
+        /// <summary>
+        /// Timeout para highlights de LED (ms)
+        /// </summary>
+        public const int LedHighlightTimeout = 300;
+        
+        /// <summary>
+        /// Intervalo para limpeza automática de timers (ms)
+        /// </summary>
+        public const int TimerCleanupInterval = 5000;
+        
+        /// <summary>
+        /// Máximo de timers de LED simultâneos
+        /// </summary>
+        public const int MaxLedTimers = 16;
+
+        // ===== CONFIGURAÇÕES DE AUDIO =====
+        
+        /// <summary>
+        /// Habilita reprodução de áudio otimizada
+        /// </summary>
+        public const bool EnableOptimizedAudio = true;
+        
+        /// <summary>
+        /// Timeout para carregamento de arquivos de áudio (ms)
+        /// </summary>
+        public const int AudioLoadTimeout = 2000;
+
+        // ===== MÉTODOS UTILITÁRIOS =====
+        
+        /// <summary>
+        /// Verifica se uma mensagem deve ser logada baseada nas configurações de performance
+        /// </summary>
+        /// <param name="message">Mensagem a ser verificada</param>
+        /// <param name="isDebug">Se é uma mensagem de debug</param>
+        /// <returns>True se deve ser logada</returns>
+        public static bool ShouldLog(string message, bool isDebug = false)
         {
-            // Configurar timeout para operações UI
-            Application.Current?.Resources.Add("UIOperationTimeout", TimeSpan.FromSeconds(5));
+            if (!EnableVerboseLogging && isDebug)
+                return false;
+                
+            if (EnableCriticalLogsOnly)
+            {
+                return message.Contains("ERRO") || 
+                       message.Contains("ERROR") || 
+                       message.Contains("GAME_OVER") ||
+                       message.Contains("CRITICAL") ||
+                       message.Contains("EXCEPTION");
+            }
             
-            // Configurar batch size para operações em lote
-            Application.Current?.Resources.Add("BatchSize", 100);
+            return !EnableCriticalLogsOnly;
         }
-
+        
         /// <summary>
-        /// Configurações de otimização de geometria - usa StreamGeometry ao invés de PathGeometry
+        /// Verifica se logs de comunicação serial devem ser habilitados
         /// </summary>
-        private static void ConfigureGeometryOptimizations()
+        /// <returns>True se deve logar comunicação serial</returns>
+        public static bool ShouldLogSerial()
         {
-            // Configurar cache de geometrias
-            Application.Current?.Resources.Add("GeometryCacheEnabled", true);
-            Application.Current?.Resources.Add("MaxGeometryCacheSize", MAX_GEOMETRY_CACHE_SIZE);
+            return EnableSerialLogging && !EnableCriticalLogsOnly;
         }
-
+        
         /// <summary>
-        /// Configurar gerenciamento automático de memória
+        /// Obtém o delay otimizado baseado no tipo de operação
         /// </summary>
-        private static void ConfigureMemoryManagement()
+        /// <param name="operationType">Tipo de operação</param>
+        /// <returns>Delay em milissegundos</returns>
+        public static int GetOptimizedDelay(string operationType)
         {
-            // Configurar timer para limpeza periódica de memória
-            var memoryTimer = new DispatcherTimer
+            return operationType.ToLower() switch
             {
-                Interval = TimeSpan.FromMinutes(MEMORY_CLEANUP_INTERVAL_MINUTES)
+                "led_highlight" => LedHighlightTimeout,
+                "arduino_init" => ArduinoInitDelay,
+                "command_interval" => MinCommandInterval,
+                "ui_update" => UIUpdateInterval,
+                _ => 100
             };
-
-            memoryTimer.Tick += (s, e) => PerformMemoryCleanup();
-            memoryTimer.Start();
         }
-
+        
         /// <summary>
-        /// Obtém uma StreamGeometry do cache ou cria uma nova
+        /// Configurações para modo de alta performance (menos logs, timeouts menores)
         /// </summary>
-        public static StreamGeometry GetCachedStreamGeometry(string key, Func<StreamGeometry> factory)
+        public static void EnableHighPerformanceMode()
         {
-            if (_geometryCache.TryGetValue(key, out var cached))
-            {
-                return cached;
-            }
-
-            // Limitar tamanho do cache
-            if (_geometryCache.Count >= MAX_GEOMETRY_CACHE_SIZE)
-            {
-                _geometryCache.Clear();
-            }
-
-            var geometry = factory();
-            _geometryCache[key] = geometry;
-            return geometry;
+            // Esta configuração é aplicada estaticamente via constantes
+            // Em uma implementação mais avançada, poderia usar propriedades dinâmicas
         }
-
+        
         /// <summary>
-        /// Otimiza um TextBlock removendo a necessidade de Run
+        /// Verifica se o sistema está em modo de alta performance
         /// </summary>
-        public static void OptimizeTextBlock(TextBlock textBlock, string text, FontWeight? fontWeight = null, Brush? foreground = null)
+        /// <returns>True se está em modo de alta performance</returns>
+        public static bool IsHighPerformanceMode()
         {
-            textBlock.Text = text;
-
-            if (fontWeight.HasValue)
-                textBlock.FontWeight = fontWeight.Value;
-
-            if (foreground != null)
-                textBlock.Foreground = foreground;
-        }
-
-        /// <summary>
-        /// Configura uma ListBox para uso otimizado com dados grandes
-        /// </summary>
-        public static void ConfigureOptimizedListBox(ListBox listBox, int estimatedItemCount = 1000)
-        {
-            // Configurar scroll otimizado
-            ScrollViewer.SetVerticalScrollBarVisibility(listBox, ScrollBarVisibility.Auto);
-            ScrollViewer.SetHorizontalScrollBarVisibility(listBox, ScrollBarVisibility.Disabled);
-            
-            // Otimizações básicas para performance
-            if (estimatedItemCount > 500)
-            {
-                // Configurações específicas para listas muito grandes
-                listBox.Background = Brushes.Transparent;
-            }
-        }
-
-        /// <summary>
-        /// Executa limpeza de memória e cache
-        /// </summary>
-        private static void PerformMemoryCleanup()
-        {
-            try
-            {
-                // Limpar cache de geometrias se muito tempo passou
-                if ((DateTime.Now - _lastMemoryCleanup).TotalMinutes > MEMORY_CLEANUP_INTERVAL_MINUTES)
-                {
-                    _geometryCache.Clear();
-                    _lastMemoryCleanup = DateTime.Now;
-                }
-
-                // Forçar garbage collection se necessário
-                var beforeMemory = GC.GetTotalMemory(false);
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
-                GC.Collect();
-
-                var afterMemory = GC.GetTotalMemory(false);
-                var freed = beforeMemory - afterMemory;
-
-                if (freed > 1024 * 1024) // Mais de 1MB liberado
-                {
-                    System.Diagnostics.Debug.WriteLine($"Memory cleanup freed {freed / 1024 / 1024}MB");
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Erro na limpeza de memória: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Validar e reportar problemas de performance
-        /// </summary>
-        public static void ValidatePerformance()
-        {
-            var startTime = DateTime.Now;
-
-            // Simular operação para testar responsividade
-            Dispatcher.UIThread.InvokeAsync(() =>
-            {
-                var elapsed = DateTime.Now - startTime;
-                if (elapsed.TotalMilliseconds > 100)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Performance warning: UI operation took {elapsed.TotalMilliseconds}ms");
-                }
-            });
-        }
-
-        /// <summary>
-        /// Monitora performance da aplicação
-        /// </summary>
-        public static void StartPerformanceMonitoring()
-        {
-            var timer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(30)
-            };
-
-            timer.Tick += (s, e) =>
-            {
-                var memoryUsage = GC.GetTotalMemory(false);
-                var gen0Collections = GC.CollectionCount(0);
-                var gen1Collections = GC.CollectionCount(1);
-                var gen2Collections = GC.CollectionCount(2);
-
-                System.Diagnostics.Debug.WriteLine($"Performance Monitor - Memory: {memoryUsage / 1024 / 1024}MB, GC: G0={gen0Collections}, G1={gen1Collections}, G2={gen2Collections}");
-            };
-
-            timer.Start();
+            return EnableCriticalLogsOnly && !EnableVerboseLogging;
         }
     }
 }

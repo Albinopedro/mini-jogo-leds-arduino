@@ -45,12 +45,8 @@ namespace miniJogo.Views
             // Subscribe to score saved events for auto-refresh
             _scoreService.ScoreSaved += OnScoreSaved;
             
-            // Configurar ListBox para virtualização
-            PerformanceConfig.ConfigureOptimizedListBox(ScoresListBox, 1000);
+            // Configure ListBox with optimized settings
             ScoresListBox.ItemsSource = _scoresCollection;
-            
-            // Aplicar configurações de performance
-            PerformanceConfig.ConfigureDataControls(this);
             
             // Carregar dados assincronamente
             _ = LoadDataAsync();

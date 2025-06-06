@@ -45,8 +45,8 @@ namespace miniJogo.Services
 
                     _serialPort = new SerialPort(portName, baudRate)
                     {
-                        ReadTimeout = 1000,
-                        WriteTimeout = 1000
+                        ReadTimeout = 500,
+                        WriteTimeout = 500
                     };
 
                     _serialPort.DataReceived += SerialPort_DataReceived;
@@ -54,8 +54,8 @@ namespace miniJogo.Services
                     _isConnected = true;
                 }
 
-                // Wait for Arduino to initialize
-                await Task.Delay(2000);
+                // Reduced wait time for faster connection
+                await Task.Delay(1000);
 
                 ConnectionChanged?.Invoke(this, true);
                 return true;
@@ -83,9 +83,9 @@ namespace miniJogo.Services
                     _serialPort?.Dispose();
                     _serialPort = null;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error disconnecting Arduino: {ex.Message}");
+                    // Silent error handling for better performance
                 }
                 finally
                 {
@@ -102,7 +102,6 @@ namespace miniJogo.Services
                 {
                     lock (_lockObject)
                     {
-                        // Check connection status inside the lock to prevent race conditions
                         if (!_isConnected || _serialPort?.IsOpen != true)
                         {
                             throw new InvalidOperationException("Arduino not connected");
@@ -112,9 +111,8 @@ namespace miniJogo.Services
                 });
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error sending command '{command}': {ex.Message}");
                 return false;
             }
         }
@@ -161,9 +159,9 @@ namespace miniJogo.Services
                     MessageReceived?.Invoke(this, new ArduinoMessageEventArgs(message));
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error reading from Arduino: {ex.Message}");
+                // Silent error handling for better responsiveness
             }
         }
 
@@ -175,38 +173,45 @@ namespace miniJogo.Services
                 Timestamp = DateTime.Now
             };
 
-            if (rawMessage.StartsWith("STATUS:"))
+            try
             {
-                message.Type = ArduinoMessageType.Status;
-                var parts = rawMessage.Substring(7).Split(',');
-                if (parts.Length >= 4)
+                if (rawMessage.StartsWith("STATUS:"))
                 {
-                    message.Data["currentMode"] = int.Parse(parts[0]);
-                    message.Data["gameActive"] = parts[1] == "1";
-                    message.Data["score"] = int.Parse(parts[2]);
-                    message.Data["level"] = int.Parse(parts[3]);
+                    message.Type = ArduinoMessageType.Status;
+                    var parts = rawMessage.Substring(7).Split(',');
+                    if (parts.Length >= 4)
+                    {
+                        if (int.TryParse(parts[0], out int mode)) message.Data["currentMode"] = mode;
+                        message.Data["gameActive"] = parts[1] == "1";
+                        if (int.TryParse(parts[2], out int score)) message.Data["score"] = score;
+                        if (int.TryParse(parts[3], out int level)) message.Data["level"] = level;
+                    }
+                }
+                else if (rawMessage.StartsWith("EVENT:"))
+                {
+                    message.Type = ArduinoMessageType.Event;
+                    var eventData = rawMessage.Substring(6);
+                    var parts = eventData.Split(',');
+                    
+                    message.Data["eventType"] = parts[0];
+                    for (int i = 1; i < parts.Length; i++)
+                    {
+                        if (int.TryParse(parts[i], out int intValue))
+                            message.Data[$"value{i-1}"] = intValue;
+                        else
+                            message.Data[$"value{i-1}"] = parts[i];
+                    }
+                }
+                else if (rawMessage == "ARDUINO_READY")
+                {
+                    message.Type = ArduinoMessageType.Ready;
+                }
+                else
+                {
+                    message.Type = ArduinoMessageType.Unknown;
                 }
             }
-            else if (rawMessage.StartsWith("EVENT:"))
-            {
-                message.Type = ArduinoMessageType.Event;
-                var eventData = rawMessage.Substring(6);
-                var parts = eventData.Split(',');
-                
-                message.Data["eventType"] = parts[0];
-                for (int i = 1; i < parts.Length; i++)
-                {
-                    if (int.TryParse(parts[i], out int intValue))
-                        message.Data[$"value{i-1}"] = intValue;
-                    else
-                        message.Data[$"value{i-1}"] = parts[i];
-                }
-            }
-            else if (rawMessage == "ARDUINO_READY")
-            {
-                message.Type = ArduinoMessageType.Ready;
-            }
-            else
+            catch (Exception)
             {
                 message.Type = ArduinoMessageType.Unknown;
             }

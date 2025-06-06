@@ -33,65 +33,36 @@ namespace miniJogo.Services
                 _isGameRunning = true;
                 _currentScore = 0;
                 _currentLevel = 1;
-                
-                System.Diagnostics.Debug.WriteLine($"Game started with mode: {gameMode}");
-                
-                // Initialize game based on mode
+
                 InitializeGameMode(gameMode);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error starting game: {ex.Message}");
                 _isGameRunning = false;
             }
         }
 
         public void StopGame()
         {
-            try
-            {
-                _isGameRunning = false;
-                System.Diagnostics.Debug.WriteLine("Game stopped");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error stopping game: {ex.Message}");
-            }
+            _isGameRunning = false;
         }
 
         public void PauseGame()
         {
-            try
-            {
-                _isGameRunning = false;
-                System.Diagnostics.Debug.WriteLine("Game paused");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error pausing game: {ex.Message}");
-            }
+            _isGameRunning = false;
         }
 
         public void ResumeGame()
         {
-            try
-            {
-                _isGameRunning = true;
-                System.Diagnostics.Debug.WriteLine("Game resumed");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error resuming game: {ex.Message}");
-            }
+            _isGameRunning = true;
         }
 
         public void UpdateGame()
         {
+            if (!_isGameRunning) return;
+
             try
             {
-                if (!_isGameRunning) return;
-
-                // Update game logic based on current mode
                 switch (_currentGameMode)
                 {
                     case GameMode.PegaLuz:
@@ -109,29 +80,23 @@ namespace miniJogo.Services
                     case GameMode.GuitarHero:
                         UpdateGuitarHero();
                         break;
-
                     case GameMode.LightningStrike:
                         UpdateLightningStrike();
                         break;
-                    default:
-                        break;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error updating game: {ex.Message}");
+                // Silent error handling to avoid performance impact
             }
         }
 
         public void HandleInput(string input)
         {
+            if (!_isGameRunning) return;
+
             try
             {
-                if (!_isGameRunning) return;
-
-                System.Diagnostics.Debug.WriteLine($"Handling input: {input}");
-                
-                // Process input based on current game mode
                 switch (_currentGameMode)
                 {
                     case GameMode.PegaLuz:
@@ -146,150 +111,74 @@ namespace miniJogo.Services
                     case GameMode.EsquivaMeteoros:
                         HandleEsquivaMeterosInput(input);
                         break;
+
                     case GameMode.GuitarHero:
                         HandleGuitarHeroInput(input);
                         break;
-
                     case GameMode.LightningStrike:
                         HandleLightningStrikeInput(input);
                         break;
-                    default:
-                        break;
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                System.Diagnostics.Debug.WriteLine($"Error handling input: {ex.Message}");
+                // Silent error handling
             }
         }
 
         public void HandleKeyUp(string key)
         {
-            try
-            {
-                if (!_isGameRunning) return;
-                
-                System.Diagnostics.Debug.WriteLine($"Key up: {key}");
-                // Handle key up events if needed for specific games
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error handling key up: {ex.Message}");
-            }
+            if (!_isGameRunning) return;
+            // Handle key up events if needed for specific games
         }
 
         private void InitializeGameMode(GameMode gameMode)
         {
-            System.Diagnostics.Debug.WriteLine($"Initializing game mode: {gameMode}");
-            
             // Initialize specific game mode settings
             switch (gameMode)
             {
                 case GameMode.PegaLuz:
-                    // Initialize Pega Luz game
-                    break;
                 case GameMode.SequenciaMaluca:
-                    // Initialize Sequencia Maluca game
-                    break;
                 case GameMode.GatoRato:
-                    // Initialize Gato Rato game
-                    break;
                 case GameMode.EsquivaMeteoros:
-                    // Initialize Esquiva Meteoros game
-                    break;
                 case GameMode.GuitarHero:
-                    // Initialize Guitar Hero game
-                    break;
-
                 case GameMode.LightningStrike:
-                    // Initialize Lightning Strike game
-                    break;
-                default:
-                    System.Diagnostics.Debug.WriteLine($"Unknown game mode: {gameMode}");
+                    // Game initialization handled by Arduino
                     break;
             }
         }
 
-        // Game-specific update methods
-        private void UpdatePegaLuz()
-        {
-            // Update Pega Luz game logic
-        }
+        // Game-specific update methods - optimized for performance
+        private void UpdatePegaLuz() { }
+        private void UpdateSequenciaMaluca() { }
+        private void UpdateGatoRato() { }
+        private void UpdateEsquivaMeteoros() { }
+        private void UpdateGuitarHero() { }
+        private void UpdateLightningStrike() { }
 
-        private void UpdateSequenciaMaluca()
-        {
-            // Update Sequencia Maluca game logic
-        }
-
-        private void UpdateGatoRato()
-        {
-            // Update Gato Rato game logic
-        }
-
-        private void UpdateEsquivaMeteoros()
-        {
-            // Update Esquiva Meteoros game logic
-        }
-
-        private void UpdateGuitarHero()
-        {
-            // Update Guitar Hero game logic
-        }
-
-
-
-        private void UpdateLightningStrike()
-        {
-            // Update Lightning Strike game logic
-        }
-
-        // Game-specific input handlers
+        // Game-specific input handlers - optimized for performance
         private void HandlePegaLuzInput(string input)
         {
-            // Handle Pega Luz input
             if (input == "space")
             {
                 _currentScore += 10;
             }
         }
 
-        private void HandleSequenciaMalucaInput(string input)
-        {
-            // Handle Sequencia Maluca input
-        }
-
-        private void HandleGatoRatoInput(string input)
-        {
-            // Handle Gato Rato input
-        }
-
-        private void HandleEsquivaMeterosInput(string input)
-        {
-            // Handle Esquiva Meteoros input
-        }
-
-        private void HandleGuitarHeroInput(string input)
-        {
-            // Handle Guitar Hero input
-        }
-
-
-
-        private void HandleLightningStrikeInput(string input)
-        {
-            // Handle Lightning Strike input
-        }
+        private void HandleSequenciaMalucaInput(string input) { }
+        private void HandleGatoRatoInput(string input) { }
+        private void HandleEsquivaMeterosInput(string input) { }
+        private void HandleGuitarHeroInput(string input) { }
+        private void HandleLightningStrikeInput(string input) { }
 
         public void AddScore(int points)
         {
             _currentScore += points;
-            System.Diagnostics.Debug.WriteLine($"Score updated: {_currentScore}");
         }
 
         public void NextLevel()
         {
             _currentLevel++;
-            System.Diagnostics.Debug.WriteLine($"Level up: {_currentLevel}");
         }
 
         public void ResetGame()
@@ -297,26 +186,14 @@ namespace miniJogo.Services
             _currentScore = 0;
             _currentLevel = 1;
             _isGameRunning = false;
-            System.Diagnostics.Debug.WriteLine("Game reset");
         }
 
         public void Dispose()
         {
             if (!_disposed)
             {
-                try
-                {
-                    StopGame();
-                    System.Diagnostics.Debug.WriteLine("GameService disposed");
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error disposing GameService: {ex.Message}");
-                }
-                finally
-                {
-                    _disposed = true;
-                }
+                StopGame();
+                _disposed = true;
             }
         }
     }

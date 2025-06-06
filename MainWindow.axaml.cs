@@ -276,7 +276,7 @@ public partial class MainWindow : Window
         PopulateGameModeComboBox();
         GameModeComboBox.SelectedIndex = selectedGameMode - 1;
 
-        AddDebugMessage($"Jogo selecionado configurado: {GetGameName(selectedGameMode)} (ID: {selectedGameMode})");
+        // Game configured silently for performance
 
         // Configure UI based on user type
         if (_isClientMode)
@@ -305,7 +305,7 @@ public partial class MainWindow : Window
 
             // Show clear message about single game session
             var selectedGameName = GetGameName(_currentGameMode);
-            AddDebugMessage($"Cliente {_currentUser?.Name} iniciará sessão de jogo único: {selectedGameName}");
+            // Client session configured silently for performance
         }
         else
         {
@@ -334,7 +334,6 @@ public partial class MainWindow : Window
         {
             if (_isClosing || _disposed)
             {
-                AddDebugMessage("[LOGOUT] Logout já em andamento, ignorando nova tentativa");
                 return;
             }
         }
@@ -359,18 +358,16 @@ public partial class MainWindow : Window
             {
                 if (_isClosing || _disposed)
                 {
-                    AddDebugMessage("[LOGOUT] Logout já em andamento, ignorando confirmação");
                     return;
                 }
                 _isClosing = true;
             }
 
-            AddDebugMessage($"[LOGOUT] {(_isClientMode ? "Cliente" : "Administrador")} {_currentUser?.Name ?? "Usuário"} fazendo logout");
+            // Logout processed silently for performance
 
             // End client session if in client mode
             if (_isClientMode && _currentUser != null)
             {
-                AddDebugMessage($"[LOGOUT] Encerrando sessão do cliente {_currentUser.Name}");
                 _sessionService.EndSession(_currentUser.Id);
             }
 
@@ -381,11 +378,10 @@ public partial class MainWindow : Window
                 {
                     _serialPort.Close();
                     _serialPort = null;
-                    AddDebugMessage("[LOGOUT] Arduino desconectado");
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    AddDebugMessage($"[LOGOUT] Erro ao desconectar Arduino: {ex.Message}");
+                    // Silent error handling
                 }
             }
 
@@ -394,7 +390,7 @@ public partial class MainWindow : Window
         }
         else
         {
-            AddDebugMessage($"[LOGOUT] Logout cancelado pelo {(_isClientMode ? "cliente" : "administrador")}");
+            // Logout cancelled silently
         }
     }
 
@@ -402,9 +398,6 @@ public partial class MainWindow : Window
     {
         try
         {
-            AddDebugMessage("[LOGOUT] ⚠️ ReturnToLoginSafely chamado - iniciando retorno seguro ao login");
-            System.Diagnostics.Debug.WriteLine("[LOGOUT] ⚠️ ReturnToLoginSafely chamado");
-
             // Set closing flag to prevent other operations
             lock (_closingLock)
             {
@@ -420,35 +413,26 @@ public partial class MainWindow : Window
             // Just close this window - App.axaml.cs will handle showing login
             await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                AddDebugMessage("[LOGOUT] 🚪 Fechando MainWindow via ReturnToLoginSafely");
-                System.Diagnostics.Debug.WriteLine("[LOGOUT] 🚪 Fechando MainWindow via ReturnToLoginSafely");
-
                 try
                 {
                     Close();
-                    AddDebugMessage("[LOGOUT] ✅ MainWindow fechado - App.axaml.cs irá mostrar login");
                 }
-                catch (Exception closeEx)
+                catch (Exception)
                 {
-                    AddDebugMessage($"[LOGOUT] ❌ Erro ao fechar window: {closeEx.Message}");
-                    System.Diagnostics.Debug.WriteLine($"[LOGOUT] ❌ Erro ao fechar window: {closeEx.Message}");
+                    // Silent error handling
                 }
             });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            AddDebugMessage($"[LOGOUT] ❌ Erro no retorno seguro ao login: {ex.Message}");
-            System.Diagnostics.Debug.WriteLine($"[LOGOUT] ❌ Erro no retorno seguro ao login: {ex.Message}");
-
             // Fallback: still try to close the window
             try
             {
                 await Dispatcher.UIThread.InvokeAsync(() => Close());
             }
-            catch (Exception fallbackEx)
+            catch (Exception)
             {
-                AddDebugMessage($"[LOGOUT] 💥 Erro crítico no fallback: {fallbackEx.Message}");
-                System.Diagnostics.Debug.WriteLine($"[LOGOUT] 💥 Erro crítico no fallback: {fallbackEx.Message}");
+                // Silent error handling
             }
         }
     }
@@ -475,13 +459,11 @@ public partial class MainWindow : Window
                 authService.SaveCodesToFile(codes, fileName);
 
                 await ShowMessage("Códigos Gerados", $"✅ {codes.Count} códigos gerados com sucesso!\n\nArquivo salvo: {fileName}\n\nOs códigos estão prontos para impressão e corte em bilhetes.");
-                AddDebugMessage($"Admin gerou {codes.Count} códigos de cliente. Arquivo: {fileName}");
             }
         }
         catch (Exception ex)
         {
             await ShowMessage("Erro", $"Erro ao gerar códigos: {ex.Message}");
-            AddDebugMessage($"Erro na geração de códigos: {ex.Message}");
         }
     }
 
@@ -597,13 +579,11 @@ public partial class MainWindow : Window
                             ConnectionBorder.Background = new SolidColorBrush(Color.FromRgb(56, 161, 105));
                             StartGameButton.IsEnabled = true;
                             StatusText.Text = $"✅ Arduino conectado automaticamente na porta {port}. Jogo selecionado: {GetGameName(_currentGameMode)}";
-                            AddDebugMessage($"Arduino conectado automaticamente na porta {port}");
 
                             // Confirm game mode is locked for clients after successful connection
                             if (_isClientMode)
                             {
                                 GameModeComboBox.IsEnabled = false;
-                                AddDebugMessage($"Modo de jogo bloqueado para cliente: {GetGameName(_currentGameMode)}");
                             }
 
                             break; // Successfully connected
@@ -623,7 +603,6 @@ public partial class MainWindow : Window
                         if (_isClientMode)
                         {
                             StatusText.Text = "⚠️ Arduino não encontrado. Aguarde a reconexão...";
-                            AddDebugMessage("Cliente não pode jogar sem Arduino - aguardando conexão");
                         }
                     }
                 }
@@ -642,7 +621,6 @@ public partial class MainWindow : Window
             catch (Exception ex)
             {
                 StatusText.Text = $"❌ Erro na conexão automática: {ex.Message}";
-                AddDebugMessage($"Erro na conexão automática: {ex.Message}");
 
                 // For clients, ensure they can't start without Arduino
                 if (_isClientMode)
@@ -690,7 +668,7 @@ public partial class MainWindow : Window
                     new GradientStop(Color.FromRgb(74, 74, 123), 1)   // #4A4A7B
                 }
             };
-            AddDebugMessage("Arduino desconectado.");
+            // Arduino disconnected silently
         }
         else
         {
@@ -781,8 +759,6 @@ public partial class MainWindow : Window
 
     private void ProcessArduinoMessage(string message)
     {
-        AddDebugMessage($"Arduino: {message}", true);
-
         if (message.StartsWith("GAME_EVENT:"))
         {
             var eventData = message.Substring("GAME_EVENT:".Length);
@@ -791,7 +767,6 @@ public partial class MainWindow : Window
         else if (message == "READY")
         {
             StatusText.Text = "🟢 Arduino pronto! Conexão estabelecida com sucesso! Inicie o jogo.";
-            // Trigger visual celebration
             TriggerVisualEffect("CONNECTION_SUCCESS");
         }
         else if (message == "ALL_LEDS_OFF")
@@ -800,17 +775,19 @@ public partial class MainWindow : Window
         }
         else
         {
-            // Treat all other messages as game events for consistency
             ProcessGameEvent(message);
         }
     }
 
     private void AddDebugMessage(string message, bool isDebug = false)
     {
-        var timestamp = DateTime.Now.ToString("HH:mm:ss");
-        var formattedMessage = $"[{timestamp}] {message}";
-
-        _debugWindow?.AddMessage(formattedMessage, isDebug);
+        // Only add critical messages to improve performance
+        if (!isDebug && (_debugWindow != null || message.Contains("ERRO") || message.Contains("GAME_OVER")))
+        {
+            var timestamp = DateTime.Now.ToString("HH:mm:ss");
+            var formattedMessage = $"[{timestamp}] {message}";
+            _debugWindow?.AddMessage(formattedMessage, isDebug);
+        }
     }
 
     private void ProcessGameEvent(string eventData)
@@ -834,9 +811,6 @@ public partial class MainWindow : Window
                         _score = syncScore;
                     }
                     UpdateUI();
-                    AddDebugMessage($"Pontuação: +{scoreIncrease} (Total: {_score})");
-                    
-                    // Check victory conditions after score update
                     CheckVictoryConditions();
                 }
                 break;
@@ -846,7 +820,6 @@ public partial class MainWindow : Window
                 {
                     _level = newLevel;
                     UpdateUI();
-                    AddDebugMessage($"Nível aumentado: {newLevel}");
                 }
                 break;
             case "GAME_OVER":
@@ -860,7 +833,7 @@ public partial class MainWindow : Window
                     }
                     else
                     {
-                        AddDebugMessage("[EVENTO] GAME_OVER recebido, mas o jogo já não está ativo ou a sessão está a terminar. A ignorar.");
+                        return; // Silent return for better performance
                     }
                 }
 
@@ -879,14 +852,12 @@ public partial class MainWindow : Window
                 StatusText.Text = $"🎮 GAME OVER! Pontuação Final: {_score}";
                 _audioService.PlaySound(AudioEvent.GameOver);
                 SaveGameScore();
-                AddDebugMessage($"[EVENTO] GAME_OVER - Fim de jogo - Pontuação final: {_score}");
                 TriggerVisualEffect("GAME_OVER");
 
                 // For clients, check if session should end after game over
                 if (_isClientMode && _currentUser != null)
                 {
                     var remainingRounds = _sessionService.GetRemainingRounds(_currentUser.Id);
-                    AddDebugMessage($"Após GAME_OVER - Rodadas restantes no jogo selecionado: {remainingRounds}");
 
                     if (remainingRounds <= 0)
                     {
@@ -894,7 +865,6 @@ public partial class MainWindow : Window
                         {
                             _isSessionEnding = true;
                         }
-                        AddDebugMessage($"Cliente {_currentUser.Name} esgotou todas as chances do jogo selecionado - iniciando fim de sessão");
 
                         // Prevent multiple session dialogs
                         lock (_sessionDialogLock)
@@ -904,10 +874,6 @@ public partial class MainWindow : Window
                                 _isShowingSessionDialog = true;
                                 Task.Run(async () => await ShowRoundsCompletedDialog());
                             }
-                            else
-                            {
-                                AddDebugMessage("[SESSÃO] Diálogo de sessão já está sendo mostrado, ignorando");
-                            }
                         }
                     }
                     else
@@ -915,7 +881,6 @@ public partial class MainWindow : Window
                         // Still has chances in the selected game
                         var selectedGameName = _sessionService.GetClientSelectedGame(_currentUser.Id).GetDisplayName();
                         StatusText.Text = $"🎮 GAME OVER! Ainda tem {remainingRounds} chance(s) em {selectedGameName}";
-                        AddDebugMessage($"Game over - cliente ainda tem {remainingRounds} chances no jogo selecionado");
                     }
                 }
                 break;
@@ -934,8 +899,7 @@ public partial class MainWindow : Window
                     HighlightLed(ledHit);
                     StatusText.Text = $"🎯 Acertou LED {ledHit}! +{pointsEarned} pontos (Total: {_score})";
                     UpdateUI();
-                    AddDebugMessage($"Acerto no LED {ledHit}, pontuação sincronizada: {_score}");
-                    
+
                     // Check victory conditions after score update
                     CheckVictoryConditions();
                 }
@@ -944,7 +908,6 @@ public partial class MainWindow : Window
             case "MISS":
                 _audioService.PlaySound(AudioEvent.Error);
                 StatusText.Text = "❌ Muito lento! O LED apagou sozinho.";
-                AddDebugMessage("[EVENTO] MISS - LED apagou antes do jogador pressionar");
                 RecordClientRoundLoss();
                 break;
 
@@ -952,7 +915,6 @@ public partial class MainWindow : Window
                 if (int.TryParse(eventValue, out var ledOnIndex))
                 {
                     HighlightLed(ledOnIndex);
-                    AddDebugMessage($"LED {ledOnIndex} aceso");
                 }
                 break;
 
@@ -960,7 +922,6 @@ public partial class MainWindow : Window
                 if (int.TryParse(eventValue, out var ledOffIndex))
                 {
                     RestoreLedColor(ledOffIndex);
-                    AddDebugMessage($"LED {ledOffIndex} apagado");
                 }
                 break;
 
@@ -968,7 +929,6 @@ public partial class MainWindow : Window
                 if (int.TryParse(eventValue, out var wrongKey))
                 {
                     StatusText.Text = $"❌ Tecla errada! Pressionou {wrongKey}, mas deveria ser outro LED.";
-                    AddDebugMessage($"[EVENTO] WRONG_KEY - Tecla incorreta pressionada: {wrongKey}");
                     RecordClientRoundLoss();
                 }
                 break;
@@ -985,9 +945,8 @@ public partial class MainWindow : Window
                     StatusText.Text = $"🆙 NÍVEL {level}! Dificuldade aumentada! Pontuação: {_score}";
                     _audioService.PlaySound(AudioEvent.LevelUp);
                     UpdateUI();
-                    AddDebugMessage($"[EVENTO] LEVEL_UP - Nível: {level}, Pontuação: {_score}");
                     TriggerVisualEffect("LEVEL_UP");
-                    
+
                     // Check victory conditions after score update
                     CheckVictoryConditions();
                 }
@@ -1001,17 +960,13 @@ public partial class MainWindow : Window
                     StartGameButton.IsEnabled = false;
                     StopGameButton.IsEnabled = true;
                     StatusText.Text = "🎮 Jogo iniciado! Prepare-se para a ação!";
-                    AddDebugMessage($"[EVENTO] GAME_STARTED - Jogo iniciado: modo {gameMode} ({GetGameName(gameMode)})");
                     UpdateUI();
                     TriggerVisualEffect("GAME_START");
                 }
                 break;
 
             case "KEY_RELEASED":
-                if (int.TryParse(eventValue, out var releasedKey))
-                {
-                    AddDebugMessage($"Tecla {releasedKey} liberada");
-                }
+                // Key release handled silently for performance
                 break;
 
             case "METEOR_HIT":
@@ -1020,7 +975,6 @@ public partial class MainWindow : Window
                 {
                     StatusText.Text = "💥 IMPACTO! Um meteoro te atingiu! Game Over!";
                     HighlightLed(meteorPos);
-                    AddDebugMessage($"Meteoro atingiu posição: {meteorPos}");
                     RecordClientRoundLoss();
                 }
                 break;
@@ -1042,8 +996,7 @@ public partial class MainWindow : Window
                     StatusText.Text = $"🎵 NOTA PERFEITA! Coluna {column} +{pointsEarned} pontos (Total: {_score})";
                     _audioService.PlaySound(AudioEvent.GuitarNote);
                     UpdateUI();
-                    AddDebugMessage($"Nota acertada coluna {column}, pontuação: {_score}");
-                    
+
                     // Check victory conditions after score update
                     CheckVictoryConditions();
                 }
@@ -1155,13 +1108,10 @@ public partial class MainWindow : Window
                 if (int.TryParse(eventValue, out var captures))
                 {
                     StatusText.Text = $"⏰ TEMPO ESGOTADO! Você capturou {captures} ratos em 2 minutos. Sessão finalizada!";
-                    AddDebugMessage($"[NEGÓCIO] Gato e Rato timeout - {captures} capturas - Sessão sendo finalizada por regra de negócio");
 
                     // Business rule: timeout ends the session permanently for this client
                     if (_isClientMode && _currentUser != null)
                     {
-                        AddDebugMessage($"[NEGÓCIO] Cliente {_currentUser.Name} atingiu timeout no Gato e Rato - finalizando sessão permanentemente");
-
                         // Mark session as completed due to timeout with business rule
                         _sessionService.EndSessionByTimeout(_currentUser.Id, "Timeout de 2 minutos no jogo Gato e Rato");
 
@@ -1252,7 +1202,7 @@ public partial class MainWindow : Window
                     _score += bonus;
                     StatusText.Text = $"🚀 BÔNUS DE VELOCIDADE! +{bonus} pontos extras!";
                     UpdateUI();
-                    
+
                     // Check victory conditions after score update
                     CheckVictoryConditions();
                 }
@@ -1264,7 +1214,7 @@ public partial class MainWindow : Window
                     _score = Math.Max(0, _score - penalty);
                     StatusText.Text = $"⚠️ Penalidade! -{penalty} pontos";
                     UpdateUI();
-                    
+
                     // Check victory conditions after score update (though unlikely after penalty)
                     CheckVictoryConditions();
                 }
@@ -1309,7 +1259,7 @@ public partial class MainWindow : Window
                 break;
 
             default:
-                AddDebugMessage($"Evento desconhecido: {eventType} = {eventValue}");
+                // Unknown events handled silently for performance
                 break;
         }
     }
@@ -1432,14 +1382,16 @@ public partial class MainWindow : Window
                     victoryAchieved = true;
                     challengeDescription = "Alcançou 200 pontos antes de esgotar as tentativas";
                 }
-                break;            case GameMode.SequenciaMaluca:
+                break;
+            case GameMode.SequenciaMaluca:
                 // Updated: Aligned with user requirements - 11 rounds for 110 points
                 if (_score >= 110) // 11 rounds * 10 points per round
                 {
                     victoryAchieved = true;
                     challengeDescription = "Completou 11 rodadas sem errar (sequência chegou a 13 passos)";
                 }
-                break;            case GameMode.GatoRato:
+                break;
+            case GameMode.GatoRato:
                 // DIFFICULTY INCREASED: Much harder challenge - 13 captures in 120 seconds
                 if (_score >= 280) // 14 captures * 20 points per capture
                 {
@@ -1462,14 +1414,16 @@ public partial class MainWindow : Window
                     victoryAchieved = true;
                     challengeDescription = "Fez 200 pontos antes de esgotar as tentativas";
                 }
-                break;            case GameMode.LightningStrike:
+                break;
+            case GameMode.LightningStrike:
                 // Updated: Aligned with user requirements - 6 rounds for 60 points
                 if (_score >= 60) // 6 rounds * 10 points per round
                 {
                     victoryAchieved = true;
                     challengeDescription = "Completou 6 rodadas de Lightning Strike sem errar";
                 }
-                break;            case GameMode.SniperMode:
+                break;
+            case GameMode.SniperMode:
                 // Updated: Aligned with user requirements - 8 hits for 80 points
                 if (_score >= 80) // 8 hits * 10 points per hit
                 {
@@ -1493,7 +1447,7 @@ public partial class MainWindow : Window
         try
         {
             AddDebugMessage($"[VITÓRIA] Desafio conquistado: {challengeDescription}");
-            
+
             // Stop the game
             _gameActive = false;
             StartGameButton.IsEnabled = true;
@@ -1501,27 +1455,27 @@ public partial class MainWindow : Window
 
             // Play victory sound
             _audioService.PlaySound(AudioEvent.Victory);
-            
+
             // Save the score
             SaveGameScore();
-            
+
             // Show victory window
             var victoryWindow = new Views.VictoryWindow();
             victoryWindow.SetVictoryDetails((GameMode)_currentGameMode, _score, _playerName, challengeDescription);
-            
+
             // Handle return to login
-            victoryWindow.OnReturnToLogin += (sender, e) =>
+            victoryWindow.OnReturnToLogin += async (sender, e) =>
             {
-                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
                 {
-                    ReturnToLoginSafely();
+                    await ReturnToLoginSafely();
                 });
             };
 
             victoryWindow.Show();
             victoryWindow.Activate();
             victoryWindow.Focus();
-            
+
             AddDebugMessage("[VITÓRIA] Janela de vitória exibida");
         }
         catch (Exception ex)
@@ -1818,7 +1772,6 @@ public partial class MainWindow : Window
         if (!string.IsNullOrEmpty(command))
         {
             _serialPort.WriteLine(command);
-            AddDebugMessage($"Comando enviado: {command}");
             e.Handled = true;
         }
     }
@@ -1837,8 +1790,6 @@ public partial class MainWindow : Window
             // Send key release command to Arduino
             string command = $"KEY_RELEASE:{ledIndex}";
             _serialPort.WriteLine(command);
-            AddDebugMessage($"Comando enviado: {command}");
-
             e.Handled = true;
         }
     }
@@ -2030,7 +1981,6 @@ public partial class MainWindow : Window
         if (_isClientMode && _currentUser != null)
         {
             var gameMode = (GameMode)_currentGameMode;
-            AddDebugMessage($"[INÍCIO] 🎮 Cliente {_currentUser.Name} tentando iniciar jogo {gameMode.GetDisplayName()}");
 
             // Check if session is blocked due to timeout (business rule)
             bool isSessionEnding;
@@ -2041,7 +1991,6 @@ public partial class MainWindow : Window
 
             if (isSessionEnding)
             {
-                AddDebugMessage($"[INÍCIO] 🚫 Cliente bloqueado - Sessão finalizada por timeout ou regra de negócio");
                 await ShowMessage("Sessão Finalizada",
                     "Sua sessão foi finalizada permanentemente devido ao timeout no jogo Gato e Rato.\n" +
                     "Para jogar novamente, faça logout e entre com uma nova sessão.");
@@ -2051,14 +2000,11 @@ public partial class MainWindow : Window
             if (!_sessionService.CanClientPlayGame(_currentUser.Id))
             {
                 var remaining = _sessionService.GetRemainingRounds(_currentUser.Id);
-                AddDebugMessage($"[INÍCIO] ❌ Cliente bloqueado - Erros restantes: {remaining}");
                 await ShowMessage("Limite de Erros Atingido",
                     $"Você já cometeu o máximo de erros permitidos em {gameMode.GetDisplayName()}!\n" +
                     $"Erros restantes: {remaining}");
                 return;
             }
-
-            AddDebugMessage($"[INÍCIO] ✅ Cliente autorizado a jogar - Rodadas restantes: {_sessionService.GetRemainingRounds(_currentUser.Id)}");
         }
 
         _gameActive = true;
@@ -2073,16 +2019,6 @@ public partial class MainWindow : Window
         _serialPort.WriteLine(command);
 
         StatusText.Text = "🚀 Jogo iniciado! Boa sorte!";
-
-        if (_isClientMode && _currentUser != null)
-        {
-            AddDebugMessage($"[INÍCIO] 🚀 Cliente {_currentUser.Name} iniciou jogo {GetGameName(_currentGameMode)} - Comando: {command}");
-        }
-        else
-        {
-            AddDebugMessage($"[INÍCIO] 🚀 Administrador iniciou jogo {GetGameName(_currentGameMode)} - Comando: {command}");
-        }
-
         UpdateUI();
     }
 
@@ -2099,7 +2035,6 @@ public partial class MainWindow : Window
         StopGameButton.IsEnabled = false;
 
         StatusText.Text = "⏹️ Jogo interrompido pelo jogador.";
-        AddDebugMessage("Jogo interrompido pelo usuário");
 
         if (_score > 0)
         {
@@ -2665,17 +2600,8 @@ O Arduino possui animações épicas para:
     {
         if (_isClientMode && _currentUser != null)
         {
-            var selectedGame = _sessionService.GetClientSelectedGame(_currentUser.Id);
-            var remainingBefore = _sessionService.GetRemainingRounds(_currentUser.Id);
-
-            AddDebugMessage($"[DEBUG] 🔄 RecordClientRoundLoss - Antes: {remainingBefore} chances restantes para {_currentUser.Name} em {selectedGame.GetDisplayName()}");
-
             _sessionService.RecordGameError(_currentUser.Id);
-
             var remainingAfter = _sessionService.GetRemainingRounds(_currentUser.Id);
-            AddDebugMessage($"[DEBUG] 🔄 RecordClientRoundLoss - Depois: {remainingAfter} chances restantes para {_currentUser.Name} em {selectedGame.GetDisplayName()}");
-
-            AddDebugMessage($"[SESSÃO] ❌ Cliente {_currentUser.Name} cometeu erro em {selectedGame.GetDisplayName()} - Restam {remainingAfter} chances");
 
             UpdateRemainingRoundsDisplay();
 
@@ -2687,8 +2613,6 @@ O Arduino possui animações épicas para:
                     _isSessionEnding = true;
                 }
 
-                AddDebugMessage($"[SESSÃO] 🚫 Cliente {_currentUser.Name} esgotou todas as chances em {selectedGame.GetDisplayName()} - iniciando fim de sessão automático");
-
                 StopGameImmediately();
 
                 // Show session completed dialog and return to login
@@ -2699,20 +2623,8 @@ O Arduino possui animações épicas para:
                         _isShowingSessionDialog = true;
                         Task.Run(async () => await ShowRoundsCompletedDialog());
                     }
-                    else
-                    {
-                        AddDebugMessage("[SESSÃO] Diálogo de sessão já está sendo mostrado, ignorando");
-                    }
                 }
             }
-            else
-            {
-                AddDebugMessage($"[SESSÃO] ✅ Sessão continua - Ainda restam {remainingAfter} chances para {_currentUser.Name}");
-            }
-        }
-        else
-        {
-            AddDebugMessage("[DEBUG] ⚠️ RecordClientRoundLoss chamado mas não está em modo cliente ou usuário é null");
         }
     }
 
@@ -2721,8 +2633,6 @@ O Arduino possui animações épicas para:
         try
         {
             _gameActive = false;
-
-            // Clear any LED effects
             ClearLedMatrix();
 
             // Send stop command to Arduino
@@ -2732,9 +2642,9 @@ O Arduino possui animações épicas para:
                 {
                     _serialPort.WriteLine("STOP_GAME");
                 }
-                catch (Exception arduinoEx)
+                catch (Exception)
                 {
-                    AddDebugMessage($"Erro ao enviar comando STOP_GAME: {arduinoEx.Message}");
+                    // Silent error handling
                 }
             }
 
@@ -2747,17 +2657,15 @@ O Arduino possui animações épicas para:
                     StopGameButton.IsEnabled = false;
                     StatusText.Text = "🛑 GAME OVER - Limite de erros atingido! Termine sessão";
                 }
-                catch (Exception uiEx)
+                catch (Exception)
                 {
-                    AddDebugMessage($"Erro ao atualizar UI: {uiEx.Message}");
+                    // Silent error handling
                 }
             });
-
-            AddDebugMessage("Jogo parado automaticamente - limite de erros atingido");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            AddDebugMessage($"Erro crítico ao parar jogo: {ex.Message}");
+            // Silent error handling for better performance
         }
     }
 

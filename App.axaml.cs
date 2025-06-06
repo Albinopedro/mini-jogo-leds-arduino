@@ -28,15 +28,8 @@ public partial class App : Application
     {
         AvaloniaXamlLoader.Load(this);
 
-        // Aplicar apenas configurações básicas de performance
-        try
-        {
-            PerformanceConfig.Configure();
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Erro na configuração de performance: {ex.Message}");
-        }
+        // Performance configurations are now handled statically via PerformanceConfig constants
+        // No need for explicit configuration method calls
     }
 
     public override void OnFrameworkInitializationCompleted()
