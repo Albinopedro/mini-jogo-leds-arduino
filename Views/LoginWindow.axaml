@@ -4,78 +4,70 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    d:DesignWidth="1400"
-    d:DesignHeight="900"
+    d:DesignWidth="1920"
+    d:DesignHeight="1080"
     x:Class="miniJogo.Views.LoginWindow"
     x:CompileBindings="True"
     Title="Mini Jogo LEDs - Login"
-    Width="1400"
-    Height="900"
+    Width="1920"
+    Height="1080"
     WindowStartupLocation="CenterScreen"
     WindowState="FullScreen"
     CanResize="True"
     Background="#0F0F23"
-    KeyDown="Window_KeyDown">
+    KeyDown="Window_KeyDown"
+    ExtendClientAreaToDecorationsHint="True">
 
+    <!-- Layout corrigido para evitar sobreposições -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <Border Grid.Row="0" Padding="25">
+        <!-- Header - Mantido compacto -->
+        <Border Grid.Row="0" Padding="20">
             <Border.Background>
                 <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
-                    <GradientStop Color="#667EEA" Offset="0"/>
-                    <GradientStop Color="#764BA2" Offset="1"/>
+                    <GradientStop Color="#5E60CE" Offset="0"/>
+                    <GradientStop Color="#7400B8" Offset="1"/>
                 </LinearGradientBrush>
             </Border.Background>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+            <StackPanel HorizontalAlignment="Center" Spacing="8">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
+                    <TextBlock Text="🎮" FontSize="40" VerticalAlignment="Center" />
                     <TextBlock
-                        Text="🎮 Mini Jogo LEDs - Arduino Gaming Platform"
-                        FontSize="36"
+                        Text="Mini Jogo LEDs - Arduino Gaming"
+                        FontSize="38"
                         FontWeight="Bold"
-                        Foreground="White"
-                        HorizontalAlignment="Center"
-                    >
+                        Foreground="White">
                         <TextBlock.Effect>
                             <DropShadowEffect BlurRadius="8" OffsetX="0" OffsetY="2" Color="#30000000"/>
                         </TextBlock.Effect>
                     </TextBlock>
-                    <TextBlock
-                        Text="Sistema de Autenticação e Seleção de Jogos"
-                        FontSize="18"
-                        Foreground="#E2E8F0"
-                        Opacity="0.95"
-                        HorizontalAlignment="Center"
-                        Margin="0,8,0,0"
-                    />
                 </StackPanel>
-            </Grid>
+                <TextBlock
+                    Text="Sistema de Autenticação e Seleção de Jogos"
+                    FontSize="20"
+                    Foreground="#E2E8F0"
+                    Opacity="0.95"
+                    HorizontalAlignment="Center"
+                />
+            </StackPanel>
         </Border>
 
-        <!-- Main Content -->
-        <Grid Grid.Row="1" Margin="30">
+        <!-- Conteúdo Principal - Layout adaptativo -->
+        <Grid Grid.Row="1" Margin="20">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="400" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="350" />
+                <ColumnDefinition Width="2*" MinWidth="500" />
+                <ColumnDefinition Width="3*" MinWidth="700" />
             </Grid.ColumnDefinitions>
 
-            <!-- Left Panel - Rankings -->
+            <!-- Painel Esquerdo - Login Form -->
             <Border
                 Grid.Column="0"
                 CornerRadius="20"
-                Padding="25"
-                Margin="0,0,15,0"
-            >
+                Margin="0,0,15,0">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
                         <GradientStop Color="#1E1E3F" Offset="0"/>
@@ -83,339 +75,290 @@
                     </LinearGradientBrush>
                 </Border.Background>
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+                    <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#30000000"/>
                 </Border.Effect>
-                <StackPanel Spacing="20">
-                    <TextBlock
-                        Text="🏆 Top Rankings"
-                        FontSize="24"
-                        FontWeight="Bold"
-                        Foreground="White"
-                        HorizontalAlignment="Center"
-                    />
 
-                    <ScrollViewer
-                        MaxHeight="600"
-                        VerticalScrollBarVisibility="Auto"
-                    >
-                        <StackPanel x:Name="RankingsPanel" Spacing="12">
-                            <!-- Rankings will be populated dynamically -->
-                            <Border
-                                CornerRadius="12"
-                                Padding="15"
-                            >
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                        <GradientStop Color="#3A3A6B" Offset="0"/>
-                                        <GradientStop Color="#4A4A7B" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock
-                                        Grid.Column="0"
-                                        Text="🥇"
-                                        FontSize="20"
-                                        VerticalAlignment="Center"
-                                    />
-                                    <StackPanel Grid.Column="1" Margin="10,0">
-                                        <TextBlock
-                                            Text="Carregando rankings..."
-                                            Foreground="White"
-                                            FontWeight="Medium"
-                                        />
-                                        <TextBlock
-                                            Text="Aguarde..."
-                                            Foreground="#CBD5E0"
-                                            FontSize="12"
-                                        />
-                                    </StackPanel>
-                                    <TextBlock
-                                        Grid.Column="2"
-                                        Text="---"
-                                        Foreground="#E2E8F0"
-                                        FontWeight="Bold"
-                                        VerticalAlignment="Center"
-                                    />
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                    </ScrollViewer>
-                </StackPanel>
-            </Border>
-
-            <!-- Center Panel - Login Form -->
-            <Border
-                Grid.Column="1"
-                CornerRadius="20"
-                Padding="40"
-                Margin="15,0"
-            >
-                <Border.Background>
-                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                        <GradientStop Color="#1E1E3F" Offset="0"/>
-                        <GradientStop Color="#2A2A5A" Offset="1"/>
-                    </LinearGradientBrush>
-                </Border.Background>
-                <Border.Effect>
-                    <DropShadowEffect BlurRadius="25" OffsetX="0" OffsetY="15" Color="#20000000"/>
-                </Border.Effect>
-                <StackPanel
-                    Spacing="30"
-                    MaxWidth="450"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                >
-
-                    <!-- TechPlay Logo -->
+                <!-- Layout adaptativo usando DockPanel -->
+                <DockPanel LastChildFill="True" Margin="25">
+                    <!-- Logo fixo no topo -->
                     <Image
                         Source="/techPlay.png"
-                        Width="180"
-                        Height="180"
+                        Width="150"
+                        Height="150"
                         HorizontalAlignment="Center"
                         RenderOptions.BitmapInterpolationMode="HighQuality"
-                    >
+                        DockPanel.Dock="Top"
+                        Margin="0,0,0,15">
                         <Image.Effect>
                             <DropShadowEffect
                                 Color="Black"
                                 BlurRadius="15"
                                 OffsetX="3"
-                                OffsetY="3"
-                            />
+                                OffsetY="3"/>
                         </Image.Effect>
                     </Image>
 
-                    <!-- Login Instructions -->
+                    <!-- Título -->
                     <TextBlock
                         Text="Faça seu login para jogar"
-                        FontSize="22"
-                        FontWeight="Medium"
-                        Foreground="White"
-                        HorizontalAlignment="Center"
-                        TextAlignment="Center"
-                    />
-
-                    <!-- Name Input (for clients) -->
-                    <StackPanel x:Name="NamePanel" Spacing="10">
-                        <TextBlock
-                            Text="👤 Seu Nome:"
-                            FontSize="16"
-                            FontWeight="Medium"
-                            Foreground="#E2E8F0"
-                        />
-                        <TextBox
-                            x:Name="NameTextBox"
-                            Watermark="Digite seu nome aqui..."
-                            Padding="18,15"
-                            FontSize="18"
-                            CornerRadius="12"
-                            Foreground="White"
-                            BorderBrush="#4FACFE"
-                            BorderThickness="2"
-                            KeyDown="NameTextBox_KeyDown"
-                        >
-                            <TextBox.Background>
-                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                    <GradientStop Color="#3A3A6B" Offset="0"/>
-                                    <GradientStop Color="#4A4A7B" Offset="1"/>
-                                </LinearGradientBrush>
-                            </TextBox.Background>
-                        </TextBox>
-                    </StackPanel>
-
-                    <!-- Code Input -->
-                    <StackPanel Spacing="10">
-                        <TextBlock
-                            Text="🔑 Código de Acesso:"
-                            FontSize="16"
-                            FontWeight="Medium"
-                            Foreground="#E2E8F0"
-                        />
-                        <TextBox
-                            x:Name="CodeTextBox"
-                            Watermark="Digite o código..."
-                            Padding="18,15"
-                            FontSize="20"
-                            FontWeight="Bold"
-                            CornerRadius="12"
-                            Foreground="White"
-                            BorderBrush="#4FACFE"
-                            BorderThickness="2"
-                            HorizontalContentAlignment="Center"
-                            TextChanged="CodeTextBox_TextChanged"
-                            KeyDown="CodeTextBox_KeyDown"
-                        >
-                            <TextBox.Background>
-                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                    <GradientStop Color="#3A3A6B" Offset="0"/>
-                                    <GradientStop Color="#4A4A7B" Offset="1"/>
-                                </LinearGradientBrush>
-                            </TextBox.Background>
-                        </TextBox>
-                    </StackPanel>
-
-                    <!-- Game Mode Selection (for clients) -->
-                    <StackPanel x:Name="GameModePanel" Spacing="20">
-                        <TextBlock
-                            Text="🎮 Escolha seu Desafio:"
-                            FontSize="18"
-                            FontWeight="Bold"
-                            Foreground="#E2E8F0"
-                            HorizontalAlignment="Center"
-                        />
-
-                        <ScrollViewer
-                            MaxHeight="400"
-                            HorizontalScrollBarVisibility="Disabled"
-                            VerticalScrollBarVisibility="Auto"
-                        >
-                            <StackPanel x:Name="GameCardsPanel" Spacing="12">
-                                <!-- Game cards will be populated in code-behind -->
-                            </StackPanel>
-                        </ScrollViewer>
-
-                        <!-- Selected game display -->
-                        <Border
-                            x:Name="SelectedGameBorder"
-                            Background="#065F46"
-                            BorderBrush="#10B981"
-                            BorderThickness="2"
-                            CornerRadius="10"
-                            Padding="15"
-                            IsVisible="False"
-                        >
-                            <StackPanel Spacing="8">
-                                <TextBlock
-                                    x:Name="SelectedGameTitle"
-                                    Text="🎯 Jogo Selecionado"
-                                    FontSize="16"
-                                    FontWeight="Bold"
-                                    Foreground="#10B981"
-                                    HorizontalAlignment="Center"
-                                />
-                                <TextBlock
-                                    x:Name="SelectedGameChallenge"
-                                    Text="Desafio: Alcance 200 pontos"
-                                    FontSize="14"
-                                    Foreground="White"
-                                    HorizontalAlignment="Center"
-                                    TextWrapping="Wrap"
-                                    TextAlignment="Center"
-                                />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-
-                    <!-- Status Message -->
-                    <TextBlock
-                        x:Name="StatusText"
-                        Text=""
-                        FontSize="16"
-                        FontWeight="Medium"
-                        HorizontalAlignment="Center"
-                        TextAlignment="Center"
-                        TextWrapping="Wrap"
-                        Foreground="#4FACFE"
-                    />
-
-                    <!-- Login Button -->
-                    <Button
-                        x:Name="LoginButton"
-                        Content="🚀 Entrar no Jogo"
-                        Click="LoginButton_Click"
-                        Padding="25,18"
-                        FontSize="18"
+                        FontSize="26"
                         FontWeight="Bold"
-                        CornerRadius="15"
                         Foreground="White"
-                        HorizontalAlignment="Stretch"
-                        IsEnabled="False"
-                    >
-                        <Button.Background>
-                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                <GradientStop Color="#4FACFE" Offset="0"/>
-                                <GradientStop Color="#00F2FE" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Button.Background>
-                        <Button.Effect>
-                            <DropShadowEffect BlurRadius="15" OffsetX="0" OffsetY="4" Color="#60000000"/>
-                        </Button.Effect>
-                    </Button>
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,15"
+                        DockPanel.Dock="Top"
+                    />
 
-                    <!-- Help Text -->
-                    <StackPanel Spacing="10">
-                        <TextBlock
-                            Text="💡 Como funciona:"
-                            FontSize="14"
-                            FontWeight="Bold"
-                            Foreground="#B794F6"
-                            HorizontalAlignment="Center"
-                        />
-                        <TextBlock
-                            FontSize="13"
-                            Foreground="#A0AEC0"
-                            HorizontalAlignment="Center"
-                            TextAlignment="Center"
-                            TextWrapping="Wrap">
-                            <TextBlock.Text>1. Digite seu nome&#x0a;2. Digite o código do bilhete&#x0a;3. Escolha o jogo desejado&#x0a;4. Clique em 'Entrar no Jogo'</TextBlock.Text>
-                        </TextBlock>
-                    </StackPanel>
-
-                    <!-- Admin Tools (Hidden by default) -->
+                    <!-- Caixa de informações -->
                     <Border
-                        x:Name="AdminPanel"
-                        CornerRadius="15"
-                        Padding="20"
-                        IsVisible="False"
-                    >
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                <GradientStop Color="#3A3A6B" Offset="0"/>
-                                <GradientStop Color="#4A4A7B" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <StackPanel Spacing="15">
+                        CornerRadius="12"
+                        Background="#2A2A5A"
+                        Padding="15,8"
+                        Margin="0,10,0,0"
+                        DockPanel.Dock="Bottom">
+                        <StackPanel Spacing="4">
                             <TextBlock
-                                Text="🔧 Ferramentas de Administrador"
-                                FontSize="16"
+                                Text="💡 Como jogar:"
+                                FontSize="15"
                                 FontWeight="Bold"
-                                Foreground="#E2E8F0"
+                                Foreground="#B794F6"
                                 HorizontalAlignment="Center"
                             />
-                            <Button
-                                x:Name="GenerateCodesButton"
-                                Content="📄 Gerar Códigos de Cliente"
-                                Click="GenerateCodesButton_Click"
-                                Padding="15,12"
+                            <TextBlock
                                 FontSize="14"
-                                CornerRadius="10"
-                                Foreground="White"
-                                HorizontalAlignment="Stretch"
-                            >
-                                <Button.Background>
-                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                        <GradientStop Color="#4FACFE" Offset="0"/>
-                                        <GradientStop Color="#00F2FE" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Button.Background>
-                            </Button>
+                                Foreground="#E2E8F0"
+                                HorizontalAlignment="Center"
+                                TextAlignment="Center"
+                                TextWrapping="Wrap">
+                                <TextBlock.Text>1. Digite seu nome&#x0a;2. Digite o código do bilhete&#x0a;3. Escolha um jogo na direita&#x0a;4. Clique em 'Entrar no Jogo'</TextBlock.Text>
+                            </TextBlock>
                         </StackPanel>
                     </Border>
 
-                </StackPanel>
+                    <!-- Rankings -->
+                    <StackPanel DockPanel.Dock="Bottom" Spacing="10" Margin="0,10,0,15">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                            <TextBlock Text="🏆" FontSize="22" VerticalAlignment="Center" />
+                            <TextBlock
+                                Text="Top Rankings"
+                                FontSize="22"
+                                FontWeight="Bold"
+                                Foreground="White"
+                                VerticalAlignment="Center"
+                            />
+                        </StackPanel>
+
+                        <Border
+                            CornerRadius="12"
+                            BorderBrush="#5E60CE"
+                            BorderThickness="1">
+                            <ScrollViewer
+                                Height="150"
+                                VerticalScrollBarVisibility="Auto"
+                                Padding="8">
+                                <StackPanel x:Name="RankingsPanel" Spacing="6">
+                                    <!-- Rankings será populado dinamicamente -->
+                                    <Border
+                                        CornerRadius="8"
+                                        Padding="10"
+                                        Margin="0,1">
+                                        <Border.Background>
+                                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                                <GradientStop Color="#3A3A6B" Offset="0"/>
+                                                <GradientStop Color="#4A4A7B" Offset="1"/>
+                                            </LinearGradientBrush>
+                                        </Border.Background>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock
+                                                Grid.Column="0"
+                                                Text="🥇"
+                                                FontSize="20"
+                                                VerticalAlignment="Center"
+                                            />
+                                            <StackPanel Grid.Column="1" Margin="10,0">
+                                                <TextBlock
+                                                    Text="Carregando rankings..."
+                                                    Foreground="White"
+                                                    FontWeight="Medium"
+                                                />
+                                                <TextBlock
+                                                    Text="Aguarde..."
+                                                    Foreground="#CBD5E0"
+                                                    FontSize="12"
+                                                />
+                                            </StackPanel>
+                                            <TextBlock
+                                                Grid.Column="2"
+                                                Text="---"
+                                                Foreground="#E2E8F0"
+                                                FontWeight="Bold"
+                                                VerticalAlignment="Center"
+                                            />
+                                        </Grid>
+                                    </Border>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Formulário de Login -->
+                    <StackPanel Spacing="15">
+                        <!-- Name Input -->
+                        <StackPanel x:Name="NamePanel" Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="👤" FontSize="22" VerticalAlignment="Center" />
+                                <TextBlock
+                                    Text="Seu Nome:"
+                                    FontSize="18"
+                                    FontWeight="Medium"
+                                    Foreground="#E2E8F0"
+                                    VerticalAlignment="Center"
+                                />
+                            </StackPanel>
+                            <TextBox
+                                x:Name="NameTextBox"
+                                Watermark="Digite seu nome aqui..."
+                                Padding="16,12"
+                                FontSize="18"
+                                CornerRadius="12"
+                                Foreground="White"
+                                BorderBrush="#5E60CE"
+                                BorderThickness="2"
+                                KeyDown="NameTextBox_KeyDown">
+                                <TextBox.Background>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                        <GradientStop Color="#2D2D5C" Offset="0"/>
+                                        <GradientStop Color="#3A3A6B" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </TextBox.Background>
+                            </TextBox>
+                        </StackPanel>
+
+                        <!-- Code Input -->
+                        <StackPanel Spacing="8">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="🔑" FontSize="22" VerticalAlignment="Center" />
+                                <TextBlock
+                                    Text="Código de Acesso:"
+                                    FontSize="18"
+                                    FontWeight="Medium"
+                                    Foreground="#E2E8F0"
+                                    VerticalAlignment="Center"
+                                />
+                            </StackPanel>
+                            <TextBox
+                                x:Name="CodeTextBox"
+                                Watermark="Digite o código..."
+                                Padding="16,12"
+                                FontSize="20"
+                                FontWeight="Bold"
+                                CornerRadius="12"
+                                Foreground="White"
+                                BorderBrush="#5E60CE"
+                                BorderThickness="2"
+                                HorizontalContentAlignment="Center"
+                                TextChanged="CodeTextBox_TextChanged"
+                                KeyDown="CodeTextBox_KeyDown">
+                                <TextBox.Background>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                        <GradientStop Color="#2D2D5C" Offset="0"/>
+                                        <GradientStop Color="#3A3A6B" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </TextBox.Background>
+                            </TextBox>
+                        </StackPanel>
+
+                        <!-- Status Message -->
+                        <TextBlock
+                            x:Name="StatusText"
+                            Text=""
+                            FontSize="16"
+                            FontWeight="Medium"
+                            HorizontalAlignment="Center"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap"
+                            Foreground="#4FACFE"
+                            MinHeight="40"
+                        />
+
+                        <!-- Login Button -->
+                        <Button
+                            x:Name="LoginButton"
+                            Content="🚀 Entrar no Jogo"
+                            Click="LoginButton_Click"
+                            Padding="25,16"
+                            FontSize="20"
+                            FontWeight="Bold"
+                            CornerRadius="14"
+                            Foreground="White"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Margin="0,5">
+                            <Button.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="#5E60CE" Offset="0"/>
+                                    <GradientStop Color="#7400B8" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Button.Background>
+                            <Button.Effect>
+                                <DropShadowEffect BlurRadius="15" OffsetX="0" OffsetY="4" Color="#60000000"/>
+                            </Button.Effect>
+                        </Button>
+
+                        <!-- Admin Panel - Escondido por padrão -->
+                        <Border
+                            x:Name="AdminPanel"
+                            CornerRadius="12"
+                            Padding="15"
+                            IsVisible="False"
+                            Margin="0,10,0,0">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                    <GradientStop Color="#3A3A6B" Offset="0"/>
+                                    <GradientStop Color="#4A4A7B" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
+                            <StackPanel Spacing="12">
+                                <TextBlock
+                                    Text="🔧 Ferramentas de Administrador"
+                                    FontSize="18"
+                                    FontWeight="Bold"
+                                    Foreground="#E2E8F0"
+                                    HorizontalAlignment="Center"
+                                />
+                                <Button
+                                    x:Name="GenerateCodesButton"
+                                    Content="📄 Gerar Códigos de Cliente"
+                                    Click="GenerateCodesButton_Click"
+                                    Padding="16,12"
+                                    FontSize="16"
+                                    CornerRadius="10"
+                                    Foreground="White"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Center">
+                                    <Button.Background>
+                                        <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                            <GradientStop Color="#5E60CE" Offset="0"/>
+                                            <GradientStop Color="#7400B8" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Button.Background>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </DockPanel>
             </Border>
 
-            <!-- Right Panel - Game Instructions -->
+            <!-- Painel Direito - Game Selection -->
             <Border
-                Grid.Column="2"
+                Grid.Column="1"
                 CornerRadius="20"
-                Padding="25"
-                Margin="15,0,0,0"
-            >
+                Margin="15,0,0,0">
                 <Border.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
                         <GradientStop Color="#1E1E3F" Offset="0"/>
@@ -423,126 +366,238 @@
                     </LinearGradientBrush>
                 </Border.Background>
                 <Border.Effect>
-                    <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+                    <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#30000000"/>
                 </Border.Effect>
-                <StackPanel Spacing="20">
-                    <!-- Visual Keyboard Section -->
+
+                <DockPanel Margin="25">
+                    <!-- Game Selection Header -->
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12" Margin="0,0,0,15">
+                        <TextBlock Text="🎮" FontSize="28" VerticalAlignment="Center" />
+                        <TextBlock
+                            Text="Escolha seu Desafio"
+                            FontSize="28"
+                            FontWeight="Bold"
+                            Foreground="White"
+                            VerticalAlignment="Center"
+                        />
+                    </StackPanel>
+
+                    <!-- F11 Information -->
                     <TextBlock
-                        Text="⌨️ Teclado Visual"
-                        FontSize="20"
-                        FontWeight="Bold"
-                        Foreground="White"
+                        DockPanel.Dock="Bottom"
+                        Text="Pressione F11 para alternar entre tela cheia e janela"
+                        FontSize="14"
+                        Foreground="#A0AEC0"
                         HorizontalAlignment="Center"
+                        Margin="0,15,0,0"
                     />
 
-                    <Border
-                        CornerRadius="15"
-                        Padding="20"
-                        BorderBrush="#4FACFE"
-                        BorderThickness="2"
-                    >
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                <GradientStop Color="#1E1E3F" Offset="0"/>
-                                <GradientStop Color="#2A2A5A" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <StackPanel Spacing="15">
+                    <!-- Game Content Grid -->
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Game List - Lado Esquerdo -->
+                        <DockPanel Grid.Column="0" Margin="0,0,10,0">
                             <TextBlock
-                                Text="Use estas teclas para controlar os LEDs:"
-                                FontSize="14"
+                                Text="Jogos Disponíveis"
+                                FontSize="18"
+                                FontWeight="Bold"
                                 Foreground="#E2E8F0"
                                 HorizontalAlignment="Center"
-                                TextAlignment="Center"
+                                Margin="0,0,0,10"
+                                DockPanel.Dock="Top"
                             />
 
-                            <!-- Visual Keyboard Matrix -->
-                            <Grid HorizontalAlignment="Center" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,Auto,Auto">
-                                <!-- Row 1 - Red LEDs -->
-                                <Button Grid.Row="0" Grid.Column="0" Content="W" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="0" Grid.Column="1" Content="E" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="0" Grid.Column="2" Content="R" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="0" Grid.Column="3" Content="T" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                            <Border
+                                DockPanel.Dock="Bottom"
+                                x:Name="SelectedGameBorder"
+                                Background="#065F46"
+                                BorderBrush="#10B981"
+                                BorderThickness="2"
+                                CornerRadius="12"
+                                Padding="15"
+                                IsVisible="False"
+                                Margin="0,10,0,0">
+                                <StackPanel Spacing="8">
+                                    <TextBlock
+                                        x:Name="SelectedGameTitle"
+                                        Text="🎯 Jogo Selecionado"
+                                        FontSize="16"
+                                        FontWeight="Bold"
+                                        Foreground="#10B981"
+                                        HorizontalAlignment="Center"
+                                    />
+                                    <TextBlock
+                                        x:Name="SelectedGameChallenge"
+                                        Text="Desafio: Selecione um jogo"
+                                        FontSize="14"
+                                        Foreground="White"
+                                        HorizontalAlignment="Center"
+                                        TextWrapping="Wrap"
+                                        TextAlignment="Center"
+                                    />
+                                </StackPanel>
+                            </Border>
 
-                                <!-- Row 2 - Yellow LEDs -->
-                                <Button Grid.Row="1" Grid.Column="0" Content="S" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="1" Grid.Column="1" Content="D" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="1" Grid.Column="2" Content="F" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="1" Grid.Column="3" Content="G" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                            <Border
+                                CornerRadius="14"
+                                BorderBrush="#5E60CE"
+                                BorderThickness="1"
+                                Padding="15">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                        <GradientStop Color="#1E1E3F" Offset="0"/>
+                                        <GradientStop Color="#252550" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
 
-                                <!-- Row 3 - Green LEDs -->
-                                <Button Grid.Row="2" Grid.Column="0" Content="Y" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="2" Grid.Column="1" Content="U" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="2" Grid.Column="2" Content="I" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="2" Grid.Column="3" Content="O" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <StackPanel x:Name="GameModePanel" Spacing="15">
+                                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                        <StackPanel x:Name="GameCardsPanel" Spacing="8">
+                                            <!-- Game cards will be populated dynamically -->
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </StackPanel>
+                            </Border>
+                        </DockPanel>
 
-                                <!-- Row 4 - Blue LEDs -->
-                                <Button Grid.Row="3" Grid.Column="0" Content="H" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="3" Grid.Column="1" Content="J" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="3" Grid.Column="2" Content="K" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                                <Button Grid.Row="3" Grid.Column="3" Content="L" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
-                            </Grid>
+                        <!-- Instruções e Controles - Lado Direito -->
+                        <DockPanel Grid.Column="1" Margin="10,0,0,0">
+                            <Border
+                                DockPanel.Dock="Top"
+                                CornerRadius="14"
+                                BorderBrush="#10B981"
+                                BorderThickness="1"
+                                Padding="15"
+                                Margin="0,0,0,15">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                        <GradientStop Color="#1E1E3F" Offset="0"/>
+                                        <GradientStop Color="#252550" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
 
-                            <TextBlock
-                                Text="As cores correspondem às fileiras dos LEDs"
-                                FontSize="12"
-                                Foreground="#A0AEC0"
-                                HorizontalAlignment="Center"
-                                TextAlignment="Center"
-                            />
-                        </StackPanel>
-                    </Border>
+                                <DockPanel>
+                                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,0,0,10">
+                                        <TextBlock Text="📖" FontSize="20" VerticalAlignment="Center" />
+                                        <TextBlock
+                                            Text="Instruções do Jogo"
+                                            FontSize="20"
+                                            FontWeight="Bold"
+                                            Foreground="White"
+                                            VerticalAlignment="Center"
+                                        />
+                                    </StackPanel>
 
-                    <!-- Game Instructions Section -->
-                    <TextBlock
-                        Text="📖 Instruções do Jogo"
-                        FontSize="18"
-                        FontWeight="Bold"
-                        Foreground="White"
-                        HorizontalAlignment="Center"
-                    />
+                                    <Border
+                                        BorderBrush="#10B981"
+                                        BorderThickness="1"
+                                        CornerRadius="8"
+                                        Padding="12">
+                                        <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto">
+                                            <StackPanel Spacing="10">
+                                                <TextBlock
+                                                    x:Name="GameTitleText"
+                                                    Text="🎯 Selecione um Desafio"
+                                                    FontSize="18"
+                                                    FontWeight="Bold"
+                                                    Foreground="#10B981"
+                                                    HorizontalAlignment="Center"
+                                                />
 
-                    <Border
-                        CornerRadius="15"
-                        Padding="15"
-                        BorderBrush="#10B981"
-                        BorderThickness="2"
-                    >
-                        <Border.Background>
-                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                <GradientStop Color="#3A3A6B" Offset="0"/>
-                                <GradientStop Color="#4A4A7B" Offset="1"/>
-                            </LinearGradientBrush>
-                        </Border.Background>
-                        <ScrollViewer
-                            MaxHeight="300"
-                            VerticalScrollBarVisibility="Auto"
-                        >
-                            <StackPanel Spacing="12">
-                                <TextBlock
-                                    x:Name="GameTitleText"
-                                    Text="🎯 Selecione um Desafio"
-                                    FontSize="16"
-                                    FontWeight="Bold"
-                                    Foreground="#10B981"
-                                    HorizontalAlignment="Center"
-                                />
+                                                <TextBlock
+                                                    x:Name="GameInstructionsText"
+                                                    LineHeight="22"
+                                                    TextWrapping="Wrap"
+                                                    Foreground="#E2E8F0"
+                                                    FontSize="15"
+                                                    Margin="0,3,0,0"
+                                                    Text="Escolha um dos desafios disponíveis para ver as instruções específicas e começar a jogar!"
+                                                />
+                                            </StackPanel>
+                                        </ScrollViewer>
+                                    </Border>
+                                </DockPanel>
+                            </Border>
 
-                                <TextBlock
-                                    x:Name="GameInstructionsText"
-                                    Text="Escolha um dos desafios ao lado para ver as instruções específicas e começar a jogar!"
-                                    FontSize="14"
-                                    Foreground="#E2E8F0"
-                                    TextWrapping="Wrap"
-                                    TextAlignment="Center"
-                                    HorizontalAlignment="Center"
-                                />
-                            </StackPanel>
-                        </ScrollViewer>
-                    </Border>
-                </StackPanel>
+                            <!-- Teclado Visual -->
+                            <Border
+                                CornerRadius="14"
+                                BorderBrush="#5E60CE"
+                                BorderThickness="1"
+                                Padding="18">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                        <GradientStop Color="#1E1E3F" Offset="0"/>
+                                        <GradientStop Color="#252550" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+
+                                <StackPanel Spacing="15">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+                                        <TextBlock Text="⌨️" FontSize="24" VerticalAlignment="Center" />
+                                        <TextBlock
+                                            Text="Teclado Visual"
+                                            FontSize="24"
+                                            FontWeight="Bold"
+                                            Foreground="White"
+                                            VerticalAlignment="Center"
+                                        />
+                                    </StackPanel>
+
+                                    <TextBlock
+                                        Text="Use estas teclas para controlar os LEDs:"
+                                        FontSize="16"
+                                        Foreground="#E2E8F0"
+                                        HorizontalAlignment="Center"
+                                        TextAlignment="Center"
+                                        Margin="0,0,0,8"
+                                    />
+
+                                    <!-- Teclado Visual - Ajustado para espaço disponível -->
+                                    <Grid HorizontalAlignment="Center" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,Auto,Auto">
+                                        <!-- Row 1 - Red LEDs -->
+                                        <Button Grid.Row="0" Grid.Column="0" Content="W" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="0" Grid.Column="1" Content="E" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="0" Grid.Column="2" Content="R" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="0" Grid.Column="3" Content="T" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+
+                                        <!-- Row 2 - Yellow LEDs -->
+                                        <Button Grid.Row="1" Grid.Column="0" Content="S" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="1" Grid.Column="1" Content="D" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="1" Grid.Column="2" Content="F" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="1" Grid.Column="3" Content="G" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+
+                                        <!-- Row 3 - Green LEDs -->
+                                        <Button Grid.Row="2" Grid.Column="0" Content="Y" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="2" Grid.Column="1" Content="U" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="2" Grid.Column="2" Content="I" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="2" Grid.Column="3" Content="O" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+
+                                        <!-- Row 4 - Blue LEDs -->
+                                        <Button Grid.Row="3" Grid.Column="0" Content="H" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="3" Grid.Column="1" Content="J" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="3" Grid.Column="2" Content="K" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                        <Button Grid.Row="3" Grid.Column="3" Content="L" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="6" Padding="16" MinWidth="58" MinHeight="58" CornerRadius="10" FontSize="18"/>
+                                    </Grid>
+
+                                    <TextBlock
+                                        Text="As cores correspondem às fileiras dos LEDs no jogo"
+                                        FontSize="16"
+                                        Foreground="#E2E8F0"
+                                        HorizontalAlignment="Center"
+                                        TextAlignment="Center"
+                                        Margin="0,8,0,0"
+                                    />
+                                </StackPanel>
+                            </Border>
+                        </DockPanel>
+                    </Grid>
+                </DockPanel>
             </Border>
-
         </Grid>
     </Grid>
 </Window>

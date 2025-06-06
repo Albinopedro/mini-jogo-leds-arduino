@@ -72,7 +72,7 @@ namespace miniJogo.Views
         {
             // Create visual game cards
             CreateGameCards();
-            
+
             // Set default game mode
             _selectedGameMode = 1;
             UpdateGameInstructions(1);
@@ -102,6 +102,8 @@ namespace miniJogo.Views
 
         private Border CreateGameCard(int gameMode, string icon, string name, string challenge, string difficulty)
         {
+            var isSelected = gameMode == _selectedGameMode;
+
             var card = new Border
             {
                 Background = new LinearGradientBrush
@@ -110,16 +112,26 @@ namespace miniJogo.Views
                     EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
                     GradientStops = new GradientStops
                     {
-                        new GradientStop(Color.FromRgb(58, 58, 107), 0),
-                        new GradientStop(Color.FromRgb(74, 74, 123), 1)
+                        new GradientStop(isSelected ? Color.FromRgb(6, 95, 70) : Color.FromRgb(58, 58, 107), 0),
+                        new GradientStop(isSelected ? Color.FromRgb(4, 120, 87) : Color.FromRgb(74, 74, 123), 1)
                     }
                 },
-                BorderBrush = new SolidColorBrush(Color.FromRgb(79, 172, 254)),
+                BorderBrush = new SolidColorBrush(isSelected ? Color.FromRgb(16, 185, 129) : Color.FromRgb(94, 96, 206)),
                 BorderThickness = new Thickness(2),
                 CornerRadius = new CornerRadius(12),
-                Padding = new Thickness(15),
+                Padding = new Thickness(12),
+                Margin = new Thickness(0, 2, 0, 2),
                 Cursor = new Cursor(StandardCursorType.Hand),
                 Tag = gameMode
+            };
+
+            // Add subtle shadow effect
+            card.Effect = new DropShadowEffect
+            {
+                BlurRadius = 15,
+                OffsetX = 0,
+                OffsetY = 5,
+                Color = Color.FromArgb(40, 0, 0, 0)
             };
 
             var grid = new Grid
@@ -132,7 +144,7 @@ namespace miniJogo.Views
             {
                 Text = icon,
                 FontSize = 24,
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                VerticalAlignment = VerticalAlignment.Center
             };
             Grid.SetColumn(iconText, 0);
 
@@ -153,29 +165,38 @@ namespace miniJogo.Views
 
             var challengeText = new TextBlock
             {
-                Text = $"🎯 {challenge}",
-                FontSize = 12,
-                Foreground = new SolidColorBrush(Color.FromRgb(160, 174, 192))
+                Text = challenge,
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(226, 232, 240))
             };
 
             infoStack.Children.Add(nameText);
             infoStack.Children.Add(challengeText);
             Grid.SetColumn(infoStack, 1);
 
-            // Difficulty
+            // Difficulty Badge
+            var difficultyBorder = new Border
+            {
+                Background = GetDifficultyBackgroundColor(difficulty),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(7, 3, 7, 3)
+            };
+
             var difficultyText = new TextBlock
             {
                 Text = difficulty,
                 FontSize = 12,
                 FontWeight = FontWeight.Medium,
-                Foreground = GetDifficultyColor(difficulty),
-                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+                Foreground = Brushes.White,
+                VerticalAlignment = VerticalAlignment.Center
             };
-            Grid.SetColumn(difficultyText, 2);
+
+            difficultyBorder.Child = difficultyText;
+            Grid.SetColumn(difficultyBorder, 2);
 
             grid.Children.Add(iconText);
             grid.Children.Add(infoStack);
-            grid.Children.Add(difficultyText);
+            grid.Children.Add(difficultyBorder);
 
             card.Child = grid;
 
@@ -185,13 +206,29 @@ namespace miniJogo.Views
             {
                 _audioService.PlaySound(AudioEvent.ButtonHover);
                 card.BorderBrush = new SolidColorBrush(Color.FromRgb(16, 185, 129));
+
+                // Add slight scale transformation on hover
+                card.RenderTransform = new ScaleTransform(1.03, 1.03);
+                card.RenderTransformOrigin = new RelativePoint(0.5, 0.5, RelativeUnit.Relative);
             };
             card.PointerExited += (sender, e) =>
             {
                 if (_selectedGameMode != gameMode)
                 {
-                    card.BorderBrush = new SolidColorBrush(Color.FromRgb(79, 172, 254));
+                    card.BorderBrush = new SolidColorBrush(Color.FromRgb(94, 96, 206));
+                    card.Background = new LinearGradientBrush
+                    {
+                        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                        EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                        GradientStops = new GradientStops
+                        {
+                            new GradientStop(Color.FromRgb(58, 58, 107), 0),
+                            new GradientStop(Color.FromRgb(74, 74, 123), 1)
+                        }
+                    };
                 }
+                // Reset transform
+                card.RenderTransform = new ScaleTransform(1, 1);
             };
 
             return card;
@@ -206,6 +243,18 @@ namespace miniJogo.Views
                 "Difícil" => new SolidColorBrush(Color.FromRgb(251, 146, 60)),
                 "Muito Difícil" => new SolidColorBrush(Color.FromRgb(239, 68, 68)),
                 _ => new SolidColorBrush(Color.FromRgb(160, 174, 192))
+            };
+        }
+
+        private SolidColorBrush GetDifficultyBackgroundColor(string difficulty)
+        {
+            return difficulty switch
+            {
+                "Fácil" => new SolidColorBrush(Color.FromRgb(56, 161, 105)),
+                "Médio" => new SolidColorBrush(Color.FromRgb(245, 158, 11)),
+                "Difícil" => new SolidColorBrush(Color.FromRgb(221, 107, 32)),
+                "Muito Difícil" => new SolidColorBrush(Color.FromRgb(224, 36, 36)),
+                _ => new SolidColorBrush(Color.FromRgb(113, 128, 150))
             };
         }
 
@@ -233,7 +282,7 @@ namespace miniJogo.Views
                 }
                 else
                 {
-                    card.BorderBrush = new SolidColorBrush(Color.FromRgb(79, 172, 254));
+                    card.BorderBrush = new SolidColorBrush(Color.FromRgb(94, 96, 206));
                     card.Background = new LinearGradientBrush
                     {
                         StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
@@ -454,7 +503,8 @@ namespace miniJogo.Views
             if (code.ToUpper() == "ADMIN2024")
             {
                 NamePanel.IsVisible = false;
-                GameModePanel.IsVisible = false;
+                // Mudança aqui - não há mais GameModePanel no novo layout
+                // GameModePanel.IsVisible = false;
                 AdminPanel.IsVisible = true;
                 StatusText.Text = "🔧 Modo Administrador Detectado";
                 StatusText.Foreground = Brushes.Orange;
@@ -462,7 +512,7 @@ namespace miniJogo.Views
             else
             {
                 NamePanel.IsVisible = true;
-                GameModePanel.IsVisible = true;
+                // GameModePanel.IsVisible = true;
                 AdminPanel.IsVisible = false;
                 StatusText.Text = "";
             }
@@ -581,8 +631,6 @@ namespace miniJogo.Views
             }
         }
 
-
-
         private void Window_KeyDown(object? sender, KeyEventArgs e)
         {
             // Play function key sound for F11
@@ -621,13 +669,13 @@ namespace miniJogo.Views
         {
             var (title, instructions) = gameMode switch
             {
-                1 => ("🎯 Pega-Luz", "🎯 PEGA-LUZ:\n\n• Pressione as teclas quando o LED acender\n• Seja rápido! LEDs apagam sozinhos\n• +10 pontos por acerto\n• +5 pontos por velocidade\n\n🏆 DESAFIO DE VITÓRIA:\nAlcance 200 pontos antes de esgotar suas tentativas\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Médio"),
-                2 => ("🧠 Sequência Maluca", "🧠 SEQUÊNCIA MALUCA:\n\n• Observe a sequência de LEDs\n• Repita pressionando as teclas corretas\n• Cada rodada adiciona +1 LED\n• Erro = Game Over\n\n🏆 DESAFIO DE VITÓRIA:\nComplete 11 rodadas sem errar (sequência chega a 13 passos)\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Difícil"),
-                3 => ("🐱 Gato e Rato", "🐱 GATO E RATO:\n\n• Use as teclas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas\n• +20 pontos por captura\n\n🏆 DESAFIO DE VITÓRIA:\nCapture o rato 11 vezes em até 2 minutos\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Médio"),
-                4 => ("☄️ Esquiva Meteoros", "☄️ ESQUIVA METEOROS:\n\n• Use as teclas para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo\n\n🏆 DESAFIO DE VITÓRIA:\nSobreviva por 150 segundos sem ser atingido\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Difícil"),
-                5 => ("🎸 Guitar Hero", "🎸 GUITAR HERO:\n\n• Pressione as teclas no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental\n\n🏆 DESAFIO DE VITÓRIA:\nFaça 200 pontos antes de esgotar suas tentativas\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Médio"),
-                6 => ("⚡ Lightning Strike", "⚡ LIGHTNING STRIKE:\n\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo diminui por rodada\n• Erro = Game Over instantâneo\n\n🏆 DESAFIO DE VITÓRIA:\nComplete 6 rodadas sem errar nenhum padrão\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Difícil"),
-                7 => ("🎯 Sniper Mode", "🎯 SNIPER MODE:\n\n• Alvos piscam por apenas 300ms\n• Pressione a tecla exata no tempo\n• Precisão absoluta necessária\n• Sequência = vitória épica\n\n🏆 DESAFIO DE VITÓRIA:\nAcerte 8 alvos em sequência com LED piscando 300ms cada\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Muito Difícil"),
+                1 => ("🎯 Pega-Luz", "PEGA-LUZ:\n\n• Pressione as teclas quando o LED acender\n• Seja rápido! LEDs apagam sozinhos\n• +10 pontos por acerto\n• +5 pontos por velocidade\n• Erros reduzem suas tentativas\n\n🏆 DESAFIO DE VITÓRIA:\nAlcance 200 pontos antes de esgotar suas tentativas!"),
+                2 => ("🧠 Sequência Maluca", "SEQUÊNCIA MALUCA:\n\n• Observe a sequência de LEDs\n• Repita pressionando as teclas corretas\n• Cada rodada adiciona +1 LED\n• Erro = Game Over\n\n🏆 DESAFIO DE VITÓRIA:\nComplete 11 rodadas (sequência chega a 13 passos)!"),
+                3 => ("🐱 Gato e Rato", "GATO E RATO:\n\n• Use as teclas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas\n• +20 pontos por captura\n\n🏆 DESAFIO DE VITÓRIA:\nCapture o rato 11 vezes em até 2 minutos!"),
+                4 => ("☄️ Esquiva Meteoros", "ESQUIVA METEOROS:\n\n• Use as teclas para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo\n\n🏆 DESAFIO DE VITÓRIA:\nSobreviva por 150 segundos sem ser atingido!"),
+                5 => ("🎸 Guitar Hero", "GUITAR HERO:\n\n• Pressione as teclas no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental\n\n🏆 DESAFIO DE VITÓRIA:\nFaça 200 pontos antes de esgotar suas tentativas!"),
+                6 => ("⚡ Lightning Strike", "LIGHTNING STRIKE:\n\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo diminui por rodada\n• Erro = Game Over\n\n🏆 DESAFIO DE VITÓRIA:\nComplete 6 rodadas sem errar nenhum padrão!"),
+                7 => ("🎯 Sniper Mode", "SNIPER MODE:\n\n• Alvos piscam por apenas 300ms\n• Pressione a tecla exata no tempo\n• Precisão absoluta necessária\n• Sequência = vitória\n\n🏆 DESAFIO DE VITÓRIA:\nAcerte 8 alvos em sequência!"),
                 _ => ("Selecione um Jogo", "Selecione um jogo na lista para ver as instruções detalhadas e o desafio específico para conquistar a vitória!")
             };
 
