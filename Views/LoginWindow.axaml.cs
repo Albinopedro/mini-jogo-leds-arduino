@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Layout;
 using miniJogo.Models.Auth;
 using miniJogo.Services;
 using miniJogo.Models;
@@ -68,10 +70,209 @@ namespace miniJogo.Views
 
         private void InitializeGameModeSelector()
         {
+            // Create visual game cards
+            CreateGameCards();
+            
             // Set default game mode
             _selectedGameMode = 1;
-            GameModeComboBox.SelectedIndex = 0;
             UpdateGameInstructions(1);
+        }
+
+        private void CreateGameCards()
+        {
+            var games = new[]
+            {
+                new { Mode = 1, Icon = "🎯", Name = "Pega-Luz", Challenge = "Alcance 200 pontos", Difficulty = "Médio" },
+                new { Mode = 2, Icon = "🧠", Name = "Sequência Maluca", Challenge = "Complete 11 rodadas", Difficulty = "Difícil" },
+                new { Mode = 3, Icon = "🐱", Name = "Gato e Rato", Challenge = "Capture 11 vezes", Difficulty = "Médio" },
+                new { Mode = 4, Icon = "☄️", Name = "Esquiva Meteoros", Challenge = "Sobreviva 150 segundos", Difficulty = "Difícil" },
+                new { Mode = 5, Icon = "🎸", Name = "Guitar Hero", Challenge = "Faça 200 pontos", Difficulty = "Médio" },
+                new { Mode = 6, Icon = "⚡", Name = "Lightning Strike", Challenge = "Complete 6 rodadas", Difficulty = "Difícil" },
+                new { Mode = 7, Icon = "🎯", Name = "Sniper Mode", Challenge = "Acerte 8 alvos", Difficulty = "Muito Difícil" }
+            };
+
+            GameCardsPanel.Children.Clear();
+
+            foreach (var game in games)
+            {
+                var card = CreateGameCard(game.Mode, game.Icon, game.Name, game.Challenge, game.Difficulty);
+                GameCardsPanel.Children.Add(card);
+            }
+        }
+
+        private Border CreateGameCard(int gameMode, string icon, string name, string challenge, string difficulty)
+        {
+            var card = new Border
+            {
+                Background = new LinearGradientBrush
+                {
+                    StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                    EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                    GradientStops = new GradientStops
+                    {
+                        new GradientStop(Color.FromRgb(58, 58, 107), 0),
+                        new GradientStop(Color.FromRgb(74, 74, 123), 1)
+                    }
+                },
+                BorderBrush = new SolidColorBrush(Color.FromRgb(79, 172, 254)),
+                BorderThickness = new Thickness(2),
+                CornerRadius = new CornerRadius(12),
+                Padding = new Thickness(15),
+                Cursor = new Cursor(StandardCursorType.Hand),
+                Tag = gameMode
+            };
+
+            var grid = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto")
+            };
+
+            // Icon
+            var iconText = new TextBlock
+            {
+                Text = icon,
+                FontSize = 24,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            Grid.SetColumn(iconText, 0);
+
+            // Name and Challenge
+            var infoStack = new StackPanel
+            {
+                Spacing = 4,
+                Margin = new Thickness(12, 0, 12, 0)
+            };
+
+            var nameText = new TextBlock
+            {
+                Text = name,
+                FontSize = 16,
+                FontWeight = FontWeight.Bold,
+                Foreground = Brushes.White
+            };
+
+            var challengeText = new TextBlock
+            {
+                Text = $"🎯 {challenge}",
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.FromRgb(160, 174, 192))
+            };
+
+            infoStack.Children.Add(nameText);
+            infoStack.Children.Add(challengeText);
+            Grid.SetColumn(infoStack, 1);
+
+            // Difficulty
+            var difficultyText = new TextBlock
+            {
+                Text = difficulty,
+                FontSize = 12,
+                FontWeight = FontWeight.Medium,
+                Foreground = GetDifficultyColor(difficulty),
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            Grid.SetColumn(difficultyText, 2);
+
+            grid.Children.Add(iconText);
+            grid.Children.Add(infoStack);
+            grid.Children.Add(difficultyText);
+
+            card.Child = grid;
+
+            // Click handler
+            card.PointerPressed += (sender, e) => GameCard_Click(gameMode);
+            card.PointerEntered += (sender, e) =>
+            {
+                _audioService.PlaySound(AudioEvent.ButtonHover);
+                card.BorderBrush = new SolidColorBrush(Color.FromRgb(16, 185, 129));
+            };
+            card.PointerExited += (sender, e) =>
+            {
+                if (_selectedGameMode != gameMode)
+                {
+                    card.BorderBrush = new SolidColorBrush(Color.FromRgb(79, 172, 254));
+                }
+            };
+
+            return card;
+        }
+
+        private SolidColorBrush GetDifficultyColor(string difficulty)
+        {
+            return difficulty switch
+            {
+                "Fácil" => new SolidColorBrush(Color.FromRgb(72, 187, 120)),
+                "Médio" => new SolidColorBrush(Color.FromRgb(246, 224, 94)),
+                "Difícil" => new SolidColorBrush(Color.FromRgb(251, 146, 60)),
+                "Muito Difícil" => new SolidColorBrush(Color.FromRgb(239, 68, 68)),
+                _ => new SolidColorBrush(Color.FromRgb(160, 174, 192))
+            };
+        }
+
+        private void GameCard_Click(int gameMode)
+        {
+            _audioService.PlaySound(AudioEvent.ButtonClick);
+            _selectedGameMode = gameMode;
+
+            // Update visual selection
+            foreach (Border card in GameCardsPanel.Children)
+            {
+                if (card.Tag != null && (int)card.Tag == gameMode)
+                {
+                    card.BorderBrush = new SolidColorBrush(Color.FromRgb(16, 185, 129));
+                    card.Background = new LinearGradientBrush
+                    {
+                        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                        EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                        GradientStops = new GradientStops
+                        {
+                            new GradientStop(Color.FromRgb(6, 95, 70), 0),
+                            new GradientStop(Color.FromRgb(16, 185, 129), 1)
+                        }
+                    };
+                }
+                else
+                {
+                    card.BorderBrush = new SolidColorBrush(Color.FromRgb(79, 172, 254));
+                    card.Background = new LinearGradientBrush
+                    {
+                        StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                        EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                        GradientStops = new GradientStops
+                        {
+                            new GradientStop(Color.FromRgb(58, 58, 107), 0),
+                            new GradientStop(Color.FromRgb(74, 74, 123), 1)
+                        }
+                    };
+                }
+            }
+
+            UpdateGameInstructions(gameMode);
+            UpdateSelectedGameDisplay(gameMode);
+            UpdateLoginButtonState();
+        }
+
+        private void UpdateSelectedGameDisplay(int gameMode)
+        {
+            var gameInfo = GetGameInfo(gameMode);
+            SelectedGameTitle.Text = $"{gameInfo.Icon} {gameInfo.Name}";
+            SelectedGameChallenge.Text = $"Desafio: {gameInfo.Challenge}";
+            SelectedGameBorder.IsVisible = true;
+        }
+
+        private (string Icon, string Name, string Challenge) GetGameInfo(int gameMode)
+        {
+            return gameMode switch
+            {
+                1 => ("🎯", "Pega-Luz", "Alcance 200 pontos antes de esgotar suas tentativas"),
+                2 => ("🧠", "Sequência Maluca", "Complete 11 rodadas sem errar (sequência chega a 13 passos)"),
+                3 => ("🐱", "Gato e Rato", "Capture o rato 11 vezes em até 2 minutos"),
+                4 => ("☄️", "Esquiva Meteoros", "Sobreviva por 150 segundos sem ser atingido (1 ponto/segundo)"),
+                5 => ("🎸", "Guitar Hero", "Faça 200 pontos antes de esgotar suas tentativas"),
+                6 => ("⚡", "Lightning Strike", "Complete 6 rodadas sem errar nenhum padrão"),
+                7 => ("🎯", "Sniper Mode", "Acerte 8 alvos em sequência com o LED piscando por 300ms cada"),
+                _ => ("🎮", "Jogo Desconhecido", "Desafio não definido")
+            };
         }
 
         private void LoadRankings()
@@ -380,15 +581,7 @@ namespace miniJogo.Views
             }
         }
 
-        private void GameModeComboBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
-        {
-            _audioService.PlaySound(AudioEvent.ButtonHover);
-            if (GameModeComboBox.SelectedItem is ComboBoxItem item && item.Tag is string tag)
-            {
-                _selectedGameMode = int.Parse(tag);
-                UpdateGameInstructions(_selectedGameMode);
-            }
-        }
+
 
         private void Window_KeyDown(object? sender, KeyEventArgs e)
         {
@@ -428,14 +621,14 @@ namespace miniJogo.Views
         {
             var (title, instructions) = gameMode switch
             {
-                1 => ("🎯 Pega-Luz", "🎯 PEGA-LUZ:\n\n• Pressione W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L quando o LED acender\n• Seja rápido! LEDs apagam sozinhos\n• +10 pontos por acerto\n• +5 pontos por velocidade\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs da matriz\n\n🎯 Objetivo:\nConseguir a maior pontuação possível!"),
-                2 => ("🧠 Sequência Maluca", "🧠 SEQUÊNCIA MALUCA:\n\n• Observe a sequência de LEDs\n• Repita pressionando W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L\n• Cada nível adiciona +1 LED\n• Erro = Game Over\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs da matriz\n\n🎯 Objetivo:\nMemoizar sequências cada vez maiores!"),
-                3 => ("🐱 Gato e Rato", "🐱 GATO E RATO:\n\n• Use setas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas azuis\n• +20 pontos por captura\n\n⌨️ Controles:\nSetas ↑↓←→ = Movimento\n\n🎯 Objetivo:\nCapturar o máximo de ratos possível!"),
-                4 => ("☄️ Esquiva Meteoros", "☄️ ESQUIVA METEOROS:\n\n• Use ↑↓←→ para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo\n\n⌨️ Controles:\nSetas ↑↓←→ = Movimento\n\n🎯 Objetivo:\nSobreviver o máximo de tempo!"),
-                5 => ("🎸 Guitar Hero", "🎸 GUITAR HERO:\n\n• Pressione W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = Notas musicais\n\n🎯 Objetivo:\nTocar no ritmo perfeito!"),
-                6 => ("⚡ Lightning Strike", "⚡ LIGHTNING STRIKE:\n\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo de exibição diminui por nível\n• Erro = Game Over instantâneo\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs da matriz\n\n🎯 Objetivo:\nMemória e reflexos ultra-rápidos!"),
-                7 => ("🎯 Sniper Mode", "🎯 SNIPER MODE:\n\n• Alvos piscam por apenas 0.1 segundo\n• Pressione a tecla exata no tempo\n• 10 acertos = vitória impossível\n• Bônus x10 se completar!\n\n⌨️ Controles:\nTeclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = Mira precisa\n\n🎯 Objetivo:\nPrecisão absoluta em tempo mínimo!"),
-                _ => ("Selecione um Jogo", "Selecione um jogo na lista para ver as instruções detalhadas.")
+                1 => ("🎯 Pega-Luz", "🎯 PEGA-LUZ:\n\n• Pressione as teclas quando o LED acender\n• Seja rápido! LEDs apagam sozinhos\n• +10 pontos por acerto\n• +5 pontos por velocidade\n\n🏆 DESAFIO DE VITÓRIA:\nAlcance 200 pontos antes de esgotar suas tentativas\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Médio"),
+                2 => ("🧠 Sequência Maluca", "🧠 SEQUÊNCIA MALUCA:\n\n• Observe a sequência de LEDs\n• Repita pressionando as teclas corretas\n• Cada rodada adiciona +1 LED\n• Erro = Game Over\n\n🏆 DESAFIO DE VITÓRIA:\nComplete 11 rodadas sem errar (sequência chega a 13 passos)\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Difícil"),
+                3 => ("🐱 Gato e Rato", "🐱 GATO E RATO:\n\n• Use as teclas para mover o gato\n• Capture o rato vermelho\n• Evite as armadilhas\n• +20 pontos por captura\n\n🏆 DESAFIO DE VITÓRIA:\nCapture o rato 11 vezes em até 2 minutos\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Médio"),
+                4 => ("☄️ Esquiva Meteoros", "☄️ ESQUIVA METEOROS:\n\n• Use as teclas para desviar\n• Meteoros caem aleatoriamente\n• Sobreviva o máximo possível\n• +1 ponto por segundo\n\n🏆 DESAFIO DE VITÓRIA:\nSobreviva por 150 segundos sem ser atingido\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Difícil"),
+                5 => ("🎸 Guitar Hero", "🎸 GUITAR HERO:\n\n• Pressione as teclas no ritmo\n• Siga as batidas musicais\n• Combo = pontos multiplicados\n• Precisão é fundamental\n\n🏆 DESAFIO DE VITÓRIA:\nFaça 200 pontos antes de esgotar suas tentativas\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Médio"),
+                6 => ("⚡ Lightning Strike", "⚡ LIGHTNING STRIKE:\n\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo diminui por rodada\n• Erro = Game Over instantâneo\n\n🏆 DESAFIO DE VITÓRIA:\nComplete 6 rodadas sem errar nenhum padrão\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Difícil"),
+                7 => ("🎯 Sniper Mode", "🎯 SNIPER MODE:\n\n• Alvos piscam por apenas 300ms\n• Pressione a tecla exata no tempo\n• Precisão absoluta necessária\n• Sequência = vitória épica\n\n🏆 DESAFIO DE VITÓRIA:\nAcerte 8 alvos em sequência com LED piscando 300ms cada\n\n⌨️ Controles:\nTeclas do teclado visual ao lado\n\n🎯 Dificuldade: Muito Difícil"),
+                _ => ("Selecione um Jogo", "Selecione um jogo na lista para ver as instruções detalhadas e o desafio específico para conquistar a vitória!")
             };
 
             GameTitleText.Text = title;

@@ -835,6 +835,9 @@ public partial class MainWindow : Window
                     }
                     UpdateUI();
                     AddDebugMessage($"Pontuação: +{scoreIncrease} (Total: {_score})");
+                    
+                    // Check victory conditions after score update
+                    CheckVictoryConditions();
                 }
                 break;
 
@@ -932,6 +935,9 @@ public partial class MainWindow : Window
                     StatusText.Text = $"🎯 Acertou LED {ledHit}! +{pointsEarned} pontos (Total: {_score})";
                     UpdateUI();
                     AddDebugMessage($"Acerto no LED {ledHit}, pontuação sincronizada: {_score}");
+                    
+                    // Check victory conditions after score update
+                    CheckVictoryConditions();
                 }
                 break;
 
@@ -981,6 +987,9 @@ public partial class MainWindow : Window
                     UpdateUI();
                     AddDebugMessage($"[EVENTO] LEVEL_UP - Nível: {level}, Pontuação: {_score}");
                     TriggerVisualEffect("LEVEL_UP");
+                    
+                    // Check victory conditions after score update
+                    CheckVictoryConditions();
                 }
                 break;
 
@@ -1034,6 +1043,9 @@ public partial class MainWindow : Window
                     _audioService.PlaySound(AudioEvent.GuitarNote);
                     UpdateUI();
                     AddDebugMessage($"Nota acertada coluna {column}, pontuação: {_score}");
+                    
+                    // Check victory conditions after score update
+                    CheckVictoryConditions();
                 }
                 break;
 
@@ -1240,6 +1252,9 @@ public partial class MainWindow : Window
                     _score += bonus;
                     StatusText.Text = $"🚀 BÔNUS DE VELOCIDADE! +{bonus} pontos extras!";
                     UpdateUI();
+                    
+                    // Check victory conditions after score update
+                    CheckVictoryConditions();
                 }
                 break;
 
@@ -1249,6 +1264,9 @@ public partial class MainWindow : Window
                     _score = Math.Max(0, _score - penalty);
                     StatusText.Text = $"⚠️ Penalidade! -{penalty} pontos";
                     UpdateUI();
+                    
+                    // Check victory conditions after score update (though unlikely after penalty)
+                    CheckVictoryConditions();
                 }
                 break;
 
@@ -1395,6 +1413,129 @@ public partial class MainWindow : Window
             {
                 CurrentGameText.Text = gameNames[_currentGameMode];
             }
+        }
+    }
+
+    private bool CheckVictoryConditions()
+    {
+        if (!_gameActive) return false;
+
+        var gameMode = (GameMode)_currentGameMode;
+        bool victoryAchieved = false;
+        string challengeDescription = "";
+
+        switch (gameMode)
+        {
+            case GameMode.PegaLuz:
+                if (_score >= 200)
+                {
+                    victoryAchieved = true;
+                    challengeDescription = "Alcançou 200 pontos antes de esgotar as tentativas";
+                }
+                break;
+
+            case GameMode.SequenciaMaluca:
+                // This would need round tracking from Arduino
+                // For now, check a high score threshold
+                if (_score >= 1100) // Assuming ~100 points per round completed
+                {
+                    victoryAchieved = true;
+                    challengeDescription = "Completou 11 rodadas sem errar (sequência chegou a 13 passos)";
+                }
+                break;
+
+            case GameMode.GatoRato:
+                // Assuming 20 points per capture
+                if (_score >= 220) // 11 captures * 20 points
+                {
+                    victoryAchieved = true;
+                    challengeDescription = "Capturou o rato 11 vezes em até 2 minutos";
+                }
+                break;
+
+            case GameMode.EsquivaMeteoros:
+                if (_score >= 150) // 1 point per second for 150 seconds
+                {
+                    victoryAchieved = true;
+                    challengeDescription = "Sobreviveu por 150 segundos sem ser atingido";
+                }
+                break;
+
+            case GameMode.GuitarHero:
+                if (_score >= 200)
+                {
+                    victoryAchieved = true;
+                    challengeDescription = "Fez 200 pontos antes de esgotar as tentativas";
+                }
+                break;
+
+            case GameMode.LightningStrike:
+                // Assuming ~100 points per round
+                if (_score >= 600) // 6 rounds * 100 points
+                {
+                    victoryAchieved = true;
+                    challengeDescription = "Completou 6 rodadas sem errar nenhum padrão";
+                }
+                break;
+
+            case GameMode.SniperMode:
+                // Assuming 25 points per hit
+                if (_score >= 200) // 8 hits * 25 points
+                {
+                    victoryAchieved = true;
+                    challengeDescription = "Acertou 8 alvos em sequência com o LED piscando por 300ms cada";
+                }
+                break;
+        }
+
+        if (victoryAchieved)
+        {
+            TriggerVictory(challengeDescription);
+            return true;
+        }
+
+        return false;
+    }
+
+    private void TriggerVictory(string challengeDescription)
+    {
+        try
+        {
+            AddDebugMessage($"[VITÓRIA] Desafio conquistado: {challengeDescription}");
+            
+            // Stop the game
+            _gameActive = false;
+            StartGameButton.IsEnabled = true;
+            StopGameButton.IsEnabled = false;
+
+            // Play victory sound
+            _audioService.PlaySound(AudioEvent.Victory);
+            
+            // Save the score
+            SaveGameScore();
+            
+            // Show victory window
+            var victoryWindow = new Views.VictoryWindow();
+            victoryWindow.SetVictoryDetails((GameMode)_currentGameMode, _score, _playerName, challengeDescription);
+            
+            // Handle return to login
+            victoryWindow.OnReturnToLogin += (sender, e) =>
+            {
+                Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                {
+                    ReturnToLoginSafely();
+                });
+            };
+
+            victoryWindow.Show();
+            victoryWindow.Activate();
+            victoryWindow.Focus();
+            
+            AddDebugMessage("[VITÓRIA] Janela de vitória exibida");
+        }
+        catch (Exception ex)
+        {
+            AddDebugMessage($"[ERRO] Erro ao exibir vitória: {ex.Message}");
         }
     }
 

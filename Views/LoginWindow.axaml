@@ -259,47 +259,55 @@
                     </StackPanel>
 
                     <!-- Game Mode Selection (for clients) -->
-                    <StackPanel x:Name="GameModePanel" Spacing="15">
+                    <StackPanel x:Name="GameModePanel" Spacing="20">
                         <TextBlock
-                            Text="🎮 Escolha seu Jogo:"
-                            FontSize="16"
-                            FontWeight="Medium"
+                            Text="🎮 Escolha seu Desafio:"
+                            FontSize="18"
+                            FontWeight="Bold"
                             Foreground="#E2E8F0"
+                            HorizontalAlignment="Center"
                         />
 
-                        <ComboBox
-                            x:Name="GameModeComboBox"
-                            SelectionChanged="GameModeComboBox_SelectionChanged"
-                            Padding="18,15"
-                            FontSize="16"
-                            CornerRadius="12"
-                            Foreground="White"
-                            BorderBrush="#4FACFE"
-                            BorderThickness="2"
+                        <ScrollViewer
+                            MaxHeight="400"
+                            HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Auto"
                         >
-                            <ComboBox.Background>
-                                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                                    <GradientStop Color="#3A3A6B" Offset="0"/>
-                                    <GradientStop Color="#4A4A7B" Offset="1"/>
-                                </LinearGradientBrush>
-                            </ComboBox.Background>
-                            <ComboBoxItem Content="🎯 Pega-Luz" Tag="1" />
-                            <ComboBoxItem
-                                Content="🧠 Sequência Maluca"
-                                Tag="2"
-                            />
-                            <ComboBoxItem Content="🐱 Gato e Rato" Tag="3" />
-                            <ComboBoxItem
-                                Content="☄️ Esquiva Meteoros"
-                                Tag="4"
-                            />
-                            <ComboBoxItem Content="🎸 Guitar Hero" Tag="5" />
-                            <ComboBoxItem
-                                Content="⚡ Lightning Strike"
-                                Tag="6"
-                            />
-                            <ComboBoxItem Content="🎯 Sniper Mode" Tag="7" />
-                        </ComboBox>
+                            <StackPanel x:Name="GameCardsPanel" Spacing="12">
+                                <!-- Game cards will be populated in code-behind -->
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Selected game display -->
+                        <Border
+                            x:Name="SelectedGameBorder"
+                            Background="#065F46"
+                            BorderBrush="#10B981"
+                            BorderThickness="2"
+                            CornerRadius="10"
+                            Padding="15"
+                            IsVisible="False"
+                        >
+                            <StackPanel Spacing="8">
+                                <TextBlock
+                                    x:Name="SelectedGameTitle"
+                                    Text="🎯 Jogo Selecionado"
+                                    FontSize="16"
+                                    FontWeight="Bold"
+                                    Foreground="#10B981"
+                                    HorizontalAlignment="Center"
+                                />
+                                <TextBlock
+                                    x:Name="SelectedGameChallenge"
+                                    Text="Desafio: Alcance 200 pontos"
+                                    FontSize="14"
+                                    Foreground="White"
+                                    HorizontalAlignment="Center"
+                                    TextWrapping="Wrap"
+                                    TextAlignment="Center"
+                                />
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
 
                     <!-- Status Message -->
@@ -418,8 +426,9 @@
                     <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
                 </Border.Effect>
                 <StackPanel Spacing="20">
+                    <!-- Visual Keyboard Section -->
                     <TextBlock
-                        Text="📖 Instruções do Jogo"
+                        Text="⌨️ Teclado Visual"
                         FontSize="20"
                         FontWeight="Bold"
                         Foreground="White"
@@ -434,31 +443,99 @@
                     >
                         <Border.Background>
                             <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                                <GradientStop Color="#1E1E3F" Offset="0"/>
+                                <GradientStop Color="#2A2A5A" Offset="1"/>
+                            </LinearGradientBrush>
+                        </Border.Background>
+                        <StackPanel Spacing="15">
+                            <TextBlock
+                                Text="Use estas teclas para controlar os LEDs:"
+                                FontSize="14"
+                                Foreground="#E2E8F0"
+                                HorizontalAlignment="Center"
+                                TextAlignment="Center"
+                            />
+
+                            <!-- Visual Keyboard Matrix -->
+                            <Grid HorizontalAlignment="Center" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,Auto,Auto">
+                                <!-- Row 1 - Red LEDs -->
+                                <Button Grid.Row="0" Grid.Column="0" Content="W" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="0" Grid.Column="1" Content="E" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="0" Grid.Column="2" Content="R" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="0" Grid.Column="3" Content="T" Background="#FF6B6B" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+
+                                <!-- Row 2 - Yellow LEDs -->
+                                <Button Grid.Row="1" Grid.Column="0" Content="S" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="1" Grid.Column="1" Content="D" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="1" Grid.Column="2" Content="F" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="1" Grid.Column="3" Content="G" Background="#F6E05E" Foreground="Black" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+
+                                <!-- Row 3 - Green LEDs -->
+                                <Button Grid.Row="2" Grid.Column="0" Content="Y" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="2" Grid.Column="1" Content="U" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="2" Grid.Column="2" Content="I" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="2" Grid.Column="3" Content="O" Background="#48BB78" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+
+                                <!-- Row 4 - Blue LEDs -->
+                                <Button Grid.Row="3" Grid.Column="0" Content="H" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="3" Grid.Column="1" Content="J" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="3" Grid.Column="2" Content="K" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                                <Button Grid.Row="3" Grid.Column="3" Content="L" Background="#4299E1" Foreground="White" FontWeight="Bold" Margin="2" Padding="8" MinWidth="40" MinHeight="40" CornerRadius="8" />
+                            </Grid>
+
+                            <TextBlock
+                                Text="As cores correspondem às fileiras dos LEDs"
+                                FontSize="12"
+                                Foreground="#A0AEC0"
+                                HorizontalAlignment="Center"
+                                TextAlignment="Center"
+                            />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Game Instructions Section -->
+                    <TextBlock
+                        Text="📖 Instruções do Jogo"
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Foreground="White"
+                        HorizontalAlignment="Center"
+                    />
+
+                    <Border
+                        CornerRadius="15"
+                        Padding="15"
+                        BorderBrush="#10B981"
+                        BorderThickness="2"
+                    >
+                        <Border.Background>
+                            <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
                                 <GradientStop Color="#3A3A6B" Offset="0"/>
                                 <GradientStop Color="#4A4A7B" Offset="1"/>
                             </LinearGradientBrush>
                         </Border.Background>
                         <ScrollViewer
-                            MaxHeight="500"
+                            MaxHeight="300"
                             VerticalScrollBarVisibility="Auto"
                         >
-                            <StackPanel Spacing="15">
+                            <StackPanel Spacing="12">
                                 <TextBlock
                                     x:Name="GameTitleText"
-                                    Text="🎯 Pega-Luz"
-                                    FontSize="18"
+                                    Text="🎯 Selecione um Desafio"
+                                    FontSize="16"
                                     FontWeight="Bold"
-                                    Foreground="#4FACFE"
+                                    Foreground="#10B981"
                                     HorizontalAlignment="Center"
                                 />
 
                                 <TextBlock
                                     x:Name="GameInstructionsText"
-                                    Text="🎯 PEGA-LUZ:&#x0a;&#x0a;• Pressione W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L quando o LED acender&#x0a;• Seja rápido! LEDs apagam sozinhos&#x0a;• +10 pontos por acerto&#x0a;• +5 pontos por velocidade&#x0a;&#x0a;⌨️ Controles:&#x0a;Teclas W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs da matriz&#x0a;&#x0a;🎯 Objetivo:&#x0a;Conseguir a maior pontuação possível!"
+                                    Text="Escolha um dos desafios ao lado para ver as instruções específicas e começar a jogar!"
                                     FontSize="14"
                                     Foreground="#E2E8F0"
                                     TextWrapping="Wrap"
-                                    LineHeight="20"
+                                    TextAlignment="Center"
+                                    HorizontalAlignment="Center"
                                 />
                             </StackPanel>
                         </ScrollViewer>
