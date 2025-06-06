@@ -625,6 +625,38 @@ namespace miniJogo.Services
                     _backgroundMusicCancellationTokenSource = null;
                 }
                 
+                // Kill any orphaned mpg123 processes on Linux
+                if (_isLinux)
+                {
+                    try
+                    {
+                        Console.WriteLine("🔍 Verificando processos mpg123 orfãos...");
+                        var killProcess = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = "pkill",
+                            Arguments = "-f \"mpg123.*C418\"",
+                            CreateNoWindow = true,
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true
+                        };
+                        
+                        using var process = System.Diagnostics.Process.Start(killProcess);
+                        if (process != null)
+                        {
+                            await process.WaitForExitAsync();
+                            if (process.ExitCode == 0)
+                            {
+                                Console.WriteLine("✅ Processos mpg123 orfãos eliminados");
+                            }
+                        }
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        Console.WriteLine($"⚠️ Erro na limpeza de processos: {cleanupEx.Message}");
+                    }
+                }
+                
                 System.Diagnostics.Debug.WriteLine("🔇 Música de fundo parada");
                 Console.WriteLine("🔇 Música de fundo parada");
             }

@@ -108,16 +108,6 @@ public partial class MainWindow : Window
         WindowState = WindowState.FullScreen;
         _isFullScreen = true;
         RefreshPorts();
-        
-        // Start background music after a short delay to let startup sound finish
-        _ = Task.Run(async () =>
-        {
-            Console.WriteLine("🎵 Aguardando 2 segundos para iniciar playlist de música de fundo...");
-            await Task.Delay(2000); // Wait 2 seconds for startup sound
-            Console.WriteLine("🎵 Iniciando playlist de música de fundo (Moog City 2, Aria Math, Sweden)...");
-            await _audioService.StartBackgroundMusicAsync();
-            Console.WriteLine("🎵 Playlist de música de fundo iniciada com sucesso!");
-        });
 
         // Auto-connect for clients
         if (_isClientMode)
