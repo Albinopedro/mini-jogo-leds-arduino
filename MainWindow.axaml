@@ -8,7 +8,7 @@
     d:DesignHeight="800"
     x:Class="miniJogo.MainWindow"
     x:CompileBindings="True"
-    Title="Mini Jogo LEDs - Arduino"
+    Title="Mini Jogo LEDs - Arduino Gaming Platform"
     Width="1200"
     Height="800"
     MinWidth="1000"
@@ -19,7 +19,7 @@
     KeyUp="Window_KeyUp"
     Focusable="True"
     Background="#0F0F23"
->
+    ExtendClientAreaToDecorationsHint="True">
 
   <Grid>
     <Grid.RowDefinitions>
@@ -28,42 +28,63 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <!-- Header -->
+    <!-- Enhanced Header with Better Visual Hierarchy -->
     <Border Grid.Row="0" Padding="25">
       <Border.Background>
         <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
-          <GradientStop Color="#667EEA" Offset="0"/>
-          <GradientStop Color="#764BA2" Offset="1"/>
+          <GradientStop Color="#5E60CE" Offset="0"/>
+          <GradientStop Color="#7400B8" Offset="1"/>
         </LinearGradientBrush>
       </Border.Background>
+      <Border.Effect>
+        <DropShadowEffect BlurRadius="15" OffsetX="0" OffsetY="5" Color="#40000000"/>
+      </Border.Effect>
+
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="20">
-          <TextBlock
-            Text="🎮 Mini Jogo LEDs - Arduino"
-            FontSize="32"
-            FontWeight="Bold"
-            Foreground="White"
-            VerticalAlignment="Center"
-          >
-            <TextBlock.Effect>
-              <DropShadowEffect BlurRadius="8" OffsetX="0" OffsetY="2" Color="#30000000"/>
-            </TextBlock.Effect>
-          </TextBlock>
-          <Border CornerRadius="15" Padding="15,8">
+        <!-- Left: Title and Player Info -->
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="25">
+          <StackPanel Orientation="Horizontal" Spacing="15">
+            <TextBlock Text="🎮" FontSize="42" VerticalAlignment="Center" />
+            <StackPanel Spacing="5">
+              <TextBlock
+                Text="Mini Jogo LEDs - Arduino"
+                FontSize="32"
+                FontWeight="Bold"
+                Foreground="White"
+                VerticalAlignment="Center">
+                <TextBlock.Effect>
+                  <DropShadowEffect BlurRadius="8" OffsetX="0" OffsetY="2" Color="#30000000"/>
+                </TextBlock.Effect>
+              </TextBlock>
+              <TextBlock
+                Text="Sistema de Jogos Interativos"
+                FontSize="14"
+                FontWeight="Medium"
+                Foreground="#E2E8F0"
+                Opacity="0.9"
+                VerticalAlignment="Center"
+              />
+            </StackPanel>
+          </StackPanel>
+
+          <Border CornerRadius="15" Padding="20,12">
             <Border.Background>
               <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                <GradientStop Color="#3A3A6B" Offset="0"/>
-                <GradientStop Color="#4A4A7B" Offset="1"/>
+                <GradientStop Color="#1E1E3F" Offset="0"/>
+                <GradientStop Color="#2A2A5A" Offset="1"/>
               </LinearGradientBrush>
             </Border.Background>
+            <Border.Effect>
+              <DropShadowEffect BlurRadius="10" OffsetX="0" OffsetY="3" Color="#20000000"/>
+            </Border.Effect>
             <TextBlock
               x:Name="PlayerDisplayText"
-              Text="👤 Jogador: Não definido"
+              Text="👤 Jogador: Carregando..."
               Foreground="White"
               FontWeight="Medium"
               FontSize="16"
@@ -72,31 +93,38 @@
           </Border>
         </StackPanel>
 
+        <!-- Right: Enhanced Connection Status -->
         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20">
           <TextBlock
-            Text="Conexão Arduino:"
+            Text="🔌 Arduino:"
             Foreground="White"
             VerticalAlignment="Center"
             FontWeight="Medium"
             FontSize="16"
           />
-          <Border x:Name="ConnectionBorder" CornerRadius="12" Padding="12,8">
+          <Border x:Name="ConnectionBorder" CornerRadius="15" Padding="18,12">
             <Border.Background>
               <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                <GradientStop Color="#3A3A6B" Offset="0"/>
-                <GradientStop Color="#4A4A7B" Offset="1"/>
+                <GradientStop Color="#1E1E3F" Offset="0"/>
+                <GradientStop Color="#2A2A5A" Offset="1"/>
               </LinearGradientBrush>
             </Border.Background>
-            <StackPanel Orientation="Horizontal" Spacing="10">
+            <Border.Effect>
+              <DropShadowEffect BlurRadius="10" OffsetX="0" OffsetY="3" Color="#20000000"/>
+            </Border.Effect>
+            <StackPanel Orientation="Horizontal" Spacing="12">
               <Ellipse
                 x:Name="ConnectionStatus"
-                Width="14"
-                Height="14"
-                Fill="#4FACFE"
-              />
+                Width="16"
+                Height="16"
+                Fill="#4FACFE">
+                <Ellipse.Effect>
+                  <DropShadowEffect BlurRadius="8" OffsetX="0" OffsetY="0" Color="#4FACFE"/>
+                </Ellipse.Effect>
+              </Ellipse>
               <TextBlock
                 x:Name="ConnectionText"
-                Text="Desconectado"
+                Text="Conectando..."
                 Foreground="White"
                 FontWeight="Medium"
                 FontSize="14"
@@ -108,18 +136,18 @@
       </Grid>
     </Border>
 
-    <!-- Main Content -->
+    <!-- Enhanced Main Content Area -->
     <Grid Grid.Row="1" Margin="30">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="380" />
+        <ColumnDefinition Width="400" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
-      <!-- Left Panel - Controls -->
-      <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
-        <StackPanel Spacing="20">
+      <!-- Enhanced Left Panel - Controls with Better Visual Grouping -->
+      <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Padding="0,0,15,0">
+        <StackPanel Spacing="25">
 
-          <!-- Player Info -->
+          <!-- Enhanced Player Info Panel -->
           <Border CornerRadius="20" Padding="25">
             <Border.Background>
               <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -128,15 +156,19 @@
               </LinearGradientBrush>
             </Border.Background>
             <Border.Effect>
-              <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+              <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#25000000"/>
             </Border.Effect>
-            <StackPanel Spacing="15">
-              <TextBlock
-                Text="👤 Informações do Jogador"
-                FontSize="18"
-                FontWeight="Bold"
-                Foreground="White"
-              />
+            <StackPanel Spacing="18">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock Text="👤" FontSize="22" VerticalAlignment="Center" />
+                <TextBlock
+                  Text="Informações do Jogador"
+                  FontSize="18"
+                  FontWeight="Bold"
+                  Foreground="White"
+                  VerticalAlignment="Center"
+                />
+              </StackPanel>
 
               <Grid>
                 <Grid.ColumnDefinitions>
@@ -148,17 +180,16 @@
                   Grid.Column="0"
                   Watermark="Digite seu nome..."
                   VerticalContentAlignment="Center"
-                  Padding="15,12"
+                  Padding="16,14"
                   CornerRadius="12"
                   FontSize="14"
                   BorderThickness="2"
-                  BorderBrush="#4FACFE"
-                  Foreground="White"
-                >
+                  BorderBrush="#5E60CE"
+                  Foreground="White">
                   <TextBox.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                      <GradientStop Color="#3A3A6B" Offset="0"/>
-                      <GradientStop Color="#4A4A7B" Offset="1"/>
+                      <GradientStop Color="#2D2D5C" Offset="0"/>
+                      <GradientStop Color="#3A3A6B" Offset="1"/>
                     </LinearGradientBrush>
                   </TextBox.Background>
                 </TextBox>
@@ -168,20 +199,18 @@
                   Content="💾"
                   Click="SavePlayerButton_Click"
                   ToolTip.Tip="Salvar Nome"
-                  Margin="10,0,0,0"
-                  Width="45"
-                  Height="40"
+                  Margin="12,0,0,0"
+                  Width="50"
+                  Height="46"
                   CornerRadius="12"
                   VerticalContentAlignment="Center"
                   HorizontalContentAlignment="Center"
-
                   Foreground="White"
-                  FontSize="16"
-                >
+                  FontSize="18">
                   <Button.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                      <GradientStop Color="#4FACFE" Offset="0"/>
-                      <GradientStop Color="#00F2FE" Offset="1"/>
+                      <GradientStop Color="#5E60CE" Offset="0"/>
+                      <GradientStop Color="#7400B8" Offset="1"/>
                     </LinearGradientBrush>
                   </Button.Background>
                   <Button.Effect>
@@ -192,7 +221,7 @@
             </StackPanel>
           </Border>
 
-          <!-- Game Selection -->
+          <!-- Enhanced Game Selection Panel -->
           <Border CornerRadius="20" Padding="25">
             <Border.Background>
               <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -201,31 +230,34 @@
               </LinearGradientBrush>
             </Border.Background>
             <Border.Effect>
-              <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+              <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#25000000"/>
             </Border.Effect>
-            <StackPanel Spacing="15">
-              <TextBlock
-                Text="🎯 Seleção de Jogo"
-                FontSize="18"
-                FontWeight="Bold"
-                Foreground="White"
-              />
+            <StackPanel Spacing="18">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock Text="🎯" FontSize="22" VerticalAlignment="Center" />
+                <TextBlock
+                  Text="Seleção de Jogo"
+                  FontSize="18"
+                  FontWeight="Bold"
+                  Foreground="White"
+                  VerticalAlignment="Center"
+                />
+              </StackPanel>
 
               <ComboBox
                 x:Name="GameModeComboBox"
                 SelectionChanged="GameModeComboBox_SelectionChanged"
                 HorizontalAlignment="Stretch"
-                Padding="15,12"
+                Padding="16,14"
                 CornerRadius="12"
                 FontSize="14"
                 BorderThickness="2"
-                BorderBrush="#4FACFE"
-                Foreground="White"
-              >
+                BorderBrush="#5E60CE"
+                Foreground="White">
                 <ComboBox.Background>
                   <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                    <GradientStop Color="#3A3A6B" Offset="0"/>
-                    <GradientStop Color="#4A4A7B" Offset="1"/>
+                    <GradientStop Color="#2D2D5C" Offset="0"/>
+                    <GradientStop Color="#3A3A6B" Offset="1"/>
                   </LinearGradientBrush>
                 </ComboBox.Background>
                 <ComboBoxItem Content="🎯 Pega-Luz" Tag="1" />
@@ -237,11 +269,11 @@
                 <ComboBoxItem Content="🎯 Sniper Mode" Tag="7" />
               </ComboBox>
 
-              <Border CornerRadius="12" Padding="15" BorderBrush="#4FACFE" BorderThickness="1">
+              <Border CornerRadius="12" Padding="18" BorderBrush="#5E60CE" BorderThickness="1">
                 <Border.Background>
                   <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                    <GradientStop Color="#3A3A6B" Offset="0"/>
-                    <GradientStop Color="#4A4A7B" Offset="1"/>
+                    <GradientStop Color="#2D2D5C" Offset="0"/>
+                    <GradientStop Color="#3A3A6B" Offset="1"/>
                   </LinearGradientBrush>
                 </Border.Background>
                 <TextBlock
@@ -250,13 +282,13 @@
                   TextWrapping="Wrap"
                   Foreground="#E2E8F0"
                   FontSize="13"
-                  LineHeight="18"
+                  LineHeight="20"
                 />
               </Border>
             </StackPanel>
           </Border>
 
-          <!-- Game Controls -->
+          <!-- Enhanced Game Controls Panel -->
           <Border CornerRadius="20" Padding="25">
             <Border.Background>
               <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -265,15 +297,19 @@
               </LinearGradientBrush>
             </Border.Background>
             <Border.Effect>
-              <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+              <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#25000000"/>
             </Border.Effect>
-            <StackPanel Spacing="15">
-              <TextBlock
-                Text="🎮 Controles do Jogo"
-                FontSize="18"
-                FontWeight="Bold"
-                Foreground="White"
-              />
+            <StackPanel Spacing="18">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock Text="🎮" FontSize="22" VerticalAlignment="Center" />
+                <TextBlock
+                  Text="Controles do Jogo"
+                  FontSize="18"
+                  FontWeight="Bold"
+                  Foreground="White"
+                  VerticalAlignment="Center"
+                />
+              </StackPanel>
 
               <Grid>
                 <Grid.ColumnDefinitions>
@@ -292,17 +328,16 @@
                   Content="▶️ Iniciar"
                   Click="StartGameButton_Click"
                   IsEnabled="False"
-                  Margin="0,0,5,10"
-                  Padding="15,12"
+                  Margin="0,0,8,12"
+                  Padding="18,14"
                   CornerRadius="12"
                   FontWeight="SemiBold"
                   Foreground="White"
-                  FontSize="14"
-                >
+                  FontSize="14">
                   <Button.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                      <GradientStop Color="#4FACFE" Offset="0"/>
-                      <GradientStop Color="#00F2FE" Offset="1"/>
+                      <GradientStop Color="#5E60CE" Offset="0"/>
+                      <GradientStop Color="#7400B8" Offset="1"/>
                     </LinearGradientBrush>
                   </Button.Background>
                   <Button.Effect>
@@ -317,17 +352,16 @@
                   Content="◼ Parar"
                   Click="StopGameButton_Click"
                   IsEnabled="False"
-                  Margin="5,0,0,10"
-                  Padding="15,12"
+                  Margin="8,0,0,12"
+                  Padding="18,14"
                   CornerRadius="12"
                   FontWeight="SemiBold"
                   Foreground="White"
-                  FontSize="14"
-                >
+                  FontSize="14">
                   <Button.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                      <GradientStop Color="#667EEA" Offset="0"/>
-                      <GradientStop Color="#764BA2" Offset="1"/>
+                      <GradientStop Color="#F56565" Offset="0"/>
+                      <GradientStop Color="#C53030" Offset="1"/>
                     </LinearGradientBrush>
                   </Button.Background>
                   <Button.Effect>
@@ -341,17 +375,16 @@
                   Grid.Row="1"
                   Content="🔄 Reset"
                   Click="ResetScoreButton_Click"
-                  Margin="0,0,5,0"
-                  Padding="15,12"
+                  Margin="0,0,8,0"
+                  Padding="18,14"
                   CornerRadius="12"
                   FontWeight="SemiBold"
                   Foreground="White"
-                  FontSize="14"
-                >
+                  FontSize="14">
                   <Button.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                      <GradientStop Color="#B794F6" Offset="0"/>
-                      <GradientStop Color="#9F7AEA" Offset="1"/>
+                      <GradientStop Color="#9F7AEA" Offset="0"/>
+                      <GradientStop Color="#805AD5" Offset="1"/>
                     </LinearGradientBrush>
                   </Button.Background>
                   <Button.Effect>
@@ -365,17 +398,16 @@
                   Grid.Row="1"
                   Content="🏆 Ranks"
                   Click="ViewScoresButton_Click"
-                  Margin="5,0,0,0"
-                  Padding="15,12"
+                  Margin="8,0,0,0"
+                  Padding="18,14"
                   CornerRadius="12"
                   FontWeight="SemiBold"
                   Foreground="White"
-                  FontSize="14"
-                >
+                  FontSize="14">
                   <Button.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                      <GradientStop Color="#4FACFE" Offset="0"/>
-                      <GradientStop Color="#00F2FE" Offset="1"/>
+                      <GradientStop Color="#48BB78" Offset="0"/>
+                      <GradientStop Color="#38A169" Offset="1"/>
                     </LinearGradientBrush>
                   </Button.Background>
                   <Button.Effect>
@@ -384,25 +416,44 @@
                 </Button>
               </Grid>
 
-              <Border CornerRadius="10" Padding="12" BorderBrush="#4FACFE" BorderThickness="1">
+              <!-- Enhanced Shortcuts Info -->
+              <Border CornerRadius="12" Padding="15" BorderBrush="#5E60CE" BorderThickness="1">
                 <Border.Background>
                   <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                    <GradientStop Color="#3A3A6B" Offset="0"/>
-                    <GradientStop Color="#4A4A7B" Offset="1"/>
+                    <GradientStop Color="#2D2D5C" Offset="0"/>
+                    <GradientStop Color="#3A3A6B" Offset="1"/>
                   </LinearGradientBrush>
                 </Border.Background>
-                <TextBlock
-                  Text="⌨️ Espaço=Iniciar | F2=Parar | F3=Reset | F4=Ranks | F5=Atualizar | F6=Parar Efeitos | F7=Matrix | F8=Pulso | F9=Fogos | F10=Demo"
-                  Foreground="#E2E8F0"
-                  FontSize="10"
-                  HorizontalAlignment="Center"
-                  FontWeight="Medium"
-                />
+                <StackPanel Spacing="8">
+                  <TextBlock
+                    Text="⌨️ Atalhos Rápidos:"
+                    FontSize="14"
+                    FontWeight="Bold"
+                    Foreground="#B794F6"
+                    HorizontalAlignment="Center"
+                  />
+                  <TextBlock
+                    Text="Espaço=Iniciar | F2=Parar | F3=Reset | F4=Ranks"
+                    Foreground="#E2E8F0"
+                    FontSize="11"
+                    HorizontalAlignment="Center"
+                    FontWeight="Medium"
+                    TextAlignment="Center"
+                  />
+                  <TextBlock
+                    Text="F7=Matrix | F8=Pulso | F9=Fogos | F11=Tela Cheia"
+                    Foreground="#E2E8F0"
+                    FontSize="11"
+                    HorizontalAlignment="Center"
+                    FontWeight="Medium"
+                    TextAlignment="Center"
+                  />
+                </StackPanel>
               </Border>
             </StackPanel>
           </Border>
 
-          <!-- Arduino Connection -->
+          <!-- Enhanced Arduino Connection Panel -->
           <Border CornerRadius="20" Padding="25">
             <Border.Background>
               <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -411,30 +462,33 @@
               </LinearGradientBrush>
             </Border.Background>
             <Border.Effect>
-              <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+              <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#25000000"/>
             </Border.Effect>
-            <StackPanel Spacing="15">
-              <TextBlock
-                Text="🔌 Conexão Arduino"
-                FontSize="18"
-                FontWeight="Bold"
-                Foreground="White"
-              />
+            <StackPanel Spacing="18">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock Text="🔌" FontSize="22" VerticalAlignment="Center" />
+                <TextBlock
+                  Text="Conexão Arduino"
+                  FontSize="18"
+                  FontWeight="Bold"
+                  Foreground="White"
+                  VerticalAlignment="Center"
+                />
+              </StackPanel>
 
               <ComboBox
                 x:Name="PortComboBox"
                 HorizontalAlignment="Stretch"
-                Padding="15,12"
+                Padding="16,14"
                 CornerRadius="12"
                 FontSize="14"
                 BorderThickness="2"
-                BorderBrush="#4FACFE"
-                Foreground="White"
-              >
+                BorderBrush="#5E60CE"
+                Foreground="White">
                 <ComboBox.Background>
                   <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                    <GradientStop Color="#3A3A6B" Offset="0"/>
-                    <GradientStop Color="#4A4A7B" Offset="1"/>
+                    <GradientStop Color="#2D2D5C" Offset="0"/>
+                    <GradientStop Color="#3A3A6B" Offset="1"/>
                   </LinearGradientBrush>
                 </ComboBox.Background>
               </ComboBox>
@@ -451,21 +505,20 @@
                   Content="🔄"
                   Click="RefreshPortsButton_Click"
                   ToolTip.Tip="Atualizar Portas"
-                  Width="45"
-                  Height="40"
+                  Width="50"
+                  Height="46"
                   CornerRadius="12"
-                  Margin="0,0,10,0"
+                  Margin="0,0,12,0"
                   Foreground="White"
-                  FontSize="16"
-                >
+                  FontSize="18">
                   <Button.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                      <GradientStop Color="#B794F6" Offset="0"/>
-                      <GradientStop Color="#9F7AEA" Offset="1"/>
+                      <GradientStop Color="#9F7AEA" Offset="0"/>
+                      <GradientStop Color="#805AD5" Offset="1"/>
                     </LinearGradientBrush>
                   </Button.Background>
                   <Button.Effect>
-                    <DropShadowEffect Color="#20000000" OffsetX="0" OffsetY="2" BlurRadius="8"/>
+                    <DropShadowEffect Color="#20000000" OffsetX="0" OffsetY="3" BlurRadius="10"/>
                   </Button.Effect>
                 </Button>
 
@@ -474,16 +527,15 @@
                   Grid.Column="1"
                   Content="🔗 Conectar"
                   Click="ConnectButton_Click"
-                  Padding="15,12"
+                  Padding="18,14"
                   CornerRadius="12"
                   FontWeight="SemiBold"
                   Foreground="White"
-                  FontSize="14"
-                >
+                  FontSize="14">
                   <Button.Background>
                     <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                      <GradientStop Color="#4FACFE" Offset="0"/>
-                      <GradientStop Color="#00F2FE" Offset="1"/>
+                      <GradientStop Color="#5E60CE" Offset="0"/>
+                      <GradientStop Color="#7400B8" Offset="1"/>
                     </LinearGradientBrush>
                   </Button.Background>
                   <Button.Effect>
@@ -494,7 +546,7 @@
             </StackPanel>
           </Border>
 
-          <!-- Debug and Advanced -->
+          <!-- Enhanced Tools Panel -->
           <Border CornerRadius="20" Padding="25">
             <Border.Background>
               <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -503,32 +555,35 @@
               </LinearGradientBrush>
             </Border.Background>
             <Border.Effect>
-              <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+              <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#25000000"/>
             </Border.Effect>
-            <StackPanel Spacing="15">
-              <TextBlock
-                Text="🔧 Ferramentas Avançadas"
-                FontSize="18"
-                FontWeight="Bold"
-                Foreground="White"
-              />
+            <StackPanel Spacing="18">
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <TextBlock Text="🔧" FontSize="22" VerticalAlignment="Center" />
+                <TextBlock
+                  Text="Ferramentas"
+                  FontSize="18"
+                  FontWeight="Bold"
+                  Foreground="White"
+                  VerticalAlignment="Center"
+                />
+              </StackPanel>
 
               <Button
                 x:Name="OpenDebugButton"
                 Content="🔍 Console Debug"
                 Click="OpenDebugButton_Click"
                 HorizontalAlignment="Stretch"
-                Padding="15,12"
+                Padding="18,14"
                 CornerRadius="12"
                 FontWeight="SemiBold"
                 Foreground="White"
                 FontSize="14"
-                Margin="0,0,0,8"
-              >
+                Margin="0,0,0,10">
                 <Button.Background>
                   <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                    <GradientStop Color="#667EEA" Offset="0"/>
-                    <GradientStop Color="#764BA2" Offset="1"/>
+                    <GradientStop Color="#4299E1" Offset="0"/>
+                    <GradientStop Color="#3182CE" Offset="1"/>
                   </LinearGradientBrush>
                 </Button.Background>
                 <Button.Effect>
@@ -538,19 +593,18 @@
 
               <Button
                 x:Name="InstructionsButton"
-                Content="📖 Ver Todas as Instruções"
+                Content="📖 Ver Instruções"
                 Click="InstructionsButton_Click"
                 HorizontalAlignment="Stretch"
-                Padding="15,12"
+                Padding="18,14"
                 CornerRadius="12"
                 FontWeight="SemiBold"
                 Foreground="White"
-                FontSize="14"
-              >
+                FontSize="14">
                 <Button.Background>
                   <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                    <GradientStop Color="#B794F6" Offset="0"/>
-                    <GradientStop Color="#9F7AEA" Offset="1"/>
+                    <GradientStop Color="#48BB78" Offset="0"/>
+                    <GradientStop Color="#38A169" Offset="1"/>
                   </LinearGradientBrush>
                 </Button.Background>
                 <Button.Effect>
@@ -563,7 +617,7 @@
         </StackPanel>
       </ScrollViewer>
 
-      <!-- Right Panel - Game Display -->
+      <!-- Enhanced Right Panel - Game Display -->
       <Grid Grid.Column="1" Margin="20,0,0,0">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
@@ -571,7 +625,7 @@
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Game Status Bar -->
+        <!-- Enhanced Game Status Bar -->
         <Border Grid.Row="0" CornerRadius="20" Padding="30,25" Margin="0,0,0,20">
           <Border.Background>
             <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -580,7 +634,7 @@
             </LinearGradientBrush>
           </Border.Background>
           <Border.Effect>
-            <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+            <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#25000000"/>
           </Border.Effect>
           <Grid>
             <Grid.ColumnDefinitions>
@@ -591,13 +645,16 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-              <TextBlock
-                Text="🎯 Jogo Atual"
-                Foreground="#A0AEC0"
-                HorizontalAlignment="Center"
-                FontSize="14"
-                FontWeight="Medium"
-              />
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                <TextBlock Text="🎯" FontSize="16" VerticalAlignment="Center" />
+                <TextBlock
+                  Text="Jogo Atual"
+                  Foreground="#A0AEC0"
+                  HorizontalAlignment="Center"
+                  FontSize="14"
+                  FontWeight="Medium"
+                />
+              </StackPanel>
               <TextBlock
                 x:Name="CurrentGameText"
                 Text="Nenhum"
@@ -605,70 +662,79 @@
                 FontWeight="Bold"
                 Foreground="White"
                 HorizontalAlignment="Center"
-                Margin="0,5,0,0"
+                Margin="0,8,0,0"
               />
             </StackPanel>
 
             <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-              <TextBlock
-                Text="🏆 Pontuação"
-                Foreground="#A0AEC0"
-                HorizontalAlignment="Center"
-                FontSize="14"
-                FontWeight="Medium"
-              />
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                <TextBlock Text="🏆" FontSize="16" VerticalAlignment="Center" />
+                <TextBlock
+                  Text="Pontuação"
+                  Foreground="#A0AEC0"
+                  HorizontalAlignment="Center"
+                  FontSize="14"
+                  FontWeight="Medium"
+                />
+              </StackPanel>
               <TextBlock
                 x:Name="ScoreText"
                 Text="0"
                 FontSize="20"
                 FontWeight="Bold"
-                Foreground="#4FACFE"
+                Foreground="#5E60CE"
                 HorizontalAlignment="Center"
-                Margin="0,5,0,0"
+                Margin="0,8,0,0"
               />
             </StackPanel>
 
             <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-              <TextBlock
-                Text="📊 Nível"
-                Foreground="#A0AEC0"
-                HorizontalAlignment="Center"
-                FontSize="14"
-                FontWeight="Medium"
-              />
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                <TextBlock Text="📊" FontSize="16" VerticalAlignment="Center" />
+                <TextBlock
+                  Text="Nível"
+                  Foreground="#A0AEC0"
+                  HorizontalAlignment="Center"
+                  FontSize="14"
+                  FontWeight="Medium"
+                />
+              </StackPanel>
               <TextBlock
                 x:Name="LevelText"
                 Text="1"
                 FontSize="20"
                 FontWeight="Bold"
-                Foreground="#B794F6"
+                Foreground="#9F7AEA"
                 HorizontalAlignment="Center"
-                Margin="0,5,0,0"
+                Margin="0,8,0,0"
               />
             </StackPanel>
 
             <StackPanel Grid.Column="3" HorizontalAlignment="Center">
-              <TextBlock
-                Text="⏱️ Tempo"
-                Foreground="#A0AEC0"
-                HorizontalAlignment="Center"
-                FontSize="14"
-                FontWeight="Medium"
-              />
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                <TextBlock Text="⏱️" FontSize="16" VerticalAlignment="Center" />
+                <TextBlock
+                  Text="Tempo"
+                  Foreground="#A0AEC0"
+                  HorizontalAlignment="Center"
+                  FontSize="14"
+                  FontWeight="Medium"
+                />
+              </StackPanel>
               <TextBlock
                 x:Name="TimeText"
                 Text="00:00"
                 FontSize="20"
                 FontWeight="Bold"
-                Foreground="#00F2FE"
+                Foreground="#48BB78"
                 HorizontalAlignment="Center"
-                Margin="0,5,0,0"
+                Margin="0,8,0,0"
               />
             </StackPanel>
           </Grid>
         </Border>
 
-        <!-- LED Matrix and Game Area -->
+        <!-- Enhanced LED Matrix and Game Area -->
         <Border Grid.Row="1" CornerRadius="20" Padding="35">
           <Border.Background>
             <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -677,7 +743,7 @@
             </LinearGradientBrush>
           </Border.Background>
           <Border.Effect>
-            <DropShadowEffect BlurRadius="25" OffsetX="0" OffsetY="15" Color="#20000000"/>
+            <DropShadowEffect BlurRadius="25" OffsetX="0" OffsetY="15" Color="#30000000"/>
           </Border.Effect>
           <Grid>
             <Grid.RowDefinitions>
@@ -686,36 +752,38 @@
               <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- Matrix Title -->
-            <TextBlock
-              Grid.Row="0"
-              Text="💡 Matriz de LEDs (4x4)"
-              FontSize="24"
-              FontWeight="Bold"
-              Foreground="White"
-              HorizontalAlignment="Center"
-              Margin="0,0,0,30"
-            >
-              <TextBlock.Effect>
-                <DropShadowEffect BlurRadius="8" OffsetX="0" OffsetY="2" Color="#30000000"/>
-              </TextBlock.Effect>
-            </TextBlock>
+            <!-- Enhanced Matrix Title -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15" Margin="0,0,0,30">
+              <TextBlock Text="💡" FontSize="28" VerticalAlignment="Center" />
+              <TextBlock
+                Text="Matriz de LEDs (4x4)"
+                FontSize="24"
+                FontWeight="Bold"
+                Foreground="White"
+                VerticalAlignment="Center">
+                <TextBlock.Effect>
+                  <DropShadowEffect BlurRadius="8" OffsetX="0" OffsetY="2" Color="#30000000"/>
+                </TextBlock.Effect>
+              </TextBlock>
+            </StackPanel>
 
-            <!-- LED Matrix -->
+            <!-- Enhanced LED Matrix -->
             <Viewbox Grid.Row="1" Stretch="Uniform" MaxWidth="500" MaxHeight="500">
-              <Border CornerRadius="20" Padding="25" BorderBrush="#4FACFE" BorderThickness="2">
+              <Border CornerRadius="20" Padding="25" BorderBrush="#5E60CE" BorderThickness="3">
                 <Border.Background>
                   <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
                     <GradientStop Color="#0F0F23" Offset="0"/>
                     <GradientStop Color="#1A1A3A" Offset="1"/>
                   </LinearGradientBrush>
                 </Border.Background>
+                <Border.Effect>
+                  <DropShadowEffect BlurRadius="15" OffsetX="0" OffsetY="8" Color="#40000000"/>
+                </Border.Effect>
                 <Grid
                   x:Name="LedMatrix"
                   Width="400"
                   Height="400"
-                  ShowGridLines="False"
-                >
+                  ShowGridLines="False">
                   <Grid.RowDefinitions>
                     <RowDefinition Height="*" />
                     <RowDefinition Height="*" />
@@ -732,21 +800,23 @@
               </Border>
             </Viewbox>
 
-            <!-- Game Status Message -->
+            <!-- Enhanced Game Status Message -->
             <Border
               Grid.Row="2"
               CornerRadius="15"
               Padding="25"
               Margin="0,30,0,0"
-              BorderBrush="#4FACFE"
-              BorderThickness="2"
-            >
+              BorderBrush="#5E60CE"
+              BorderThickness="2">
               <Border.Background>
                 <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                  <GradientStop Color="#3A3A6B" Offset="0"/>
-                  <GradientStop Color="#4A4A7B" Offset="1"/>
+                  <GradientStop Color="#2D2D5C" Offset="0"/>
+                  <GradientStop Color="#3A3A6B" Offset="1"/>
                 </LinearGradientBrush>
               </Border.Background>
+              <Border.Effect>
+                <DropShadowEffect BlurRadius="12" OffsetX="0" OffsetY="5" Color="#20000000"/>
+              </Border.Effect>
               <TextBlock
                 x:Name="StatusText"
                 Text="🚀 Pronto para a aventura! Conecte o Arduino e escolha seu jogo favorito."
@@ -756,12 +826,13 @@
                 FontWeight="Medium"
                 FontSize="16"
                 LineHeight="24"
+                TextAlignment="Center"
               />
             </Border>
           </Grid>
         </Border>
 
-        <!-- Quick Actions -->
+        <!-- Enhanced Quick Actions -->
         <Border Grid.Row="2" CornerRadius="20" Padding="25" Margin="0,20,0,0">
           <Border.Background>
             <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
@@ -770,105 +841,104 @@
             </LinearGradientBrush>
           </Border.Background>
           <Border.Effect>
-            <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#15000000"/>
+            <DropShadowEffect BlurRadius="20" OffsetX="0" OffsetY="10" Color="#25000000"/>
           </Border.Effect>
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="15">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="20">
             <Button
               x:Name="QuickStartButton"
               Content="⚡ Início Rápido"
               Click="QuickStartButton_Click"
-              Padding="20,12"
+              Padding="25,15"
               CornerRadius="12"
               FontWeight="SemiBold"
               Foreground="White"
-              FontSize="14"
-            >
+              FontSize="14">
               <Button.Background>
                 <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                  <GradientStop Color="#4FACFE" Offset="0"/>
-                  <GradientStop Color="#00F2FE" Offset="1"/>
+                  <GradientStop Color="#5E60CE" Offset="0"/>
+                  <GradientStop Color="#7400B8" Offset="1"/>
                 </LinearGradientBrush>
               </Button.Background>
               <Button.Effect>
                 <DropShadowEffect Color="#20000000" OffsetX="0" OffsetY="3" BlurRadius="10"/>
               </Button.Effect>
             </Button>
+
             <Button
               x:Name="SettingsButton"
               Content="⚙️ Configurações"
               Click="SettingsButton_Click"
-              Padding="20,12"
+              Padding="25,15"
               CornerRadius="12"
               FontWeight="SemiBold"
               Foreground="White"
-              FontSize="14"
-            >
+              FontSize="14">
               <Button.Background>
                 <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                  <GradientStop Color="#667EEA" Offset="0"/>
-                  <GradientStop Color="#764BA2" Offset="1"/>
+                  <GradientStop Color="#4299E1" Offset="0"/>
+                  <GradientStop Color="#3182CE" Offset="1"/>
                 </LinearGradientBrush>
               </Button.Background>
               <Button.Effect>
                 <DropShadowEffect Color="#20000000" OffsetX="0" OffsetY="3" BlurRadius="10"/>
               </Button.Effect>
             </Button>
+
             <Button
               x:Name="HelpButton"
               Content="❓ Ajuda"
               Click="HelpButton_Click"
-              Padding="20,12"
+              Padding="25,15"
               CornerRadius="12"
               FontWeight="SemiBold"
               Foreground="White"
-              FontSize="14"
-            >
+              FontSize="14">
               <Button.Background>
                 <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                  <GradientStop Color="#B794F6" Offset="0"/>
-                  <GradientStop Color="#9F7AEA" Offset="1"/>
+                  <GradientStop Color="#48BB78" Offset="0"/>
+                  <GradientStop Color="#38A169" Offset="1"/>
                 </LinearGradientBrush>
               </Button.Background>
               <Button.Effect>
                 <DropShadowEffect Color="#20000000" OffsetX="0" OffsetY="3" BlurRadius="10"/>
               </Button.Effect>
             </Button>
+
             <Button
               x:Name="GenerateCodesButton"
               Content="📄 Gerar Códigos"
               Click="GenerateCodesButton_Click"
-              Padding="20,12"
+              Padding="25,15"
               CornerRadius="12"
               FontWeight="SemiBold"
               Foreground="White"
               FontSize="14"
-              IsVisible="False"
-            >
+              IsVisible="False">
               <Button.Background>
                 <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                  <GradientStop Color="#4FACFE" Offset="0"/>
-                  <GradientStop Color="#00F2FE" Offset="1"/>
+                  <GradientStop Color="#F6AD55" Offset="0"/>
+                  <GradientStop Color="#ED8936" Offset="1"/>
                 </LinearGradientBrush>
               </Button.Background>
               <Button.Effect>
                 <DropShadowEffect Color="#20000000" OffsetX="0" OffsetY="3" BlurRadius="10"/>
               </Button.Effect>
             </Button>
+
             <Button
               x:Name="LogoutButton"
               Content="🚪 Logout"
               Click="LogoutButton_Click"
-              Padding="20,12"
+              Padding="25,15"
               CornerRadius="12"
               Foreground="White"
               FontWeight="SemiBold"
               FontSize="14"
-              IsVisible="True"
-            >
+              IsVisible="True">
               <Button.Background>
                 <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
-                  <GradientStop Color="#667EEA" Offset="0"/>
-                  <GradientStop Color="#764BA2" Offset="1"/>
+                  <GradientStop Color="#F56565" Offset="0"/>
+                  <GradientStop Color="#C53030" Offset="1"/>
                 </LinearGradientBrush>
               </Button.Background>
               <Button.Effect>
@@ -881,21 +951,24 @@
       </Grid>
     </Grid>
 
-    <!-- Footer -->
-    <Border Grid.Row="2" Padding="20,15" Margin="0,10,0,0">
+    <!-- Enhanced Footer -->
+    <Border Grid.Row="2" Padding="25,18" Margin="0,15,0,0">
       <Border.Background>
         <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,0%">
           <GradientStop Color="#1E1E3F" Offset="0"/>
           <GradientStop Color="#2A2A5A" Offset="1"/>
         </LinearGradientBrush>
       </Border.Background>
+      <Border.Effect>
+        <DropShadowEffect BlurRadius="10" OffsetX="0" OffsetY="-3" Color="#20000000"/>
+      </Border.Effect>
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Column="0" Orientation="Vertical" Spacing="5">
+        <StackPanel Grid.Column="0" Orientation="Vertical" Spacing="8">
           <TextBlock
             Text="⌨️ Controles: W,E,R,T / S,D,F,G / Y,U,I,O / H,J,K,L = LEDs | Setas = Navegação | Enter = Confirmar | Esc = Cancelar"
             Foreground="White"
@@ -905,7 +978,7 @@
             Opacity="0.9"
           />
           <TextBlock
-            Text="🎭 Animações Arduino: F5 = 🔄 Atualizar Portas | F6 = ⏹️ Parar FX | F7 = 💚 Matrix | F8 = 💓 Pulso | F9 = 🎆 Fogos | F10 = ✨ Demo | F11 = 🖥️ Tela Cheia"
+            Text="🎭 Efeitos Arduino: F5 = 🔄 Atualizar Portas | F6 = ⏹️ Parar FX | F7 = 💚 Matrix | F8 = 💓 Pulso | F9 = 🎆 Fogos | F10 = ✨ Demo | F11 = 🖥️ Tela Cheia"
             Foreground="White"
             VerticalAlignment="Center"
             FontSize="13"
@@ -914,14 +987,16 @@
           />
         </StackPanel>
 
-        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="15">
-          <TextBlock
-            Text="v2.2.0"
-            Foreground="White"
-            VerticalAlignment="Center"
-            FontSize="13"
-            Opacity="0.7"
-          />
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="20">
+          <Border CornerRadius="8" Padding="12,6" Background="#2D2D5C">
+            <TextBlock
+              Text="v2.3.0"
+              Foreground="White"
+              VerticalAlignment="Center"
+              FontSize="13"
+              FontWeight="Medium"
+            />
+          </Border>
           <TextBlock
             Text="•"
             Foreground="White"
@@ -933,7 +1008,8 @@
             Foreground="White"
             VerticalAlignment="Center"
             FontSize="13"
-            Opacity="0.7"
+            FontWeight="Medium"
+            Opacity="0.8"
           />
         </StackPanel>
       </Grid>
