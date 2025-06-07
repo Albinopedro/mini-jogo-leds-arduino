@@ -1157,7 +1157,7 @@ namespace miniJogo.Services
                 1 => AudioEvent.PegaLuzMusic,           // Pega-Luz
                 2 => AudioEvent.SequenciaMalucaMusic,   // Sequência Maluca
                 3 => AudioEvent.GatoRatoMusic,          // Gato e Rato
-                4 => AudioEvent.EsquivaMeteoresMusic, // Esquiva Meteoros
+                4 => AudioEvent.EsquivaMeteoresMusic,   // Esquiva Meteoros
                 5 => AudioEvent.GuitarHeroMusic,        // Guitar Hero
                 6 => AudioEvent.LightningStrikeMusic,   // Lightning Strike
                 7 => AudioEvent.SniperModeMusic,        // Sniper Mode

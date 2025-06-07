@@ -1125,13 +1125,13 @@ public partial class MainWindow : Window
 
             case "LIGHTNING_STRIKE_VICTORY":
                 _audioService.PlaySound(AudioEvent.Victory);
-                StatusText.Text = "🏆 VITÓRIA LIGHTNING STRIKE! 20 sequências perfeitas!";
+                StatusText.Text = "🏆 VITÓRIA LIGHTNING STRIKE! 7 sequências perfeitas!";
                 TriggerVisualEffect("VICTORY");
                 break;
 
             case "SNIPER_VICTORY":
                 _audioService.PlaySound(AudioEvent.Victory);
-                StatusText.Text = "🏆 LEGENDÁRIO! 10/10 acertos! Você é um sniper de elite!";
+                StatusText.Text = "🏆 LEGENDÁRIO! 7/7 acertos! Você é um sniper de elite!";
                 TriggerVisualEffect("VICTORY");
                 break;
 
@@ -1402,20 +1402,20 @@ public partial class MainWindow : Window
     {
         if (!_gameActive) return false;
 
-        var gameMode = (GameMode)_currentGameMode;
+        var gameMode = (miniJogo.Models.GameMode)_currentGameMode;
         bool victoryAchieved = false;
         string challengeDescription = "";
 
         switch (gameMode)
         {
-            case GameMode.PegaLuz:
+            case miniJogo.Models.GameMode.PegaLuz:
                 if (_score >= 400)
                 {
                     victoryAchieved = true;
                     challengeDescription = "Alcançou 400 pontos com reflexos ultra-rápidos";
                 }
                 break;
-            case GameMode.SequenciaMaluca:
+            case miniJogo.Models.GameMode.SequenciaMaluca:
                 // Updated: 8 rounds without errors (sequence reaches 10 steps)
                 if (_score >= 80) // 8 rounds * 10 points per round
                 {
@@ -1423,7 +1423,7 @@ public partial class MainWindow : Window
                     challengeDescription = "Completou 8 rodadas sem errar (sequência chegou a 10 passos)";
                 }
                 break;
-            case GameMode.GatoRato:
+            case miniJogo.Models.GameMode.GatoRato:
                 // DIFFICULTY INCREASED: Much harder challenge - 16 captures in 120 seconds
                 if (_score >= 320) // 16 captures * 20 points per capture
                 {
@@ -1432,7 +1432,7 @@ public partial class MainWindow : Window
                 }
                 break;
 
-            case GameMode.EsquivaMeteoros:
+            case miniJogo.Models.GameMode.EsquivaMeteoros:
                 if (_score >= 180)
                 {
                     victoryAchieved = true;
@@ -1440,27 +1440,27 @@ public partial class MainWindow : Window
                 }
                 break;
 
-            case GameMode.GuitarHero:
+            case miniJogo.Models.GameMode.GuitarHero:
                 if (_score >= 300)
                 {
                     victoryAchieved = true;
                     challengeDescription = "Fez 300 pontos com ritmo perfeito";
                 }
                 break;
-            case GameMode.LightningStrike:
-                // Updated: 20 successful sequences for 200 points
-                if (_score >= 200) // 20 rounds * 10 points per round
+            case miniJogo.Models.GameMode.LightningStrike:
+                // Updated: 7 successful sequences for 70 points
+                if (_score >= 70) // 7 rounds * 10 points per round
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Completou 20 sequências de Lightning Strike sem errar";
+                    challengeDescription = "Completou 7 sequências de Lightning Strike sem errar";
                 }
                 break;
-            case GameMode.SniperMode:
-                // Updated: 10 hits for 100 points (more challenging)
-                if (_score >= 100) // 10 hits * 10 points per hit
+            case miniJogo.Models.GameMode.SniperMode:
+                // Updated: 7 hits for 70 points (challenging but achievable)
+                if (_score >= 70) // 7 hits * 10 points per hit
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Acertou 10 alvos com reflexos ultra-rápidos (300ms por alvo)";
+                    challengeDescription = "Acertou 7 alvos com reflexos ultra-rápidos (300ms por alvo)";
                 }
                 break;
         }
@@ -2015,7 +2015,7 @@ public partial class MainWindow : Window
         // Check if client can play this game
         if (_isClientMode && _currentUser != null)
         {
-            var gameMode = (GameMode)_currentGameMode;
+            var gameMode = (miniJogo.Models.GameMode)_currentGameMode;
 
             // Check if session is blocked due to timeout (business rule)
             bool isSessionEnding;

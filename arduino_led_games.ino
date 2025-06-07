@@ -99,7 +99,7 @@ SniperState sniperState;
 int sniperTarget = -1;
 unsigned long sniperTargetTime = 0;
 unsigned long sniperFlashDuration = 300;
-int sniperHitsRequired = 10; // Updated: Need 10 hits to win (more challenging)
+int sniperHitsRequired = 7; // Updated: Need 7 hits to win (challenging but achievable)
 int sniperCurrentHits = 0;
 unsigned long nextTargetDelay = 0;
 
@@ -1210,8 +1210,8 @@ void handleLightningStrikeKey(int key) {
             lightningShowDuration = max(lightningShowDuration - 50, 100);
             sendGameEvent("LIGHTNING_COMPLETE", game.level, lightningShowDuration);
 
-            // Check victory condition: 200 points (20 successful sequences)
-            if (game.score >= 200) {
+            // Check victory condition: 70 points (7 successful sequences)
+            if (game.score >= 70) {
                 sendGameEvent("LIGHTNING_STRIKE_VICTORY", game.score);
                 playAnimation(ANIM_VICTORY, false);
                 stopGame();

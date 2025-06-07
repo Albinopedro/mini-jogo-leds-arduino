@@ -93,8 +93,8 @@ namespace miniJogo.Views
                 new { Mode = 3, Icon = "🐱", Name = "Gato e Rato", Challenge = "Capture 16 vezes", Difficulty = "Difícil" },
                 new { Mode = 4, Icon = "☄️", Name = "Esquiva Meteoros", Challenge = "Sobreviva 180 segundos", Difficulty = "Médio" },
                 new { Mode = 5, Icon = "🎸", Name = "Guitar Hero", Challenge = "Faça 300 pontos", Difficulty = "Difícil" },
-                new { Mode = 6, Icon = "⚡", Name = "Lightning Strike", Challenge = "Complete 20 rodadas", Difficulty = "Muito Difícil" },
-                new { Mode = 7, Icon = "🎯", Name = "Sniper Mode", Challenge = "Acerte 10 alvos", Difficulty = "Muito Difícil" }
+                new { Mode = 6, Icon = "⚡", Name = "Lightning Strike", Challenge = "Complete 7 rodadas", Difficulty = "Muito Difícil" },
+                new { Mode = 7, Icon = "🎯", Name = "Sniper Mode", Challenge = "Acerte 7 alvos", Difficulty = "Muito Difícil" }
             };
 
             GameCardsPanel.Children.Clear();
@@ -324,8 +324,8 @@ namespace miniJogo.Views
                 3 => ("🐱", "Gato e Rato", "Capture o rato 16 vezes em até 2 minutos"),
                 4 => ("☄️", "Esquiva Meteoros", "Sobreviva por 180 segundos sem ser atingido (1 ponto/segundo)"),
                 5 => ("🎸", "Guitar Hero", "Faça 300 pontos com ritmo perfeito"),
-                6 => ("⚡", "Lightning Strike", "Complete 20 sequências sem errar nenhum padrão"),
-                7 => ("🎯", "Sniper Mode", "Acerte 10 alvos em sequência com o LED piscando por 300ms cada"),
+                6 => ("⚡", "Lightning Strike", "Complete 7 sequências sem errar nenhum padrão"),
+                7 => ("🎯", "Sniper Mode", "Acerte 7 alvos em sequência com o LED piscando por 300ms cada"),
                 _ => ("🎮", "Jogo Desconhecido", "Desafio não definido")
             };
         }
@@ -723,8 +723,8 @@ namespace miniJogo.Views
                 3 => ("🐱 Gato e Rato", "GATO E RATO:\n\n• Mova-se apenas UMA VEZ por movimento do rato\n• Capture o rato que pisca rapidamente\n• Rato fica mais rápido a cada captura\n• +20 pontos por captura\n\n🏆 DESAFIO DE VITÓRIA:\nCapture o rato 16 vezes em até 2 minutos!"),
                 4 => ("☄️ Esquiva Meteoros", "ESQUIVA METEOROS:\n\n• Use as teclas para desviar\n• Meteoros caem cada vez mais rápido\n• Múltiplos meteoros simultâneos\n• +1 ponto por segundo\n\n🏆 DESAFIO DE VITÓRIA:\nSobreviva por 180 segundos (3 minutos) sem ser atingido!"),
                 5 => ("🎸 Guitar Hero", "GUITAR HERO:\n\n• Pressione as teclas no ritmo\n• Notas ficam mais rápidas com progresso\n• Penalidade por erros e perdas\n• Precisão é fundamental\n\n🏆 DESAFIO DE VITÓRIA:\nFaça 300 pontos com ritmo perfeito!"),
-                6 => ("⚡ Lightning Strike", "LIGHTNING STRIKE:\n\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo diminui drasticamente por rodada\n• Erro = Game Over\n\n🏆 DESAFIO DE VITÓRIA:\nComplete 20 sequências sem errar nenhum padrão!"),
-                7 => ("🎯 Sniper Mode", "SNIPER MODE:\n\n• Alvos piscam por apenas 300ms\n• Pressione a tecla exata no tempo\n• Precisão absoluta necessária\n• Sequência = vitória\n\n🏆 DESAFIO DE VITÓRIA:\nAcerte 10 alvos em sequência!"),
+                6 => ("⚡ Lightning Strike", "LIGHTNING STRIKE:\n\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo diminui drasticamente por rodada\n• Erro = Game Over\n\n🏆 DESAFIO DE VITÓRIA:\nComplete 7 sequências sem errar nenhum padrão!"),
+                7 => ("🎯 Sniper Mode", "SNIPER MODE:\n\n• Alvos piscam por apenas 300ms\n• Pressione a tecla exata no tempo\n• Precisão absoluta necessária\n• Sequência = vitória\n\n🏆 DESAFIO DE VITÓRIA:\nAcerte 7 alvos em sequência!"),
                 _ => ("Selecione um Jogo", "Selecione um jogo na lista para ver as instruções detalhadas e o desafio específico para conquistar a vitória!")
             };
 
