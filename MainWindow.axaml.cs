@@ -1099,6 +1099,36 @@ public partial class MainWindow : Window
                 RecordClientRoundLoss();
                 break;
 
+            case "PEGA_LUZ_VICTORY":
+                _audioService.PlaySound(AudioEvent.Victory);
+                StatusText.Text = "🏆 VITÓRIA PEGA-LUZ! 400 pontos com reflexos ultra-rápidos!";
+                TriggerVisualEffect("VICTORY");
+                break;
+
+            case "SEQUENCIA_MALUCA_VICTORY":
+                _audioService.PlaySound(AudioEvent.Victory);
+                StatusText.Text = "🏆 VITÓRIA SEQUÊNCIA MALUCA! 8 rodadas perfeitas chegando a 10 passos!";
+                TriggerVisualEffect("VICTORY");
+                break;
+
+            case "GUITAR_HERO_VICTORY":
+                _audioService.PlaySound(AudioEvent.Victory);
+                StatusText.Text = "🏆 VITÓRIA GUITAR HERO! 300 pontos com ritmo perfeito!";
+                TriggerVisualEffect("VICTORY");
+                break;
+
+            case "ESQUIVA_METEOROS_VICTORY":
+                _audioService.PlaySound(AudioEvent.Victory);
+                StatusText.Text = "🏆 VITÓRIA METEOROS! Sobreviveu 3 minutos completos!";
+                TriggerVisualEffect("VICTORY");
+                break;
+
+            case "LIGHTNING_STRIKE_VICTORY":
+                _audioService.PlaySound(AudioEvent.Victory);
+                StatusText.Text = "🏆 VITÓRIA LIGHTNING STRIKE! 20 sequências perfeitas!";
+                TriggerVisualEffect("VICTORY");
+                break;
+
             case "SNIPER_VICTORY":
                 _audioService.PlaySound(AudioEvent.Victory);
                 StatusText.Text = "🏆 LEGENDÁRIO! 10/10 acertos! Você é um sniper de elite!";
@@ -1379,58 +1409,58 @@ public partial class MainWindow : Window
         switch (gameMode)
         {
             case GameMode.PegaLuz:
-                if (_score >= 200)
+                if (_score >= 400)
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Alcançou 200 pontos antes de esgotar as tentativas";
+                    challengeDescription = "Alcançou 400 pontos com reflexos ultra-rápidos";
                 }
                 break;
             case GameMode.SequenciaMaluca:
-                // Updated: Aligned with user requirements - 11 rounds for 110 points
-                if (_score >= 110) // 11 rounds * 10 points per round
+                // Updated: 8 rounds without errors (sequence reaches 10 steps)
+                if (_score >= 80) // 8 rounds * 10 points per round
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Completou 11 rodadas sem errar (sequência chegou a 13 passos)";
+                    challengeDescription = "Completou 8 rodadas sem errar (sequência chegou a 10 passos)";
                 }
                 break;
             case GameMode.GatoRato:
-                // DIFFICULTY INCREASED: Much harder challenge - 13 captures in 120 seconds
-                if (_score >= 280) // 14 captures * 20 points per capture
+                // DIFFICULTY INCREASED: Much harder challenge - 16 captures in 120 seconds
+                if (_score >= 320) // 16 captures * 20 points per capture
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Capturou o rato 13 vezes em apenas 120 segundos!";
+                    challengeDescription = "Capturou o rato 16 vezes em apenas 120 segundos!";
                 }
                 break;
 
             case GameMode.EsquivaMeteoros:
-                if (_score >= 150) // 1 point per second for 150 seconds
+                if (_score >= 180)
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Sobreviveu por 150 segundos sem ser atingido";
+                    challengeDescription = "Sobreviveu por 180 segundos (3 minutos) sem ser atingido";
                 }
                 break;
 
             case GameMode.GuitarHero:
-                if (_score >= 200)
+                if (_score >= 300)
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Fez 200 pontos antes de esgotar as tentativas";
+                    challengeDescription = "Fez 300 pontos com ritmo perfeito";
                 }
                 break;
             case GameMode.LightningStrike:
-                // Updated: Aligned with user requirements - 6 rounds for 60 points
-                if (_score >= 60) // 6 rounds * 10 points per round
+                // Updated: 20 successful sequences for 200 points
+                if (_score >= 200) // 20 rounds * 10 points per round
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Completou 6 rodadas de Lightning Strike sem errar";
+                    challengeDescription = "Completou 20 sequências de Lightning Strike sem errar";
                 }
                 break;
             case GameMode.SniperMode:
-                // Updated: Aligned with user requirements - 8 hits for 80 points
-                if (_score >= 80) // 8 hits * 10 points per hit
+                // Updated: 10 hits for 100 points (more challenging)
+                if (_score >= 100) // 10 hits * 10 points per hit
                 {
                     victoryAchieved = true;
-                    challengeDescription = "Acertou 8 alvos com reflexos ultra-rápidos (300ms por alvo)";
+                    challengeDescription = "Acertou 10 alvos com reflexos ultra-rápidos (300ms por alvo)";
                 }
                 break;
         }
@@ -2669,7 +2699,7 @@ O Arduino possui animações épicas para:
                 {
                     // Stop dynamic game music
                     _ = Task.Run(async () => await _audioService.StopGameMusicAsync());
-                    
+
                     StartGameButton.IsEnabled = false;
                     StopGameButton.IsEnabled = false;
                     StatusText.Text = "🛑 GAME OVER - Limite de erros atingido! Termine sessão";

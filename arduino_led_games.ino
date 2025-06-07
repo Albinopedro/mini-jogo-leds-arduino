@@ -40,6 +40,7 @@ PegaLuzState pegaLuzState;
 int pegaLuzTarget = -1;
 unsigned long pegaLuzStartTime = 0;
 unsigned long pegaLuzTimeout = 2000;
+bool pegaLuzJustHit = false;
 
 // Sequência Maluca
 enum SequenciaState { SEQ_SHOWING, SEQ_PAUSE_BEFORE_INPUT, SEQ_WAITING_INPUT, SEQ_PAUSE_BEFORE_NEXT };
@@ -56,21 +57,22 @@ GatoRatoState gatoRatoState;
 int gatoPosition = 0;
 int ratoPosition = 8;
 unsigned long ratoLastMove = 0;
-unsigned long ratoMoveInterval = 600; // DIFFICULTY INCREASED: Rato moves much faster (was 1000ms)
+unsigned long ratoMoveInterval = 800;
 bool ratoVisible = true;
 unsigned long ratoLastBlink = 0;
 int captureBlinkCount = 0;
-unsigned long gatoRatoTimeLimit = 120000; // DIFFICULTY INCREASED: Only 90 seconds (was 120 seconds)
-int gatoRatoCapturesRequired = 14; // DIFFICULTY INCREASED: Need 14 captures to win (was 11)
+unsigned long gatoRatoTimeLimit = 120000; // 2 minutes
+int gatoRatoCapturesRequired = 16; // Need 16 captures to win
 int gatoRatoCaptureCount = 0;
+bool playerCanMove = true; // Player can only move once per rat movement
 
 // Esquiva Meteoros
 int playerPosition = 12;
 bool meteoros[NUM_LEDS];
 unsigned long meteoroLastSpawn = 0;
-unsigned long meteoroSpawnInterval = 1500;
+unsigned long meteoroSpawnInterval = 1200; // Faster spawning
 unsigned long meteoroLastMove = 0;
-unsigned long meteoroMoveInterval = 800;
+unsigned long meteoroMoveInterval = 600; // Faster movement
 bool meteoroVisible = true;
 unsigned long meteoroLastBlink = 0;
 
@@ -78,8 +80,8 @@ unsigned long meteoroLastBlink = 0;
 struct Note { int column; int row; unsigned long spawnTime; bool active; };
 Note notes[8];
 unsigned long lastNoteSpawn = 0;
-unsigned long noteSpeed = 1000;
-int noteSpawnInterval = 2000;
+unsigned long noteSpeed = 800; // Faster notes
+int noteSpawnInterval = 1500; // More frequent notes
 
 
 
@@ -97,7 +99,7 @@ SniperState sniperState;
 int sniperTarget = -1;
 unsigned long sniperTargetTime = 0;
 unsigned long sniperFlashDuration = 300;
-int sniperHitsRequired = 8; // Updated: Need 8 hits to win (aligned with user requirements)
+int sniperHitsRequired = 10; // Updated: Need 10 hits to win (more challenging)
 int sniperCurrentHits = 0;
 unsigned long nextTargetDelay = 0;
 
@@ -721,11 +723,12 @@ void spawnPegaLuzTarget() {
   setLED(pegaLuzTarget, true);
   sendGameEvent("LED_ON", pegaLuzTarget);
   pegaLuzState = PL_PLAYING;
+  pegaLuzJustHit = false;
 }
 
 void updatePegaLuz() {
   unsigned long currentTime = millis();
-  if (pegaLuzState == PL_PLAYING && pegaLuzTarget >= 0) {
+  if (pegaLuzState == PL_PLAYING && pegaLuzTarget >= 0 && !pegaLuzJustHit) {
     if (currentTime - pegaLuzStartTime >= pegaLuzTimeout) {
       setLED(pegaLuzTarget, false);
       sendGameEvent("LED_OFF", pegaLuzTarget);
@@ -742,11 +745,12 @@ void updatePegaLuz() {
 void handlePegaLuzKey(int key) {
   if (pegaLuzState != PL_PLAYING) return;
   if (key == pegaLuzTarget) {
+    pegaLuzJustHit = true; // Prevent timeout check after hit
     setLED(pegaLuzTarget, false);
 
     // Efeito visual para acerto
     unsigned long reactionTime = millis() - pegaLuzStartTime;
-    if (reactionTime < 200) {
+    if (reactionTime < 150) {
       playAnimation(ANIM_PERFECT_HIT, false); // Acerto perfeito
       sendGameEvent("PERFECT");
     } else {
@@ -756,8 +760,16 @@ void handlePegaLuzKey(int key) {
     game.score += 10;
     sendGameEvent("HIT", key, game.score);
 
+    // Check victory condition: 400 points
+    if (game.score >= 400) {
+      sendGameEvent("PEGA_LUZ_VICTORY", game.score);
+      playAnimation(ANIM_VICTORY, false);
+      stopGame();
+      return;
+    }
+
     if (game.score > 0 && game.score % 50 == 0) {
-      pegaLuzTimeout = max(pegaLuzTimeout - 100, 500);
+      pegaLuzTimeout = max(pegaLuzTimeout - 50, 500);
       game.level++;
       playAnimation(ANIM_LEVEL_UP, false);
       sendGameEvent("LEVEL_UP", game.level);
@@ -834,6 +846,14 @@ void handleSequenciaMalucaKey(int key) {
         playAnimation(ANIM_LEVEL_UP, false);
       }
 
+      // Check victory condition: 80 points (8 sequences completed, reaching 10 steps)
+      if (game.score >= 80) {
+        sendGameEvent("SEQUENCIA_MALUCA_VICTORY", game.score);
+        playAnimation(ANIM_VICTORY, false);
+        stopGame();
+        return;
+      }
+
       sendGameEvent("LEVEL_UP", game.level, game.score);
       sequenciaState = SEQ_PAUSE_BEFORE_NEXT;
       stateChangeTime = millis();
@@ -855,11 +875,12 @@ void initGatoRato() {
   gatoPosition = 0;
   ratoPosition = 8;
   ratoLastMove = millis();
-  ratoMoveInterval = 1000;
+  ratoMoveInterval = 800;
   ratoVisible = true;
   ratoLastBlink = millis();
   gatoRatoState = GR_PLAYING;
   gatoRatoCaptureCount = 0;
+  playerCanMove = true;
   clearAllLEDs();
 }
 
@@ -888,13 +909,14 @@ void updateGatoRato() {
             do { newPos = random(0, NUM_LEDS); } while (newPos == gatoPosition);
             ratoPosition = newPos;
             ratoLastMove = currentTime;
+            playerCanMove = true; // Player can move again after rat moves
         }
-        // DIFFICULTY INCREASED: Rato blinks faster and becomes harder to see
-        unsigned long blinkInterval = 200; // Faster blinking (was 300ms)
+
+        unsigned long blinkInterval = 250;
         if (gatoRatoCaptureCount >= 8) {
-            blinkInterval = 120; // Ultra-fast blinking after 8 captures
+            blinkInterval = 150; // Faster blinking after 8 captures
         }
-        
+
         if (currentTime - ratoLastBlink >= blinkInterval) {
             ratoVisible = !ratoVisible;
             ratoLastBlink = currentTime;
@@ -902,17 +924,12 @@ void updateGatoRato() {
         if (gatoPosition == ratoPosition) {
             game.score += 20;
             gatoRatoCaptureCount++;
-            
-            // DIFFICULTY INCREASED: Rato becomes MUCH faster with each capture
-            if (ratoMoveInterval > 200) {
-                ratoMoveInterval -= 25; // Accelerates faster than before (was -50 every 300ms)
+
+            // Increase difficulty: Rato becomes faster with each capture
+            if (ratoMoveInterval > 300) {
+                ratoMoveInterval -= 30;
             }
-            
-            // EXTRA DIFFICULTY: After 10 captures, rato becomes nearly impossible
-            if (gatoRatoCaptureCount >= 10) {
-                ratoMoveInterval = max(ratoMoveInterval - 15, 150); // Ultra-fast after 10 captures
-            }
-            
+
             sendGameEvent("SCORE", 20, game.score);
 
             // Check win condition
@@ -944,8 +961,9 @@ void updateGatoRato() {
 }
 
 void handleGatoRatoKey(int key) {
-  if (gatoRatoState == GR_PLAYING && key >= 0 && key < NUM_LEDS) {
+  if (gatoRatoState == GR_PLAYING && key >= 0 && key < NUM_LEDS && playerCanMove) {
     gatoPosition = key;
+    playerCanMove = false; // Player can only move once per rat movement
   }
 }
 
@@ -953,9 +971,9 @@ void handleGatoRatoKey(int key) {
 void initEsquivaMeteoros() {
   playerPosition = 12;
   meteoroLastSpawn = millis();
-  meteoroSpawnInterval = 1500;
+  meteoroSpawnInterval = 1200;
   meteoroLastMove = millis();
-  meteoroMoveInterval = 800;
+  meteoroMoveInterval = 600;
   for (int i = 0; i < NUM_LEDS; i++) meteoros[i] = false;
   clearAllLEDs();
   setLED(playerPosition, true);
@@ -973,12 +991,27 @@ void updateEsquivaMeteorosDisplay() {
 
 void updateEsquivaMeteoros() {
   unsigned long currentTime = millis();
-  if (currentTime - meteoroLastSpawn >= meteoroSpawnInterval) {
-    meteoros[random(0, 4)] = true;
+
+  // Increase spawn rate and difficulty over time
+  int difficultyLevel = game.score / 10;
+  int baseSpawnInterval = meteoroSpawnInterval - (difficultyLevel * 30);
+  baseSpawnInterval = max(baseSpawnInterval, 400);
+
+  if (currentTime - meteoroLastSpawn >= baseSpawnInterval) {
+    // Spawn more meteors at higher levels
+    int meteorCount = 1 + (difficultyLevel / 5);
+    meteorCount = min(meteorCount, 3);
+
+    for (int i = 0; i < meteorCount; i++) {
+      meteoros[random(0, 4)] = true;
+    }
     meteoroLastSpawn = currentTime;
-    if (meteoroSpawnInterval > 800) meteoroSpawnInterval -= 50;
   }
-  if (currentTime - meteoroLastMove >= meteoroMoveInterval) {
+
+  int baseMoveInterval = meteoroMoveInterval - (difficultyLevel * 15);
+  baseMoveInterval = max(baseMoveInterval, 200);
+
+  if (currentTime - meteoroLastMove >= baseMoveInterval) {
     for (int row = 3; row >= 0; row--) {
       for (int col = 0; col < 4; col++) {
         int currentPos = row * 4 + col;
@@ -989,8 +1022,8 @@ void updateEsquivaMeteoros() {
       }
     }
     meteoroLastMove = currentTime;
-    if (meteoroMoveInterval > 300) meteoroMoveInterval -= 10;
   }
+
   if (currentTime - meteoroLastBlink >= 200) {
     meteoroVisible = !meteoroVisible;
     meteoroLastBlink = currentTime;
@@ -1003,6 +1036,14 @@ void updateEsquivaMeteoros() {
   if (currentTime - game.lastUpdateTime >= 1000) {
     game.score++;
     game.lastUpdateTime = currentTime;
+
+    // Check victory condition: 180 points (3 minutes survival)
+    if (game.score >= 180) {
+        sendGameEvent("ESQUIVA_METEOROS_VICTORY", game.score);
+        playAnimation(ANIM_VICTORY, false);
+        stopGame();
+        return;
+    }
   }
   updateEsquivaMeteorosDisplay();
 }
@@ -1016,8 +1057,8 @@ void handleEsquivaMeteoros(int key) {
 // ===== JOGO 5: GUITAR HERO =====
 void initGuitarHero() {
   lastNoteSpawn = millis();
-  noteSpeed = 1000;
-  noteSpawnInterval = 2000;
+  noteSpeed = 800;
+  noteSpawnInterval = 1500;
   for (int i = 0; i < 8; i++) notes[i].active = false;
   clearAllLEDs();
 }
@@ -1055,20 +1096,31 @@ void updateGuitarHeroDisplay() {
 
 void updateGuitarHero() {
   unsigned long currentTime = millis();
-  if (currentTime - lastNoteSpawn >= noteSpawnInterval) {
+
+  // Increase difficulty over time
+  int difficultyLevel = game.score / 30;
+  int currentSpawnInterval = noteSpawnInterval - (difficultyLevel * 50);
+  currentSpawnInterval = max(currentSpawnInterval, 600);
+
+  if (currentTime - lastNoteSpawn >= currentSpawnInterval) {
     spawnNote();
     lastNoteSpawn = currentTime;
-    if (noteSpawnInterval > 1000) noteSpawnInterval -= 100;
   }
+
+  int currentNoteSpeed = noteSpeed - (difficultyLevel * 30);
+  currentNoteSpeed = max(currentNoteSpeed, 300);
+
   for (int i = 0; i < 8; i++) {
     if (notes[i].active) {
-      if (currentTime - notes[i].spawnTime >= noteSpeed) {
+      if (currentTime - notes[i].spawnTime >= currentNoteSpeed) {
         if (notes[i].row < 3) {
           notes[i].row++;
           notes[i].spawnTime = currentTime;
         } else {
           notes[i].active = false;
           sendGameEvent("NOTE_MISS", notes[i].column);
+          // Penalty for missing notes
+          if (game.score > 0) game.score = max(0, game.score - 5);
         }
       }
     }
@@ -1086,13 +1138,20 @@ void handleGuitarHero(int key) {
       game.score += 10;
       hitNote = true;
       sendGameEvent("NOTE_HIT", columnPressed, game.score);
-      if (noteSpeed > 400 && game.score % 50 == 0) noteSpeed -= 50;
+
+      // Check victory condition: 300 points
+      if (game.score >= 300) {
+        sendGameEvent("GUITAR_HERO_VICTORY", game.score);
+        playAnimation(ANIM_VICTORY, false);
+        stopGame();
+        return;
+      }
       break;
     }
   }
   if (!hitNote) {
     sendGameEvent("NOTE_MISS", columnPressed);
-    if (game.score > 0) game.score = max(0, game.score - 5);
+    if (game.score > 0) game.score = max(0, game.score - 10);
   }
 }
 
@@ -1150,6 +1209,15 @@ void handleLightningStrikeKey(int key) {
             lightningPatternLength = min(lightningPatternLength + 1, 12);
             lightningShowDuration = max(lightningShowDuration - 50, 100);
             sendGameEvent("LIGHTNING_COMPLETE", game.level, lightningShowDuration);
+
+            // Check victory condition: 200 points (20 successful sequences)
+            if (game.score >= 200) {
+                sendGameEvent("LIGHTNING_STRIKE_VICTORY", game.score);
+                playAnimation(ANIM_VICTORY, false);
+                stopGame();
+                return;
+            }
+
             lightningState = LS_CORRECT_PAUSE;
             stateChangeTime = millis();
         }
@@ -1213,7 +1281,7 @@ void handleSniperModeKey(int key) {
         sendGameEvent("SNIPER_HIT", sniperCurrentHits, reactionTime);
 
         if (sniperCurrentHits >= sniperHitsRequired) {
-            // VITÓRIA ÉPICA - Quase impossível!
+            // VITÓRIA ÉPICA - Muito desafiador!
             playAnimation(ANIM_VICTORY, false);
             sendGameEvent("SNIPER_VICTORY", game.score);
             stopGame();
@@ -1296,7 +1364,7 @@ void stopGame() {
   // Efeito visual baseado na pontuação
   if (game.score == 0) {
     playAnimation(ANIM_GAME_OVER, false); // Morte épica
-  } else if (game.score > 100) {
+  } else if (game.score >= 150) {
     playAnimation(ANIM_VICTORY, false);   // Vitória épica
   } else {
     playAnimation(ANIM_EXPLOSION, false); // Explosão normal
