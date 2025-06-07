@@ -1137,6 +1137,8 @@ public partial class MainWindow : Window
 
             case "GATO_RATO_TIMEOUT":
                 _audioService.PlaySound(AudioEvent.Error);
+                // Stop background music immediately
+                _ = Task.Run(async () => await _audioService.StopBackgroundMusicAsync());
                 if (int.TryParse(eventValue, out var captures))
                 {
                     StatusText.Text = $"⏰ TEMPO ESGOTADO! Você capturou {captures} ratos em 2 minutos. Sessão finalizada!";
@@ -1165,7 +1167,18 @@ public partial class MainWindow : Window
 
             case "GATO_RATO_WIN":
                 _audioService.PlaySound(AudioEvent.Victory);
+                // Stop background music immediately
+                _ = Task.Run(async () => await _audioService.StopBackgroundMusicAsync());
                 StatusText.Text = "🏆 VITÓRIA! Você capturou todos os ratos necessários!";
+                break;
+
+            case "STOP_MUSIC":
+                // Stop all music when requested by Arduino
+                _ = Task.Run(async () => 
+                {
+                    await _audioService.StopBackgroundMusicAsync();
+                    await _audioService.StopGameMusicAsync();
+                });
                 break;
 
             case "GATO_CAPTURE":
@@ -2750,6 +2763,13 @@ O Arduino possui animações épicas para:
                         ExtendClientAreaToDecorationsHint = true,
                         ExtendClientAreaChromeHints = Avalonia.Platform.ExtendClientAreaChromeHints.NoChrome
                     };
+
+                    // Stop all music when timeout dialog opens
+                    _ = Task.Run(async () => 
+                    {
+                        await _audioService.StopBackgroundMusicAsync();
+                        await _audioService.StopGameMusicAsync();
+                    });
 
                     var mainPanel = new StackPanel
                     {

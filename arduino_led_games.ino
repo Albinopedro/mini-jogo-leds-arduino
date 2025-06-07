@@ -437,12 +437,12 @@ void updateGameOver(unsigned long elapsed) {
 }
 
 void updateLevelUp(unsigned long elapsed) {
-  // Celebração de nível (2 segundos)
+  // Celebração de nível (800ms - rápida para não interferir no jogo)
   clearAllLEDs();
 
-  if (elapsed < 1000) {
-    // Ondas de energia subindo
-    int wave = (elapsed / 100) % 8;
+  if (elapsed < 400) {
+    // Ondas de energia subindo (mais rápido)
+    int wave = (elapsed / 50) % 8;
     for (int row = 0; row < 4; row++) {
       if ((wave - row) % 4 == 0) {
         for (int col = 0; col < 4; col++) {
@@ -451,15 +451,14 @@ void updateLevelUp(unsigned long elapsed) {
       }
     }
   }
-  else if (elapsed < 2000) {
-    // Estrela de vitória
-    bool flash = ((elapsed - 1000) / 150) % 2;
+  else if (elapsed < 800) {
+    // Estrela de vitória (mais rápida)
+    bool flash = ((elapsed - 400) / 100) % 2;
     int star[] = {1, 2, 4, 7, 8, 11, 13, 14}; // Forma de estrela
     for (int i = 0; i < 8; i++) setLED(star[i], flash);
   }
-  else {
-    stopAnimation();
-  }
+
+  if (elapsed > 800) stopAnimation();
 }
 
 void updatePerfectHit(unsigned long elapsed) {
@@ -718,47 +717,64 @@ void initPegaLuz() {
 
 void spawnPegaLuzTarget() {
   clearAllLEDs();
+  
+  // Reset all flags before setting new target
+  pegaLuzJustHit = false;
+  pegaLuzState = PL_PLAYING;
+  
   pegaLuzTarget = random(0, NUM_LEDS);
   pegaLuzStartTime = millis();
   setLED(pegaLuzTarget, true);
   sendGameEvent("LED_ON", pegaLuzTarget);
-  pegaLuzState = PL_PLAYING;
-  pegaLuzJustHit = false;
 }
 
 void updatePegaLuz() {
   unsigned long currentTime = millis();
-  if (pegaLuzState == PL_PLAYING && pegaLuzTarget >= 0 && !pegaLuzJustHit) {
-    if (currentTime - pegaLuzStartTime >= pegaLuzTimeout) {
-      setLED(pegaLuzTarget, false);
-      sendGameEvent("LED_OFF", pegaLuzTarget);
-      sendGameEvent("MISS");
-      spawnPegaLuzTarget();
+  
+  if (pegaLuzState == PL_PLAYING && pegaLuzTarget >= 0) {
+    // CRITICAL: Only check timeout if no hit flag is set
+    if (!pegaLuzJustHit) {
+      if (currentTime - pegaLuzStartTime >= pegaLuzTimeout) {
+        // Triple safety check: target valid, state correct, no hit flag
+        if (pegaLuzTarget >= 0 && pegaLuzState == PL_PLAYING && !pegaLuzJustHit) {
+          setLED(pegaLuzTarget, false);
+          sendGameEvent("LED_OFF", pegaLuzTarget);
+          sendGameEvent("MISS");
+          spawnPegaLuzTarget();
+        }
+      }
     }
   } else if (pegaLuzState == PL_PAUSE_AFTER_HIT) {
-    if (currentTime - stateChangeTime >= 200) { // REFACTOR: Non-blocking delay
+    if (currentTime - stateChangeTime >= 100) { // Even faster transition
       spawnPegaLuzTarget();
     }
   }
 }
 
 void handlePegaLuzKey(int key) {
-  if (pegaLuzState != PL_PLAYING) return;
+  // Immediate validation - prevent any processing if invalid state
+  if (pegaLuzState != PL_PLAYING || pegaLuzTarget < 0 || pegaLuzJustHit) return;
+  
   if (key == pegaLuzTarget) {
-    pegaLuzJustHit = true; // Prevent timeout check after hit
-    setLED(pegaLuzTarget, false);
+    // ATOMIC OPERATION: All critical flags set together
+    int hitTarget = pegaLuzTarget;
+    pegaLuzTarget = -1;           // Invalidate immediately
+    pegaLuzJustHit = true;        // Block timeout check
+    pegaLuzState = PL_PAUSE_AFTER_HIT; // Change state
+    
+    setLED(hitTarget, false);
 
     // Efeito visual para acerto
     unsigned long reactionTime = millis() - pegaLuzStartTime;
     if (reactionTime < 150) {
-      playAnimation(ANIM_PERFECT_HIT, false); // Acerto perfeito
+      playAnimation(ANIM_PERFECT_HIT, false);
       sendGameEvent("PERFECT");
     } else {
-      playAnimation(ANIM_COMBO, false); // Acerto normal
+      playAnimation(ANIM_COMBO, false);
     }
 
     game.score += 10;
-    sendGameEvent("HIT", key, game.score);
+    sendGameEvent("HIT", hitTarget, game.score);
 
     // Check victory condition: 400 points
     if (game.score >= 400) {
@@ -774,11 +790,14 @@ void handlePegaLuzKey(int key) {
       playAnimation(ANIM_LEVEL_UP, false);
       sendGameEvent("LEVEL_UP", game.level);
     }
-    pegaLuzState = PL_PAUSE_AFTER_HIT;
+    
     stateChangeTime = millis();
-  } else if (pegaLuzTarget >= 0) {
-    playAnimation(ANIM_ERROR, false);
-    sendGameEvent("WRONG_KEY", key);
+  } else {
+    // Only send wrong key if we still have a valid target
+    if (pegaLuzTarget >= 0 && !pegaLuzJustHit) {
+      playAnimation(ANIM_ERROR, false);
+      sendGameEvent("WRONG_KEY", key);
+    }
   }
 }
 
@@ -898,6 +917,7 @@ void updateGatoRato() {
     // Check timeout (2 minutes) - end game when time is up
     if (currentTime - game.gameStartTime >= gatoRatoTimeLimit) {
         sendGameEvent("GATO_RATO_TIMEOUT", gatoRatoCaptureCount);
+        sendGameEvent("STOP_MUSIC"); // Stop background music
         sendGameEvent("GAME_OVER", game.score);
         stopGame();
         return;
@@ -935,6 +955,7 @@ void updateGatoRato() {
             // Check win condition
             if (gatoRatoCaptureCount >= gatoRatoCapturesRequired) {
                 sendGameEvent("GATO_RATO_WIN", game.score);
+                sendGameEvent("STOP_MUSIC"); // Stop background music
                 playAnimation(ANIM_VICTORY, false);
                 stopGame();
                 return;
