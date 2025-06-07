@@ -844,12 +844,14 @@ public partial class MainWindow : Window
                 StartGameButton.IsEnabled = true;
                 StopGameButton.IsEnabled = false;
 
+                // Stop dynamic game music
+                _ = Task.Run(async () => await _audioService.StopGameMusicAsync());
+
                 if (int.TryParse(eventValue, out var finalScore))
                 {
                     _score = finalScore;
                 }
 
-                StatusText.Text = $"🎮 GAME OVER! Pontuação Final: {_score}";
                 _audioService.PlaySound(AudioEvent.GameOver);
                 SaveGameScore();
                 TriggerVisualEffect("GAME_OVER");
@@ -1453,6 +1455,9 @@ public partial class MainWindow : Window
             StartGameButton.IsEnabled = true;
             StopGameButton.IsEnabled = false;
 
+            // Stop dynamic game music
+            _ = Task.Run(async () => await _audioService.StopGameMusicAsync());
+
             // Play victory sound
             _audioService.PlaySound(AudioEvent.Victory);
 
@@ -2018,6 +2023,9 @@ public partial class MainWindow : Window
         var command = $"START_GAME:{_currentGameMode}";
         _serialPort.WriteLine(command);
 
+        // Start dynamic game music
+        _ = Task.Run(async () => await _audioService.StartGameMusicForModeAsync(_currentGameMode));
+
         StatusText.Text = "🚀 Jogo iniciado! Boa sorte!";
         UpdateUI();
     }
@@ -2033,6 +2041,9 @@ public partial class MainWindow : Window
         _gameActive = false;
         StartGameButton.IsEnabled = true;
         StopGameButton.IsEnabled = false;
+
+        // Stop dynamic game music
+        _ = Task.Run(async () => await _audioService.StopGameMusicAsync());
 
         StatusText.Text = "⏹️ Jogo interrompido pelo jogador.";
 
@@ -2635,6 +2646,9 @@ O Arduino possui animações épicas para:
             _gameActive = false;
             ClearLedMatrix();
 
+            // Stop dynamic game music
+            _ = Task.Run(async () => await _audioService.StopGameMusicAsync());
+
             // Send stop command to Arduino
             if (_serialPort?.IsOpen == true)
             {
@@ -2653,6 +2667,9 @@ O Arduino possui animações épicas para:
             {
                 try
                 {
+                    // Stop dynamic game music
+                    _ = Task.Run(async () => await _audioService.StopGameMusicAsync());
+                    
                     StartGameButton.IsEnabled = false;
                     StopGameButton.IsEnabled = false;
                     StatusText.Text = "🛑 GAME OVER - Limite de erros atingido! Termine sessão";

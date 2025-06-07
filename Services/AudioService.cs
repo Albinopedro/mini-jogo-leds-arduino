@@ -73,6 +73,15 @@ namespace miniJogo.Services
         // Música de Fundo
         LoginBackgroundMusic,
 
+        // Músicas Dinâmicas dos Jogos
+        PegaLuzMusic,
+        SequenciaMalucaMusic,
+        GatoRatoMusic,
+        EsquivaMeteoresMusic,
+        GuitarHeroMusic,
+        LightningStrikeMusic,
+        SniperModeMusic,
+
         // Controles e Teclas
         KeyPress,
         KeyRelease,
@@ -93,6 +102,12 @@ namespace miniJogo.Services
         private CancellationTokenSource? _backgroundMusicCancellationTokenSource;
         private Task? _backgroundMusicTask;
         private bool _backgroundMusicPlaying = false;
+
+        // Game music management
+        private CancellationTokenSource? _gameMusicCancellationTokenSource;
+        private Task? _gameMusicTask;
+        private bool _gameMusicPlaying = false;
+        private AudioEvent? _currentGameMusic;
 
         public bool IsEnabled
         {
@@ -189,6 +204,15 @@ namespace miniJogo.Services
 
                 // Música de Fundo
                 [AudioEvent.LoginBackgroundMusic] = "Assets/Audio/Ambiente/Pxnkgxd - mercy.mp3",
+
+                // Músicas Dinâmicas dos Jogos
+                [AudioEvent.PegaLuzMusic] = "Assets/Audio/Ambiente/Funk Tribu - Phonky Tribu.mp3",
+                [AudioEvent.SequenciaMalucaMusic] = "Assets/Audio/Ambiente/CXSMPX - Stay Focused.mp3",
+                [AudioEvent.GatoRatoMusic] = "Assets/Audio/Ambiente/Interworld - RAPTURE.mp3",
+                [AudioEvent.EsquivaMeteoresMusic] = "Assets/Audio/Ambiente/MoonDeity - NEON BLADE.mp3",
+                [AudioEvent.GuitarHeroMusic] = "Assets/Audio/Ambiente/g3ox_em - GigaChad Theme (Phonk House Version).mp3",
+                [AudioEvent.LightningStrikeMusic] = "Assets/Audio/Ambiente/DVRST - Dream Space (Sped Up).mp3",
+                [AudioEvent.SniperModeMusic] = "Assets/Audio/Ambiente/ONIMXRU - SHADOW.mp3",
 
                 // Controles e Teclas
                 [AudioEvent.KeyPress] = "Assets/Audio/Sistema/button_click.wav",
@@ -858,6 +882,9 @@ namespace miniJogo.Services
         {
             // Stop background music
             _ = Task.Run(async () => await StopBackgroundMusicAsync());
+            
+            // Stop game music
+            _ = Task.Run(async () => await StopGameMusicAsync());
 
             System.Diagnostics.Debug.WriteLine("🔇 StopAllSounds chamado");
         }
@@ -875,10 +902,290 @@ namespace miniJogo.Services
             System.Diagnostics.Debug.WriteLine($"🔊 Volume da categoria '{category}' definido para: {volume:P0} (simulado)");
         }
 
+        // Game Music Methods
+        public async Task StartGameMusicAsync(AudioEvent musicEvent)
+        {
+            if (!_isEnabled || !_audioFiles.ContainsKey(musicEvent))
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Música do jogo não disponível: {musicEvent}");
+                return;
+            }
+
+            // Stop any current game music
+            await StopGameMusicAsync();
+
+            _currentGameMusic = musicEvent;
+            _gameMusicPlaying = true;
+            _gameMusicCancellationTokenSource = new CancellationTokenSource();
+
+            Console.WriteLine($"🎵 Iniciando música do jogo: {musicEvent}");
+
+            _gameMusicTask = Task.Run(async () =>
+            {
+                try
+                {
+                    await PlayGameMusicFile(musicEvent);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Erro na música do jogo: {ex.Message}");
+                }
+            });
+        }
+
+        public async Task StopGameMusicAsync()
+        {
+            if (!_gameMusicPlaying)
+                return;
+
+            try
+            {
+                Console.WriteLine("🔇 Parando música do jogo...");
+                _gameMusicPlaying = false;
+
+                // Cancel the music playback
+                _gameMusicCancellationTokenSource?.Cancel();
+
+                if (_gameMusicTask != null)
+                {
+                    try
+                    {
+                        await _gameMusicTask;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Expected when cancelling
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"⚠️ Erro ao parar música do jogo: {ex.Message}");
+                    }
+                }
+
+                // Kill any orphaned mpg123 processes for game music on Linux
+                if (_isLinux && _currentGameMusic.HasValue)
+                {
+                    try
+                    {
+                        var musicFileName = Path.GetFileNameWithoutExtension(_audioFiles[_currentGameMusic.Value]);
+                        var killProcess = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = "pkill",
+                            Arguments = $"-f \"mpg123.*{musicFileName}\"",
+                            CreateNoWindow = true,
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true
+                        };
+
+                        using var process = System.Diagnostics.Process.Start(killProcess);
+                        if (process != null)
+                        {
+                            await process.WaitForExitAsync();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"⚠️ Erro ao eliminar processos de música do jogo: {ex.Message}");
+                    }
+                }
+
+                _gameMusicCancellationTokenSource?.Dispose();
+                _gameMusicCancellationTokenSource = null;
+                _gameMusicTask = null;
+                _currentGameMusic = null;
+
+                Console.WriteLine("✅ Música do jogo parada com sucesso");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Erro ao parar música do jogo: {ex.Message}");
+            }
+        }
+
+        private async Task PlayGameMusicFile(AudioEvent musicEvent)
+        {
+            try
+            {
+                var filePath = _audioFiles[musicEvent];
+
+                if (!File.Exists(filePath))
+                {
+                    Console.WriteLine($"⚠️ Arquivo de música do jogo não encontrado: {filePath}");
+                    return;
+                }
+
+                Console.WriteLine($"🎵 Tocando música do jogo: {Path.GetFileNameWithoutExtension(filePath)}");
+
+                if (_isLinux)
+                {
+                    await PlayLinuxGameMusic(filePath);
+                }
+                else if (_isWindows)
+                {
+                    await PlayWindowsGameMusic(filePath);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Erro ao reproduzir música do jogo: {ex.Message}");
+            }
+        }
+
+        private async Task PlayLinuxGameMusic(string filePath)
+        {
+            try
+            {
+                // Loop the game music indefinitely until stopped
+                while (_gameMusicPlaying && !(_gameMusicCancellationTokenSource?.Token.IsCancellationRequested ?? true))
+                {
+                    var startInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "mpg123",
+                        Arguments = $"-q \"{filePath}\"",
+                        CreateNoWindow = true,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    };
+
+                    using var process = System.Diagnostics.Process.Start(startInfo);
+                    if (process != null)
+                    {
+                        var cancellationToken = _gameMusicCancellationTokenSource?.Token ?? CancellationToken.None;
+
+                        try
+                        {
+                            await process.WaitForExitAsync(cancellationToken);
+
+                            if (process.ExitCode != 0 && _gameMusicPlaying)
+                            {
+                                Console.WriteLine($"⚠️ mpg123 terminou com código {process.ExitCode} para música do jogo");
+                            }
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            if (!process.HasExited)
+                            {
+                                process.Kill(true);
+                                await Task.Delay(500);
+                            }
+                            break;
+                        }
+                    }
+
+                    // Small delay before looping if still playing
+                    if (_gameMusicPlaying && !(_gameMusicCancellationTokenSource?.Token.IsCancellationRequested ?? true))
+                    {
+                        await Task.Delay(1000, _gameMusicCancellationTokenSource?.Token ?? CancellationToken.None);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Erro na reprodução Linux da música do jogo: {ex.Message}");
+            }
+        }
+
+        private async Task PlayWindowsGameMusic(string filePath)
+        {
+            try
+            {
+                // Loop the game music indefinitely until stopped
+                while (_gameMusicPlaying && !(_gameMusicCancellationTokenSource?.Token.IsCancellationRequested ?? true))
+                {
+                    var startInfo = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "powershell",
+                        Arguments = $@"-Command ""
+                            Add-Type -AssemblyName presentationCore;
+                            $player = New-Object System.Windows.Media.MediaPlayer;
+                            $player.Open([uri]'{filePath.Replace("'", "''")}');
+                            $player.Play();
+
+                            # Wait for the file to finish or be cancelled
+                            $timeout = 600; # 10 minutes max per track
+                            $elapsed = 0;
+                            while ($player.Position -lt $player.NaturalDuration.TimeSpan -and $elapsed -lt $timeout) {{
+                                Start-Sleep -Milliseconds 500;
+                                $elapsed += 0.5;
+                            }}
+
+                            $player.Stop();
+                            $player.Close();
+                        """,
+                        CreateNoWindow = true,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    };
+
+                    using var process = System.Diagnostics.Process.Start(startInfo);
+                    if (process != null)
+                    {
+                        var cancellationToken = _gameMusicCancellationTokenSource?.Token ?? CancellationToken.None;
+
+                        try
+                        {
+                            await process.WaitForExitAsync(cancellationToken);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            Console.WriteLine("🔇 Reprodução de música do jogo cancelada");
+                            break;
+                        }
+                    }
+
+                    // Small delay before looping if still playing
+                    if (_gameMusicPlaying && !(_gameMusicCancellationTokenSource?.Token.IsCancellationRequested ?? true))
+                    {
+                        await Task.Delay(1000, _gameMusicCancellationTokenSource?.Token ?? CancellationToken.None);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Erro na reprodução Windows da música do jogo: {ex.Message}");
+            }
+        }
+
+        // Helper method to get game music for a specific game mode
+        public static AudioEvent? GetGameMusicForMode(int gameMode)
+        {
+            return gameMode switch
+            {
+                1 => AudioEvent.PegaLuzMusic,           // Pega-Luz
+                2 => AudioEvent.SequenciaMalucaMusic,   // Sequência Maluca
+                3 => AudioEvent.GatoRatoMusic,          // Gato e Rato
+                4 => AudioEvent.EsquivaMeteoresMusic, // Esquiva Meteoros
+                5 => AudioEvent.GuitarHeroMusic,        // Guitar Hero
+                6 => AudioEvent.LightningStrikeMusic,   // Lightning Strike
+                7 => AudioEvent.SniperModeMusic,        // Sniper Mode
+                _ => null
+            };
+        }
+
+        // Public method to start game music by game mode
+        public async Task StartGameMusicForModeAsync(int gameMode)
+        {
+            var musicEvent = GetGameMusicForMode(gameMode);
+            if (musicEvent.HasValue)
+            {
+                await StartGameMusicAsync(musicEvent.Value);
+            }
+            else
+            {
+                Console.WriteLine($"⚠️ Nenhuma música configurada para o modo de jogo: {gameMode}");
+            }
+        }
+
         public void Dispose()
         {
             // Stop background music before disposing
             _ = Task.Run(async () => await StopBackgroundMusicAsync());
+            
+            // Stop game music before disposing
+            _ = Task.Run(async () => await StopGameMusicAsync());
 
             StopAllSounds();
             System.Diagnostics.Debug.WriteLine("🎵 AudioService disposed");
