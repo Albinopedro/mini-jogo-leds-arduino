@@ -188,7 +188,7 @@ namespace miniJogo.Services
                 [AudioEvent.PowerDown] = "Assets/Audio/Efeitos/power_down.wav",
 
                 // Música de Fundo
-                [AudioEvent.LoginBackgroundMusic] = "Assets/Audio/Ambiente/C418 - Moog City 2.mp3",
+                [AudioEvent.LoginBackgroundMusic] = "Assets/Audio/Ambiente/Pxnkgxd - mercy.mp3",
 
                 // Controles e Teclas
                 [AudioEvent.KeyPress] = "Assets/Audio/Sistema/button_click.wav",
@@ -641,7 +641,7 @@ namespace miniJogo.Services
                         var killProcess = new System.Diagnostics.ProcessStartInfo
                         {
                             FileName = "pkill",
-                            Arguments = "-f \"mpg123.*C418\"",
+                            Arguments = "-f \"mpg123.*Pxnkgxd|ONIMXRU\"",
                             CreateNoWindow = true,
                             UseShellExecute = false,
                             RedirectStandardOutput = true,
@@ -683,9 +683,8 @@ namespace miniJogo.Services
             {
                 var playlist = new[]
                 {
-                    "Assets/Audio/Ambiente/C418 - Moog City 2.mp3",
-                    "Assets/Audio/Ambiente/C418 - Aria Math.mp3",
-                    "Assets/Audio/Ambiente/C418 - Sweden.mp3"
+                    "Assets/Audio/Ambiente/Pxnkgxd - mercy.mp3",
+                    "Assets/Audio/Ambiente/ONIMXRU - SHADOW.mp3"
                 };
 
                 // Verify files exist
@@ -720,66 +719,65 @@ namespace miniJogo.Services
         {
             try
             {
-                // Build command to play all files in infinite loop
-                var fileList = string.Join(" ", validFiles.Select(f => $"\"{f}\""));
-
-                var startInfo = new System.Diagnostics.ProcessStartInfo
+                int currentIndex = 0;
+                
+                // Loop through playlist continuously
+                while (_backgroundMusicPlaying && !(_backgroundMusicCancellationTokenSource?.Token.IsCancellationRequested ?? true))
                 {
-                    FileName = "mpg123",
-                    Arguments = $"--loop -1 -q {fileList}", // Loop all files infinitely
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true
-                };
+                    var currentFile = validFiles[currentIndex];
+                    Console.WriteLine($"🎵 Reproduzindo: {Path.GetFileNameWithoutExtension(currentFile)}");
 
-                Console.WriteLine($"🔧 Comando: mpg123 --loop -1 -q {fileList}");
-
-                using var process = System.Diagnostics.Process.Start(startInfo);
-                if (process != null)
-                {
-                    Console.WriteLine($"🎵 Música ambiente INICIADA (PID: {process.Id})");
-                    Console.WriteLine($"🎶 Tocando em loop: {string.Join(", ", validFiles.Select(Path.GetFileNameWithoutExtension))}");
-                    Console.WriteLine("🔊 Se você não ouvir nada, verifique o volume do sistema!");
-
-                    var cancellationToken = _backgroundMusicCancellationTokenSource?.Token ?? CancellationToken.None;
-
-                    // Give the process a moment to start playing
-                    await Task.Delay(1000);
-
-                    if (process.HasExited)
+                    var startInfo = new System.Diagnostics.ProcessStartInfo
                     {
-                        Console.WriteLine($"❌ mpg123 terminou imediatamente! Código de saída: {process.ExitCode}");
-                        var error = await process.StandardError.ReadToEndAsync();
-                        if (!string.IsNullOrEmpty(error))
-                            Console.WriteLine($"Erro: {error}");
-                        return;
-                    }
+                        FileName = "mpg123",
+                        Arguments = $"-q \"{currentFile}\"", // Play single file without loop
+                        CreateNoWindow = true,
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    };
 
-                    Console.WriteLine("✅ mpg123 está rodando e deve estar tocando música agora!");
+                    using var process = System.Diagnostics.Process.Start(startInfo);
+                    if (process != null)
+                    {
+                        var cancellationToken = _backgroundMusicCancellationTokenSource?.Token ?? CancellationToken.None;
 
-                    try
-                    {
-                        // Wait for the process to finish or be cancelled
-                        await process.WaitForExitAsync(cancellationToken);
-                        Console.WriteLine("🎵 Processo mpg123 finalizou naturalmente");
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        // Kill the process if cancellation is requested
-                        if (!process.HasExited)
+                        try
                         {
-                            Console.WriteLine("🔇 PARANDO música ambiente...");
-                            process.Kill(true);
-                            // Wait a moment for clean shutdown
-                            await Task.Delay(500);
-                            Console.WriteLine("✅ Música ambiente PARADA com sucesso");
+                            // Wait for the current track to finish or be cancelled
+                            await process.WaitForExitAsync(cancellationToken);
+                            
+                            if (process.ExitCode != 0 && _backgroundMusicPlaying)
+                            {
+                                Console.WriteLine($"⚠️ mpg123 terminou com código {process.ExitCode} para {Path.GetFileName(currentFile)}");
+                            }
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            // Kill the process if cancellation is requested
+                            if (!process.HasExited)
+                            {
+                                Console.WriteLine("🔇 PARANDO música ambiente...");
+                                process.Kill(true);
+                                await Task.Delay(500);
+                                Console.WriteLine("✅ Música ambiente PARADA com sucesso");
+                            }
+                            break;
                         }
                     }
-                }
-                else
-                {
-                    Console.WriteLine("❌ Falha ao criar processo mpg123");
+                    else
+                    {
+                        Console.WriteLine($"❌ Falha ao criar processo mpg123 para {Path.GetFileName(currentFile)}");
+                    }
+
+                    // Move to next track in playlist
+                    currentIndex = (currentIndex + 1) % validFiles.Length;
+                    
+                    // Small delay between tracks if still playing
+                    if (_backgroundMusicPlaying && !(_backgroundMusicCancellationTokenSource?.Token.IsCancellationRequested ?? true))
+                    {
+                        await Task.Delay(1000, _backgroundMusicCancellationTokenSource?.Token ?? CancellationToken.None);
+                    }
                 }
             }
             catch (Exception ex)

@@ -63,7 +63,7 @@ namespace miniJogo.Views
             {
                 // Unsubscribe from events
                 _scoreService.ScoreSaved -= OnScoreSaved;
-                
+
                 Console.WriteLine("🎵 LoginWindow fechando - parando música de fundo...");
                 await _audioService.StopBackgroundMusicAsync();
                 Console.WriteLine("🎵 Música de fundo parada!");
@@ -90,7 +90,7 @@ namespace miniJogo.Views
             {
                 new { Mode = 1, Icon = "🎯", Name = "Pega-Luz", Challenge = "Alcance 200 pontos", Difficulty = "Médio" },
                 new { Mode = 2, Icon = "🧠", Name = "Sequência Maluca", Challenge = "Complete 11 rodadas", Difficulty = "Difícil" },
-                new { Mode = 3, Icon = "🐱", Name = "Gato e Rato", Challenge = "Capture 11 vezes", Difficulty = "Médio" },
+                new { Mode = 3, Icon = "🐱", Name = "Gato e Rato", Challenge = "Capture 14 vezes", Difficulty = "Médio" },
                 new { Mode = 4, Icon = "☄️", Name = "Esquiva Meteoros", Challenge = "Sobreviva 150 segundos", Difficulty = "Difícil" },
                 new { Mode = 5, Icon = "🎸", Name = "Guitar Hero", Challenge = "Faça 200 pontos", Difficulty = "Médio" },
                 new { Mode = 6, Icon = "⚡", Name = "Lightning Strike", Challenge = "Complete 6 rodadas", Difficulty = "Difícil" },

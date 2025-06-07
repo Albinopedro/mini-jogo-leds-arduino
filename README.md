@@ -47,6 +47,7 @@ Sistema de jogos interativos com matriz 4x4 de LEDs conectada ao Arduino, contro
 O Mini Jogo LEDs agora conta com um **sistema de áudio de qualidade profissional** com 42 sons únicos, síntese musical avançada e feedback sonoro para cada ação do jogo.
 
 #### 🎼 **Características Premium**
+
 - **42 arquivos de áudio** de alta qualidade (44.1kHz)
 - **Síntese musical** com harmônicos naturais
 - **Envelopes ADSR** para transições suaves
@@ -55,15 +56,16 @@ O Mini Jogo LEDs agora conta com um **sistema de áudio de qualidade profissiona
 
 #### 🎮 **Sons por Categoria**
 
-| Categoria | Descrição | Exemplos |
-|-----------|-----------|----------|
-| 🖥️ **Sistema** | Interface elegante | Login, cliques, notificações |
-| 🎮 **Jogos** | Eventos dinâmicos | Vitória, game over, level up |
-| 🎯 **Específicos** | Únicos por jogo | Pega-luz hit, guitar hero, meteoros |
-| 💥 **Efeitos** | Animações visuais | Matrix, fogos, explosões |
-| 🌙 **Ambiente** | Loops atmosféricos | Menu ambient, tensão, calma |
+| Categoria          | Descrição          | Exemplos                            |
+| ------------------ | ------------------ | ----------------------------------- |
+| 🖥️ **Sistema**     | Interface elegante | Login, cliques, notificações        |
+| 🎮 **Jogos**       | Eventos dinâmicos  | Vitória, game over, level up        |
+| 🎯 **Específicos** | Únicos por jogo    | Pega-luz hit, guitar hero, meteoros |
+| 💥 **Efeitos**     | Animações visuais  | Matrix, fogos, explosões            |
+| 🌙 **Ambiente**    | Loops atmosféricos | Menu ambient, tensão, calma         |
 
 #### 🔊 **Feedback Sonoro Completo**
+
 - ✅ **Cada clique** tem som responsivo
 - ✅ **Cada acerto/erro** tem feedback único
 - ✅ **Cada jogo** tem sons específicos
@@ -119,7 +121,6 @@ Navegação:
 ### 🎭 **Teclas de Animações do Arduino**
 
 ```
-F5  = 🔄 Atualizar Portas COM
 F6  = ⏹️ Parar Todos os Efeitos
 F7  = 💚 Matrix Rain (Chuva Digital)
 F8  = 💓 Pulso Universal (Todos LEDs)
