@@ -80,8 +80,10 @@ unsigned long meteoroLastBlink = 0;
 struct Note { int column; int row; unsigned long spawnTime; bool active; };
 Note notes[8];
 unsigned long lastNoteSpawn = 0;
-unsigned long noteSpeed = 800; // Faster notes
-int noteSpawnInterval = 1500; // More frequent notes
+unsigned long noteSpeed = 500; // Much faster notes
+int noteSpawnInterval = 800; // Much more frequent notes
+int guitarHeroLives = 5; // Player starts with 5 lives
+int guitarHeroMissedInRow = 0; // Track consecutive misses
 
 
 
@@ -735,11 +737,16 @@ void updatePegaLuz() {
     // CRITICAL: Only check timeout if no hit flag is set
     if (!pegaLuzJustHit) {
       if (currentTime - pegaLuzStartTime >= pegaLuzTimeout) {
-        // Triple safety check: target valid, state correct, no hit flag
+        // Enhanced safety check: target valid, state correct, no hit flag
         if (pegaLuzTarget >= 0 && pegaLuzState == PL_PLAYING && !pegaLuzJustHit) {
-          setLED(pegaLuzTarget, false);
-          sendGameEvent("LED_OFF", pegaLuzTarget);
+          // Store target before clearing it
+          int timeoutTarget = pegaLuzTarget;
+          setLED(timeoutTarget, false);
+          pegaLuzTarget = -1;  // Clear target
+          sendGameEvent("LED_OFF", timeoutTarget);
           sendGameEvent("MISS");
+          // Small delay to ensure hit processing doesn't interfere
+          delay(10);
           spawnPegaLuzTarget();
         }
       }
@@ -755,14 +762,16 @@ void handlePegaLuzKey(int key) {
   // Immediate validation - prevent any processing if invalid state
   if (pegaLuzState != PL_PLAYING || pegaLuzTarget < 0 || pegaLuzJustHit) return;
   
-  if (key == pegaLuzTarget) {
+  // Store original target before any modifications
+  int originalTarget = pegaLuzTarget;
+  
+  if (key == originalTarget) {
     // ATOMIC OPERATION: All critical flags set together
-    int hitTarget = pegaLuzTarget;
     pegaLuzTarget = -1;           // Invalidate immediately
     pegaLuzJustHit = true;        // Block timeout check
     pegaLuzState = PL_PAUSE_AFTER_HIT; // Change state
     
-    setLED(hitTarget, false);
+    setLED(originalTarget, false);
 
     // Efeito visual para acerto
     unsigned long reactionTime = millis() - pegaLuzStartTime;
@@ -774,7 +783,7 @@ void handlePegaLuzKey(int key) {
     }
 
     game.score += 10;
-    sendGameEvent("HIT", hitTarget, game.score);
+    sendGameEvent("HIT", originalTarget, game.score);
 
     // Check victory condition: 400 points
     if (game.score >= 400) {
@@ -793,8 +802,9 @@ void handlePegaLuzKey(int key) {
     
     stateChangeTime = millis();
   } else {
-    // Only send wrong key if we still have a valid target
-    if (pegaLuzTarget >= 0 && !pegaLuzJustHit) {
+    // Only send wrong key if we still have a valid target AND the player didn't just hit
+    // Use original target to avoid race condition
+    if (originalTarget >= 0 && !pegaLuzJustHit && pegaLuzState == PL_PLAYING) {
       playAnimation(ANIM_ERROR, false);
       sendGameEvent("WRONG_KEY", key);
     }
@@ -1078,10 +1088,13 @@ void handleEsquivaMeteoros(int key) {
 // ===== JOGO 5: GUITAR HERO =====
 void initGuitarHero() {
   lastNoteSpawn = millis();
-  noteSpeed = 800;
-  noteSpawnInterval = 1500;
+  noteSpeed = 500;
+  noteSpawnInterval = 800;
+  guitarHeroLives = 5;
+  guitarHeroMissedInRow = 0;
   for (int i = 0; i < 8; i++) notes[i].active = false;
   clearAllLEDs();
+  sendGameEvent("GUITAR_HERO_LIVES", guitarHeroLives);
 }
 
 void spawnNote() {
@@ -1118,18 +1131,18 @@ void updateGuitarHeroDisplay() {
 void updateGuitarHero() {
   unsigned long currentTime = millis();
 
-  // Increase difficulty over time
-  int difficultyLevel = game.score / 30;
-  int currentSpawnInterval = noteSpawnInterval - (difficultyLevel * 50);
-  currentSpawnInterval = max(currentSpawnInterval, 600);
+  // Increase difficulty over time - more aggressive
+  int difficultyLevel = game.score / 20;
+  int currentSpawnInterval = noteSpawnInterval - (difficultyLevel * 80);
+  currentSpawnInterval = max(currentSpawnInterval, 300);
 
   if (currentTime - lastNoteSpawn >= currentSpawnInterval) {
     spawnNote();
     lastNoteSpawn = currentTime;
   }
 
-  int currentNoteSpeed = noteSpeed - (difficultyLevel * 30);
-  currentNoteSpeed = max(currentNoteSpeed, 300);
+  int currentNoteSpeed = noteSpeed - (difficultyLevel * 40);
+  currentNoteSpeed = max(currentNoteSpeed, 200);
 
   for (int i = 0; i < 8; i++) {
     if (notes[i].active) {
@@ -1140,8 +1153,29 @@ void updateGuitarHero() {
         } else {
           notes[i].active = false;
           sendGameEvent("NOTE_MISS", notes[i].column);
-          // Penalty for missing notes
-          if (game.score > 0) game.score = max(0, game.score - 5);
+          
+          // Harsh penalty for missing notes
+          guitarHeroMissedInRow++;
+          guitarHeroLives--;
+          game.score = max(0, game.score - 15);
+          
+          sendGameEvent("GUITAR_HERO_LIVES", guitarHeroLives);
+          
+          // Game over condition - no more lives
+          if (guitarHeroLives <= 0) {
+            sendGameEvent("GUITAR_HERO_GAME_OVER", game.score);
+            playAnimation(ANIM_GAME_OVER, false);
+            stopGame();
+            return;
+          }
+          
+          // Game over condition - too many consecutive misses
+          if (guitarHeroMissedInRow >= 8) {
+            sendGameEvent("GUITAR_HERO_GAME_OVER", game.score);
+            playAnimation(ANIM_GAME_OVER, false);
+            stopGame();
+            return;
+          }
         }
       }
     }
@@ -1156,12 +1190,13 @@ void handleGuitarHero(int key) {
   for (int i = 0; i < 8; i++) {
     if (notes[i].active && notes[i].column == columnPressed && notes[i].row == 3) {
       notes[i].active = false;
-      game.score += 10;
+      game.score += 15;
+      guitarHeroMissedInRow = 0; // Reset consecutive misses on hit
       hitNote = true;
       sendGameEvent("NOTE_HIT", columnPressed, game.score);
 
-      // Check victory condition: 300 points
-      if (game.score >= 300) {
+      // Check victory condition: 500 points (increased difficulty)
+      if (game.score >= 500) {
         sendGameEvent("GUITAR_HERO_VICTORY", game.score);
         playAnimation(ANIM_VICTORY, false);
         stopGame();
@@ -1171,8 +1206,29 @@ void handleGuitarHero(int key) {
     }
   }
   if (!hitNote) {
+    // Harsh penalty for wrong key press
+    guitarHeroMissedInRow++;
+    guitarHeroLives--;
+    game.score = max(0, game.score - 20);
+    
     sendGameEvent("NOTE_MISS", columnPressed);
-    if (game.score > 0) game.score = max(0, game.score - 10);
+    sendGameEvent("GUITAR_HERO_LIVES", guitarHeroLives);
+    
+    // Game over condition - no more lives
+    if (guitarHeroLives <= 0) {
+      sendGameEvent("GUITAR_HERO_GAME_OVER", game.score);
+      playAnimation(ANIM_GAME_OVER, false);
+      stopGame();
+      return;
+    }
+    
+    // Game over condition - too many consecutive misses
+    if (guitarHeroMissedInRow >= 8) {
+      sendGameEvent("GUITAR_HERO_GAME_OVER", game.score);
+      playAnimation(ANIM_GAME_OVER, false);
+      stopGame();
+      return;
+    }
   }
 }
 

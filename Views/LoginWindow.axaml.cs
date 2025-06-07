@@ -22,6 +22,7 @@ namespace miniJogo.Views
         private User? _currentUser;
         private int _selectedGameMode = 1;
         private bool _isFullScreen = true;
+        private System.Timers.Timer? _codeCheckTimer;
 
         public User? AuthenticatedUser => _currentUser;
         public int SelectedGameMode => _selectedGameMode;
@@ -64,6 +65,10 @@ namespace miniJogo.Views
                 // Unsubscribe from events
                 _scoreService.ScoreSaved -= OnScoreSaved;
 
+                // Clean up timer
+                _codeCheckTimer?.Stop();
+                _codeCheckTimer?.Dispose();
+
                 Console.WriteLine("🎵 LoginWindow fechando - parando música de fundo...");
                 await _audioService.StopBackgroundMusicAsync();
                 Console.WriteLine("🎵 Música de fundo parada!");
@@ -79,9 +84,9 @@ namespace miniJogo.Views
             // Create visual game cards
             CreateGameCards();
 
-            // Set default game mode
-            _selectedGameMode = 1;
-            UpdateGameInstructions(1);
+            // Set default game mode - skip first game (Pega-Luz)
+            _selectedGameMode = 2;
+            UpdateGameInstructions(2);
         }
 
         private void CreateGameCards()
@@ -92,7 +97,7 @@ namespace miniJogo.Views
                 new { Mode = 2, Icon = "🧠", Name = "Sequência Maluca", Challenge = "Complete 8 rodadas", Difficulty = "Médio" },
                 new { Mode = 3, Icon = "🐱", Name = "Gato e Rato", Challenge = "Capture 16 vezes", Difficulty = "Difícil" },
                 new { Mode = 4, Icon = "☄️", Name = "Esquiva Meteoros", Challenge = "Sobreviva 180 segundos", Difficulty = "Médio" },
-                new { Mode = 5, Icon = "🎸", Name = "Guitar Hero", Challenge = "Faça 300 pontos", Difficulty = "Difícil" },
+                new { Mode = 5, Icon = "🎸", Name = "Guitar Hero", Challenge = "Faça 500 pontos", Difficulty = "Muito Difícil" },
                 new { Mode = 6, Icon = "⚡", Name = "Lightning Strike", Challenge = "Complete 7 rodadas", Difficulty = "Muito Difícil" },
                 new { Mode = 7, Icon = "🎯", Name = "Sniper Mode", Challenge = "Acerte 7 alvos", Difficulty = "Muito Difícil" }
             };
@@ -101,8 +106,17 @@ namespace miniJogo.Views
 
             foreach (var game in games)
             {
-                var card = CreateGameCard(game.Mode, game.Icon, game.Name, game.Challenge, game.Difficulty);
-                GameCardsPanel.Children.Add(card);
+                // Skip first game (Pega-Luz) - make it unselectable
+                if (game.Mode == 1)
+                {
+                    var disabledCard = CreateDisabledGameCard(game.Mode, game.Icon, game.Name, "Em manutenção", game.Difficulty);
+                    GameCardsPanel.Children.Add(disabledCard);
+                }
+                else
+                {
+                    var card = CreateGameCard(game.Mode, game.Icon, game.Name, game.Challenge, game.Difficulty);
+                    GameCardsPanel.Children.Add(card);
+                }
             }
         }
 
@@ -240,6 +254,99 @@ namespace miniJogo.Views
             return card;
         }
 
+        private Border CreateDisabledGameCard(int gameMode, string icon, string name, string status, string difficulty)
+        {
+            var card = new Border
+            {
+                Background = new LinearGradientBrush
+                {
+                    StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
+                    EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
+                    GradientStops = new GradientStops
+                    {
+                        new GradientStop(Color.FromRgb(40, 40, 40), 0),
+                        new GradientStop(Color.FromRgb(60, 60, 60), 1)
+                    }
+                },
+                BorderBrush = new SolidColorBrush(Color.FromRgb(100, 100, 100)),
+                BorderThickness = new Thickness(2),
+                CornerRadius = new CornerRadius(12),
+                Padding = new Thickness(12),
+                Margin = new Thickness(0, 2, 0, 2),
+                Opacity = 0.6,
+                Tag = gameMode
+            };
+
+            var grid = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto")
+            };
+
+            // Icon
+            var iconText = new TextBlock
+            {
+                Text = icon,
+                FontSize = 24,
+                VerticalAlignment = VerticalAlignment.Center,
+                Foreground = new SolidColorBrush(Color.FromRgb(150, 150, 150))
+            };
+            Grid.SetColumn(iconText, 0);
+
+            // Name and Status
+            var infoStack = new StackPanel
+            {
+                Spacing = 4,
+                Margin = new Thickness(12, 0, 12, 0)
+            };
+
+            var nameText = new TextBlock
+            {
+                Text = name,
+                FontSize = 16,
+                FontWeight = FontWeight.Bold,
+                Foreground = new SolidColorBrush(Color.FromRgb(150, 150, 150))
+            };
+
+            var statusText = new TextBlock
+            {
+                Text = status,
+                FontSize = 14,
+                Foreground = new SolidColorBrush(Color.FromRgb(180, 100, 100))
+            };
+
+            infoStack.Children.Add(nameText);
+            infoStack.Children.Add(statusText);
+            Grid.SetColumn(infoStack, 1);
+
+            // Disabled Badge
+            var disabledBorder = new Border
+            {
+                Background = new SolidColorBrush(Color.FromRgb(120, 120, 120)),
+                CornerRadius = new CornerRadius(6),
+                Padding = new Thickness(7, 3, 7, 3)
+            };
+
+            var disabledText = new TextBlock
+            {
+                Text = "Indisponível",
+                FontSize = 12,
+                FontWeight = FontWeight.Medium,
+                Foreground = new SolidColorBrush(Color.FromRgb(200, 200, 200)),
+                VerticalAlignment = VerticalAlignment.Center
+            };
+
+            disabledBorder.Child = disabledText;
+            Grid.SetColumn(disabledBorder, 2);
+
+            grid.Children.Add(iconText);
+            grid.Children.Add(infoStack);
+            grid.Children.Add(disabledBorder);
+
+            card.Child = grid;
+
+            return card;
+        }
+
         private SolidColorBrush GetDifficultyColor(string difficulty)
         {
             return difficulty switch
@@ -266,6 +373,9 @@ namespace miniJogo.Views
 
         private void GameCard_Click(int gameMode)
         {
+            // Don't allow selection of first game (Pega-Luz)
+            if (gameMode == 1) return;
+            
             _audioService.PlaySound(AudioEvent.ButtonClick);
             _selectedGameMode = gameMode;
 
@@ -323,7 +433,7 @@ namespace miniJogo.Views
                 2 => ("🧠", "Sequência Maluca", "Complete 8 rodadas sem errar (sequência chega a 10 passos)"),
                 3 => ("🐱", "Gato e Rato", "Capture o rato 16 vezes em até 2 minutos"),
                 4 => ("☄️", "Esquiva Meteoros", "Sobreviva por 180 segundos sem ser atingido (1 ponto/segundo)"),
-                5 => ("🎸", "Guitar Hero", "Faça 300 pontos com ritmo perfeito"),
+                5 => ("🎸", "Guitar Hero", "Faça 500 pontos com ritmo perfeito"),
                 6 => ("⚡", "Lightning Strike", "Complete 7 sequências sem errar nenhum padrão"),
                 7 => ("🎯", "Sniper Mode", "Acerte 7 alvos em sequência com o LED piscando por 300ms cada"),
                 _ => ("🎮", "Jogo Desconhecido", "Desafio não definido")
@@ -548,6 +658,10 @@ namespace miniJogo.Views
         {
             var code = CodeTextBox.Text?.ToUpper() ?? "";
 
+            // Stop previous timer if running
+            _codeCheckTimer?.Stop();
+            _codeCheckTimer?.Dispose();
+
             // Check if it's admin code
             if (code.ToUpper() == "ADMIN2024")
             {
@@ -563,7 +677,52 @@ namespace miniJogo.Views
                 NamePanel.IsVisible = true;
                 // GameModePanel.IsVisible = true;
                 AdminPanel.IsVisible = false;
+                
+                // Clear status immediately when typing
                 StatusText.Text = "";
+                
+                // Check if code is already used (only for client codes with proper length)
+                if (!string.IsNullOrWhiteSpace(code) && code.Length >= 6 && code != "ADMIN2024")
+                {
+                    // Use timer to delay checking (better UX while typing)
+                    _codeCheckTimer = new System.Timers.Timer(800); // 800ms delay
+                    _codeCheckTimer.Elapsed += (s, args) =>
+                    {
+                        _codeCheckTimer?.Stop();
+                        
+                        // Run on UI thread
+                        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+                        {
+                            var codeStatus = _authService.CheckCodeStatus(code);
+                            switch (codeStatus)
+                            {
+                                case Services.CodeStatus.AlreadyUsed:
+                                    StatusText.Text = "⚠️ Este código já foi utilizado!";
+                                    StatusText.Foreground = Brushes.Orange;
+                                    _audioService.PlaySound(AudioEvent.LoginError);
+                                    break;
+                                case Services.CodeStatus.Invalid:
+                                    StatusText.Text = "❌ Código inválido";
+                                    StatusText.Foreground = Brushes.Red;
+                                    break;
+                                case Services.CodeStatus.Valid:
+                                    StatusText.Text = "✅ Código válido - Digite seu nome";
+                                    StatusText.Foreground = Brushes.LimeGreen;
+                                    // Focus on name field if code is valid
+                                    if (NameTextBox.IsVisible)
+                                    {
+                                        NameTextBox.Focus();
+                                    }
+                                    break;
+                                default:
+                                    StatusText.Text = "";
+                                    break;
+                            }
+                        });
+                    };
+                    _codeCheckTimer.AutoReset = false;
+                    _codeCheckTimer.Start();
+                }
             }
 
             UpdateLoginButtonState();
@@ -635,10 +794,22 @@ namespace miniJogo.Views
                     _audioService.PlaySound(AudioEvent.LoginError);
                     ShowStatus($"❌ {result.Message}", Brushes.Red);
 
-                    // Clear sensitive information on failure
-                    if (result.Message.Contains("já foi utilizado") || result.Message.Contains("inválido"))
+                    // Clear sensitive information on failure and provide specific feedback
+                    if (result.Message.Contains("já foi utilizado"))
                     {
+                        ShowStatus($"⚠️ {result.Message} Tente outro código.", Brushes.Orange);
                         CodeTextBox.Text = "";
+                        CodeTextBox.Focus();
+                    }
+                    else if (result.Message.Contains("inválido"))
+                    {
+                        ShowStatus($"❌ {result.Message}", Brushes.Red);
+                        CodeTextBox.Text = "";
+                        CodeTextBox.Focus();
+                    }
+                    else
+                    {
+                        ShowStatus($"❌ {result.Message}", Brushes.Red);
                     }
                 }
             }
@@ -722,7 +893,7 @@ namespace miniJogo.Views
                 2 => ("🧠 Sequência Maluca", "SEQUÊNCIA MALUCA:\n\n• Observe a sequência de LEDs\n• Repita pressionando as teclas corretas\n• Cada rodada adiciona +1 LED\n• Erro = Game Over\n\n🏆 DESAFIO DE VITÓRIA:\nComplete 8 rodadas (sequência chega a 10 passos)!"),
                 3 => ("🐱 Gato e Rato", "GATO E RATO:\n\n• Mova-se apenas UMA VEZ por movimento do rato\n• Capture o rato que pisca rapidamente\n• Rato fica mais rápido a cada captura\n• +20 pontos por captura\n\n🏆 DESAFIO DE VITÓRIA:\nCapture o rato 16 vezes em até 2 minutos!"),
                 4 => ("☄️ Esquiva Meteoros", "ESQUIVA METEOROS:\n\n• Use as teclas para desviar\n• Meteoros caem cada vez mais rápido\n• Múltiplos meteoros simultâneos\n• +1 ponto por segundo\n\n🏆 DESAFIO DE VITÓRIA:\nSobreviva por 180 segundos (3 minutos) sem ser atingido!"),
-                5 => ("🎸 Guitar Hero", "GUITAR HERO:\n\n• Pressione as teclas no ritmo\n• Notas ficam mais rápidas com progresso\n• Penalidade por erros e perdas\n• Precisão é fundamental\n\n🏆 DESAFIO DE VITÓRIA:\nFaça 300 pontos com ritmo perfeito!"),
+                5 => ("🎸 Guitar Hero", "GUITAR HERO:\n\n• Pressione as teclas no ritmo\n• Notas MUITO rápidas e frequentes\n• Sistema de vidas (5 vidas iniciais)\n• Penalidade severa por erros (-20 pts)\n• 8 erros consecutivos = Game Over\n\n🏆 DESAFIO DE VITÓRIA:\nFaça 500 pontos sobrevivendo ao ritmo extremo!"),
                 6 => ("⚡ Lightning Strike", "LIGHTNING STRIKE:\n\n• Padrão pisca por milissegundos\n• Memorize e reproduza rapidamente\n• Tempo diminui drasticamente por rodada\n• Erro = Game Over\n\n🏆 DESAFIO DE VITÓRIA:\nComplete 7 sequências sem errar nenhum padrão!"),
                 7 => ("🎯 Sniper Mode", "SNIPER MODE:\n\n• Alvos piscam por apenas 300ms\n• Pressione a tecla exata no tempo\n• Precisão absoluta necessária\n• Sequência = vitória\n\n🏆 DESAFIO DE VITÓRIA:\nAcerte 7 alvos em sequência!"),
                 _ => ("Selecione um Jogo", "Selecione um jogo na lista para ver as instruções detalhadas e o desafio específico para conquistar a vitória!")

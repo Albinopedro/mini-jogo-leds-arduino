@@ -246,8 +246,35 @@ namespace miniJogo.Services
             }
         }
 
+        public CodeStatus CheckCodeStatus(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                return CodeStatus.Invalid;
+                
+            code = code.ToUpper();
+            
+            if (code == ADMIN_CODE)
+                return CodeStatus.AdminCode;
+                
+            if (!IsValidClientCode(code))
+                return CodeStatus.Invalid;
+                
+            if (_usedCodes.Contains(code))
+                return CodeStatus.AlreadyUsed;
+                
+            return CodeStatus.Valid;
+        }
+
         public int GetTotalValidCodes() => _validCodes.Count;
         public int GetUsedCodesCount() => _usedCodes.Count;
         public int GetAvailableCodesCount() => _validCodes.Count - _usedCodes.Count;
+    }
+
+    public enum CodeStatus
+    {
+        Valid,
+        Invalid,
+        AlreadyUsed,
+        AdminCode
     }
 }
